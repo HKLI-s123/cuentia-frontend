@@ -598,10 +598,6 @@ export default function CuentIALandingPage() {
                   </div>
                 </div>
               </Card>
-
-              <div className="mt-4 text-xs text-slate-400">
-                * Este bloque es una representación visual. Puedes reemplazarlo por capturas reales.
-              </div>
             </motion.div>
           </div>
         </div>
