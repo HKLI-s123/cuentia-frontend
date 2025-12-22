@@ -14,6 +14,7 @@ import {
   MonitorSmartphone,
 } from "lucide-react";
 import { apiFetch } from "@/app/services/apiClient";
+import { API_URL } from "@/utils/env";
 
 type ActiveBot = {
   code: string;
@@ -37,7 +38,7 @@ export default function BotConfigPage() {
         setBots(status.bots || []);
 
         // 🔹 Estado comercial (Billing)
-        const res = await apiFetch("http://localhost:3001/billing/me-plan", {
+        const res = await apiFetch(`${API_URL}/billing/me-plan`, {
         });
         const billing = await res?.json();
         setActiveBots(Array.isArray(billing.bots) ? billing.bots : []);
@@ -62,7 +63,7 @@ export default function BotConfigPage() {
         onClick: async () => {
           try {
             await apiFetch(
-              `http://localhost:3001/billing/addon/${bot.stripeItemId}`,
+              `${API_URL}/billing/addon/${bot.stripeItemId}`,
               { method: "DELETE" }
             );
   

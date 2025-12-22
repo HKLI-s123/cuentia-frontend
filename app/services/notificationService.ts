@@ -1,12 +1,13 @@
+import { API_URL } from "@/utils/env";
 import { apiFetch } from "./apiClient";
 
 export async function getNotificationPreferences() {
-  const res = await apiFetch("http://localhost:3001/notifications");
+  const res = await apiFetch(`${API_URL}/notifications`);
   return res?.json();
 }
 
 export async function updateNotificationPreferences(prefs: any) {
-  const res = await apiFetch("http://localhost:3001/notifications/update", {
+  const res = await apiFetch(`${API_URL}/notifications/update`, {
     method: "PATCH",
     body: JSON.stringify(prefs),
   });
@@ -14,7 +15,7 @@ export async function updateNotificationPreferences(prefs: any) {
 }
 
 export async function getNotifications() {
-  const res = await apiFetch("http://localhost:3001/notifications/my");
+  const res = await apiFetch(`${API_URL}/notifications/my`);
 
   if (!res?.ok) throw new Error("No se pudieron cargar las notificaciones");
 
@@ -22,7 +23,7 @@ export async function getNotifications() {
 }
 
 export async function deleteNotification(id: number) {
-  const res = await apiFetch(`http://localhost:3001/notifications/${id}`, {
+  const res = await apiFetch(`${API_URL}/notifications/${id}`, {
     method: "DELETE",
   });
 

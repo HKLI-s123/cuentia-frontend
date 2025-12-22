@@ -4,12 +4,13 @@ import { apiFetch } from "@/app/services/apiClient";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle } from "lucide-react";
+import { API_URL } from "@/utils/env";
 
 export default function Success() {
   const [plan, setPlan] = useState<string | null>(null);
 
   useEffect(() => {
-    apiFetch("http://localhost:3001/billing/me-plan", {})
+    apiFetch(`${API_URL}/billing/me-plan`, {})
       .then((r) => r?.json())
       .then((data) => setPlan(data.plan))
       .catch(() => setPlan("error"));

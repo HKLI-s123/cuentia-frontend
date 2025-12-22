@@ -26,6 +26,7 @@ import {
 
 import { getFinanceTrends } from "../../../../../../services/financeService";
 import { apiFetch } from "@/app/services/apiClient";
+import { API_URL } from "@/utils/env";
 
 const FinanceChart = dynamic(
   () => import("../charts").then((mod) => mod.FinanceChart),
@@ -113,7 +114,7 @@ const FinanceTrends = ({ rfc }: Props) => {
   const handleDownload = async () => {
     try {
       const res = await apiFetch(
-        `http://localhost:3001/cfdis/finance-report?rfc=${rfc}&startDate=${startDate}&endDate=${endDate}`,
+        `${API_URL}/cfdis/finance-report?rfc=${rfc}&startDate=${startDate}&endDate=${endDate}`,
         { method: "GET" }
       );
 

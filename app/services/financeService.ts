@@ -1,3 +1,4 @@
+import { API_URL } from "@/utils/env";
 import { authHeaders } from "./api";
 import { apiFetch } from "./apiClient";
 
@@ -6,7 +7,7 @@ export const getFinanceStats = async (
   startDate?: string,
   endDate?: string
 ) => {
-  const url = new URL(`http://localhost:3001/cfdis/finance-stats`);
+  const url = new URL(`${API_URL}/cfdis/finance-stats`);
   url.searchParams.append("rfc", rfc);
   if (startDate) url.searchParams.append("startDate", startDate);
   if (endDate) url.searchParams.append("endDate", endDate);
@@ -130,7 +131,7 @@ export const getFinanceStats = async (
 
 
 export const getFinanceTrends = async (rfc: string, startDate?: string, endDate?: string) => {
-  const url = new URL(`http://localhost:3001/cfdis/finance-trends`);
+  const url = new URL(`${API_URL}/cfdis/finance-trends`);
   url.searchParams.append('rfc', rfc);
   if (startDate) url.searchParams.append('startDate', startDate);
   if (endDate) url.searchParams.append('endDate', endDate);
@@ -175,7 +176,7 @@ export const getFinanceTrends = async (rfc: string, startDate?: string, endDate?
 
 
 export const getFinanceStatsChart = async (rfc: string, startDate?: string, endDate?: string) => {
-  const url = new URL(`http://localhost:3001/cfdis/finance-stats-chart`);
+  const url = new URL(`${API_URL}/cfdis/finance-stats-chart`);
   url.searchParams.append("rfc", rfc);
   if (startDate) url.searchParams.append("startDate", startDate);
   if (endDate) url.searchParams.append("endDate", endDate);
@@ -188,7 +189,7 @@ export const getFinanceStatsChart = async (rfc: string, startDate?: string, endD
 
 
 export const getMainExpenses = async (rfc: string, startDate?: string, endDate?: string) => {
-  const url = new URL("http://localhost:3001/cfdis/main-expenses");
+  const url = new URL(`${API_URL}/cfdis/main-expenses`);
   url.searchParams.append("rfc", rfc);
   if (startDate) url.searchParams.append("startDate", startDate);
   if (endDate) url.searchParams.append("endDate", endDate);
@@ -202,7 +203,7 @@ export const getMainExpenses = async (rfc: string, startDate?: string, endDate?:
 
 
 export const getMainRevenue = async (rfc: string, startDate?: string, endDate?: string) => {
-  const url = new URL("http://localhost:3001/cfdis/main-revenue");
+  const url = new URL(`${API_URL}/cfdis/main-revenue`);
   url.searchParams.append("rfc", rfc);
   if (startDate) url.searchParams.append("startDate", startDate);
   if (endDate) url.searchParams.append("endDate", endDate);
@@ -219,7 +220,7 @@ export async function getIncomeByClient(rfc: string, startDate?: string, endDate
   if (endDate) params.append("endDate", endDate);
   if (rfc) params.append("rfc", rfc);
 
-  const res = await apiFetch(`http://localhost:3001/cfdis/income-by-client?${params.toString()}`, { method: "GET" });
+  const res = await apiFetch(`${API_URL}/cfdis/income-by-client?${params.toString()}`, { method: "GET" });
 
   const json = await res?.json();
 
@@ -237,7 +238,7 @@ export async function getExpensesByProvider(rfc: string, startDate?: string, end
   if (endDate) params.append("endDate", endDate);
   if (rfc) params.append("rfc", rfc);
 
-  const res = await apiFetch(`http://localhost:3001/cfdis/expenses-by-provider?${params.toString()}`, { method: "GET" });
+  const res = await apiFetch(`${API_URL}/cfdis/expenses-by-provider?${params.toString()}`, { method: "GET" });
 
   const json = await res?.json();
 
@@ -250,7 +251,7 @@ export async function getExpensesByProvider(rfc: string, startDate?: string, end
 }
 
 export const getFacturas = async (params: { rfc?: string; startDate?: string; endDate?: string }) => {
-  const url = new URL("http://localhost:3001/cfdis");
+  const url = new URL(`${API_URL}/cfdis`);
 
   if (params.rfc) url.searchParams.append("rfc", params.rfc);
   if (params.startDate) url.searchParams.append("fechaInicio", params.startDate);
@@ -267,7 +268,7 @@ export const getFacturas = async (params: { rfc?: string; startDate?: string; en
 
 
 export const getPagos = async (params: { rfc?: string; startDate?: string; endDate?: string }) => {
-  const url = new URL("http://localhost:3001/cfdis/pagos");
+  const url = new URL(`${API_URL}/cfdis/pagos`);
 
   if (params.rfc) url.searchParams.append("rfc", params.rfc);
   if (params.startDate) url.searchParams.append("fechaInicio", params.startDate);
@@ -285,7 +286,7 @@ export const getPagos = async (params: { rfc?: string; startDate?: string; endDa
 
 
 export const getNotasCredito = async (params: { rfc?: string; startDate?: string; endDate?: string }) => {
-  const url = new URL("http://localhost:3001/cfdis/notas-credito");
+  const url = new URL(`${API_URL}/cfdis/notas-credito`);
 
   if (params.rfc) url.searchParams.append("rfc", params.rfc);
   if (params.startDate) url.searchParams.append("fechaInicio", params.startDate);
@@ -303,7 +304,7 @@ export const getNotasCredito = async (params: { rfc?: string; startDate?: string
 
 
 export const generarDiot = async (params: {rfc?: string; startDate?: string; endDate?: string }) => {
-  const url = new URL("http://localhost:3001/cfdis/generar-diot");
+  const url = new URL(`${API_URL}/cfdis/generar-diot`);
 
   if (params.rfc) url.searchParams.append("rfc", params.rfc);
   if (params.startDate) url.searchParams.append("fechaInicio", params.startDate);

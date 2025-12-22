@@ -1,4 +1,5 @@
 import { apiFetch } from "@/app/services/apiClient";
+import { API_URL } from "@/utils/env";
 
 export interface UpdatePaymentMethodPayload {
   metodoPago: "TARJETA" | "TRANSFERENCIA" | "PAYPAL";
@@ -16,7 +17,7 @@ export interface UpdatePaymentMethodPayload {
 }
 
 export async function getPaymentMethod() {
-  const res = await apiFetch("http://localhost:3001/billing/payment/me");
+  const res = await apiFetch(`${API_URL}/billing/payment/me`);
 
   if (!res?.ok) {
     throw new Error("No se pudo obtener el método de pago");
@@ -26,7 +27,7 @@ export async function getPaymentMethod() {
 }
 
 export async function updatePaymentMethod(data: UpdatePaymentMethodPayload) {
-  const res = await apiFetch("http://localhost:3001/billing/payment/update-method", {
+  const res = await apiFetch(`${API_URL}/billing/payment/update-method`, {
     method: "POST",
     body: JSON.stringify(data),
   });

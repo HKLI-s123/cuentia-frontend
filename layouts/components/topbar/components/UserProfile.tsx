@@ -9,6 +9,7 @@ import Image from "next/image";
 import user2 from "@/assets/images/users/user-2.jpg";
 import { getSessionInfo } from "@/app/services/authService";
 import { apiFetch } from "@/app/services/apiClient";
+import { API_URL } from "@/utils/env";
 
 type PlanBadgeInfo = {
   plan: string | null;
@@ -58,7 +59,7 @@ const UserProfile = () => {
           const data = await getSessionInfo();
           setSession(data);
 
-          const res = await apiFetch("http://localhost:3001/billing/me-plan", {});
+          const res = await apiFetch(`${API_URL}/billing/me-plan`, {});
           const plan = await res?.json();
           setPlanInfo(plan);
         } catch (err) {

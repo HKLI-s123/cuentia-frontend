@@ -1,4 +1,5 @@
 import { apiFetch } from "@/app/services/apiClient";
+import { API_URL } from "@/utils/env";
 import { useState, useEffect } from "react";
 import { Card, Button, Table, Form, Spinner } from "react-bootstrap";
 
@@ -45,7 +46,7 @@ export const ComprobantesDigitalesList = ({
     value: 'ingreso' | 'egreso' | ''
   ): Promise<void> => {
     try {
-      await apiFetch(`http://localhost:3001/comprobantes-digitales/${id}/tipo-movimiento`, {
+      await apiFetch(`${API_URL}/comprobantes-digitales/${id}/tipo-movimiento`, {
         method: 'PATCH',
         body: JSON.stringify({ tipo_movimiento: value }),
       });
@@ -66,7 +67,7 @@ export const ComprobantesDigitalesList = ({
     setLoading(true);
     try {
       const res = await apiFetch(
-        `http://localhost:3001/comprobantes-digitales?userId=${userId}&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`
+        `${API_URL}/comprobantes-digitales?userId=${userId}&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`
       );
       const data = await res?.json();
 
@@ -86,7 +87,7 @@ export const ComprobantesDigitalesList = ({
   const exportarExcel = async () => {
     try {
       const res = await apiFetch(
-        `http://localhost:3001/comprobantes-digitales/exportar?userId=${userId}&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`,
+        `${API_URL}/comprobantes-digitales/exportar?userId=${userId}&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`,
         {
          method: "GET",
          raw: true, // ⬅️ IMPORTANTE: para no hacer res.json() internamente

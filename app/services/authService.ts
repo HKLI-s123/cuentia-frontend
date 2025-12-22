@@ -1,3 +1,4 @@
+import { API_URL } from "@/utils/env";
 import { apiFetch, publicApiFetch } from "./apiClient";
 
 export async function registerUser(data: any) {
@@ -17,7 +18,7 @@ export async function registerUser(data: any) {
   };
 
   // 3. POST al backend con JSON, NO FormData
-  const res = await fetch("http://localhost:3001/auth/register", {
+  const res = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
     credentials: "include", // ← IMPORTANTE para que el refresh token HttpOnly llegue
     headers: {
@@ -43,7 +44,7 @@ export async function loginUser(emailOrUser: string, password: string) {
   );
 
   // 2. Enviar al backend
-  const res = await fetch("http://localhost:3001/auth/login", {
+  const res = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
     credentials: "include", // para refresh cookies si las agregas luego
     headers: { "Content-Type": "application/json" },
@@ -71,7 +72,7 @@ export async function fetchMe() {
   }
 
   // Hacemos la llamada protegida
-  const res = await fetch("http://localhost:3001/auth/me", {
+  const res = await fetch(`${API_URL}/auth/me`, {
     headers: {
       Authorization: `Bearer ${window.__accessToken}`,
     },
@@ -84,7 +85,7 @@ export async function fetchMe() {
 
 export async function refreshAccessToken() {
   try {
-    const res = await fetch("http://localhost:3001/auth/refresh", {
+    const res = await fetch(`${API_URL}/auth/refresh`, {
       method: "POST",
       credentials: "include", // para enviar cookie refresh_token
     });
@@ -103,7 +104,7 @@ export async function refreshAccessToken() {
 }
 
 export async function secureResendVerification() {
-  let res = await fetch("http://localhost:3001/auth/resend-verification", {
+  let res = await fetch(`${API_URL}/auth/resend-verification`, {
     method: "POST",
     credentials: "include",
     headers: {
@@ -117,7 +118,7 @@ export async function secureResendVerification() {
     const newToken = await refreshAccessToken();
     if (!newToken) return { message: "Sesión expirada. Inicia sesión de nuevo." };
 
-    res = await fetch("http://localhost:3001/auth/resend-verification", {
+    res = await fetch(`${API_URL}/auth/resend-verification`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -134,7 +135,7 @@ export async function logoutUser() {
   try {
     const access = localStorage.getItem("accessToken");
 
-    const res = await fetch("http://localhost:3001/auth/logout", {
+    const res = await fetch(`${API_URL}/auth/logout`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -161,7 +162,7 @@ export async function requestPasswordReset(email: string) {
     { action: "password_reset_request" }
   );
 
-  const res = await fetch("http://localhost:3001/auth/request-password-reset", {
+  const res = await fetch(`${API_URL}/auth/request-password-reset`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, recaptchaToken }),
@@ -171,7 +172,7 @@ export async function requestPasswordReset(email: string) {
 }
 
 export async function resetPassword(token: string, password: string) {
-  const res = await fetch("http://localhost:3001/auth/reset-password", {
+  const res = await fetch(`${API_URL}/auth/reset-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ token, password }),
@@ -186,7 +187,7 @@ export async function resetPassword(token: string, password: string) {
 
 export async function getSessionInfo() {
   try {
-    const res = await apiFetch('http://localhost:3001/auth/session-info');
+    const res = await apiFetch(`${API_URL}/auth/session-info`);
 
     if (!res || !res.ok) {
       throw new Error("No se pudo obtener la información de sesión");
@@ -201,7 +202,7 @@ export async function getSessionInfo() {
 }
 
 export async function getSessionOptional() {
-  const res = await publicApiFetch("http://localhost:3001/auth/session-info");
+  const res = await publicApiFetch(`${API_URL}/auth/session-info`);
 
   if (!res || !res.ok) return null;
   return res.json();
@@ -210,7 +211,7 @@ export async function getSessionOptional() {
 
 export async function googleLogin(googleToken: string) {
   try {
-    const res = await fetch("http://localhost:3001/auth/google", {
+    const res = await fetch(`${API_URL}/auth/google`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",   // <= FALTABA ESTO
@@ -231,7 +232,7 @@ export async function googleLogin(googleToken: string) {
 
 
 export async function googleSetupAccount(tipo_cuenta: string, empresa: string | null, accepted: boolean) {
-  const res = await apiFetch("http://localhost:3001/auth/google/setup", {
+  const res = await apiFetch(`${API_URL}/auth/google/setup`, {
     method: "POST",
     body: JSON.stringify({
       tipo_cuenta,

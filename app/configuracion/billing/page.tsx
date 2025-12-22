@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import MetodoPagoModal from "./components/MetodoPagoModal";
 import { apiFetch } from "@/app/services/apiClient";
+import { API_URL } from "@/utils/env";
 
 
 export default function FacturacionPage() {
@@ -51,7 +52,7 @@ export default function FacturacionPage() {
   useEffect(() => {
     const loadPlan = async () => {
       try {
-        const res = await apiFetch("http://localhost:3001/billing/me-plan");
+        const res = await apiFetch(`${API_URL}/billing/me-plan`);
         const data = await res?.json();
 
         const normalizedPlan = {

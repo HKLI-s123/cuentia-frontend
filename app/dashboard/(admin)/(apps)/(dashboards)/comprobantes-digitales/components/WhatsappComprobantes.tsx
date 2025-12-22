@@ -7,6 +7,7 @@ import { ComprobantesDigitalesList } from "./comprobantesDigitalesList"; // o un
 import { toast } from "sonner";
 import { apiFetch } from "@/app/services/apiClient";
 import { getSessionInfo } from "@/app/services/authService";
+import { API_URL } from "@/utils/env";
 
 export const WhatsappComprobantes = () => {
   const [qr, setQr] = useState<string | null>(null);
@@ -45,7 +46,7 @@ export const WhatsappComprobantes = () => {
     if (!userId) return;   // 👈 evitar ejecutar sin ID
     const clientId = `${BOT_TYPE}-${userId}`;
 
-    apiFetch(`http://localhost:3001/whatsapp/status/${clientId}/${BOT_TYPE}`)
+    apiFetch(`${API_URL}/whatsapp/status/${clientId}/${BOT_TYPE}`)
       .then((res) => res?.json())
       .then((data) => {
         setHasContract(data.hasContract ?? false);
@@ -75,7 +76,7 @@ export const WhatsappComprobantes = () => {
     );
 
     try {
-      const res = await apiFetch(`http://localhost:3001/whatsapp/qr-limit/${clientId}/${BOT_TYPE}`);
+      const res = await apiFetch(`${API_URL}/whatsapp/qr-limit/${clientId}/${BOT_TYPE}`);
       const data = await res?.json();
 
       if (!data.canGenerate) {
@@ -92,13 +93,13 @@ export const WhatsappComprobantes = () => {
     setConnected(false);
 
     try {
-      await apiFetch(`http://localhost:3001/whatsapp/reconnect`, {
+      await apiFetch(`${API_URL}/whatsapp/reconnect`, {
         method: "POST",
         body: JSON.stringify({ clientId, botType: BOT_TYPE }),
       });
 
       const eventSource = new EventSource(
-        `http://localhost:3001/whatsapp/qr/${clientId}/${BOT_TYPE}`
+        `${API_URL}/whatsapp/qr/${clientId}/${BOT_TYPE}`
       );
 
       eventSource.onmessage = (event) => {
@@ -141,7 +142,7 @@ export const WhatsappComprobantes = () => {
     const clientId = `${BOT_TYPE}-${userId}`;
 
     try {
-      const res = await apiFetch(`http://localhost:3001/whatsapp/qr-limit/${clientId}/${BOT_TYPE}`);
+      const res = await apiFetch(`${API_URL}/whatsapp/qr-limit/${clientId}/${BOT_TYPE}`);
       const data = await res?.json();
       if (!data.canGenerate) {
         toast.error("Has alcanzado el límite diario de 10 QR. Intenta de nuevo mañana.");
@@ -157,13 +158,13 @@ export const WhatsappComprobantes = () => {
     setConnected(false);
 
     try {
-      await apiFetch(`http://localhost:3001/whatsapp/create`, {
+      await apiFetch(`${API_URL}/whatsapp/create`, {
         method: "POST",
         body: JSON.stringify({ clientId, botType: BOT_TYPE}),
       });
 
       const eventSource = new EventSource(
-        `http://localhost:3001/whatsapp/qr/${clientId}/${BOT_TYPE}`
+        `${API_URL}/whatsapp/qr/${clientId}/${BOT_TYPE}`
       );
 
       eventSource.onmessage = (event) => {
@@ -203,7 +204,7 @@ export const WhatsappComprobantes = () => {
     const clientId = `${BOT_TYPE}-${userId}`;
 
     try {
-      const res = await apiFetch(`http://localhost:3001/whatsapp/qr-limit/${clientId}/${BOT_TYPE}`);
+      const res = await apiFetch(`${API_URL}/whatsapp/qr-limit/${clientId}/${BOT_TYPE}`);
       const data = await res?.json();
       if (!data.canGenerate) {
         toast.error("Has alcanzado el límite diario de 10 QR. Intenta de nuevo mañana.");

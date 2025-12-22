@@ -12,6 +12,7 @@ import { es } from "date-fns/locale";
 import { apiFetch } from "@/app/services/apiClient";
 import { getSessionInfo } from "@/app/services/authService";
 import { useOnboardingRedirect } from "@/hooks/useUserSessionGuard";
+import { API_URL } from "@/utils/env";
 
 type Message = {
   role: "user" | "bot";
@@ -170,7 +171,7 @@ export const Chat = ({}:ChatProps) => {
 
   const obtenerCantidadFacturasSemana = async (rfc: string, fechaInicio: string, fechaFin: string) => {
     try {
-      const response = await apiFetch(`http://localhost:3001/cfdis/cantidad-por-semana?rfc=${rfc}&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
+      const response = await apiFetch(`${API_URL}/cfdis/cantidad-por-semana?rfc=${rfc}&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
       if (!response?.ok) throw new Error("Error al obtener las facturas");
       const data = await response.json();
       return data; // ← espera que sea algo como [{ semana: 1, cantidad: 120 }, ...]

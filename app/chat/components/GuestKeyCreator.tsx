@@ -1,6 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/app/services/apiClient";
+import { API_URL } from "@/utils/env";
 import React, { useState } from "react";
 import { toast } from "sonner"
 
@@ -67,7 +68,7 @@ export const GuestKeyCreator: React.FC<GuestKeyCreatorProps> = ({
     for (const rfc of selected) {
       try {
         // Ajusta la URL si tu API está montada en subpath o CORS
-        const res = await apiFetch("http://localhost:3001/guest/create", {
+        const res = await apiFetch(`${API_URL}/guest/create`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -1,3 +1,4 @@
+import { API_URL } from "@/utils/env";
 import { apiFetch } from "./apiClient";
 
 export type BillingIntent = "plan" | "addon";
@@ -30,12 +31,12 @@ interface AddonResponse {
 
 
 export async function getBillingInfo() {
-  const res = await apiFetch("http://localhost:3001/billing/info");
+  const res = await apiFetch(`${API_URL}/billing/info`);
   return res?.json();
 }
 
 export async function updateBillingInfo(data: any) {
-  const res = await apiFetch("http://localhost:3001/billing/update", {
+  const res = await apiFetch(`${API_URL}/billing/update`, {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -50,14 +51,14 @@ export async function updateBillingInfo(data: any) {
 }
 
 export async function getInvoices() {
-  const res = await apiFetch("http://localhost:3001/billing/invoices");
+  const res = await apiFetch(`${API_URL}/billing/invoices`);
   return res?.json();
 }
 
 export async function subscribePlan(
   priceId: string,
 ): Promise<CheckoutResponse> {
-  const res = await apiFetch("http://localhost:3001/billing/subscribe", {
+  const res = await apiFetch(`${API_URL}/billing/subscribe`, {
     method: "POST",
     body: JSON.stringify({
       intent: "plan",
@@ -85,7 +86,7 @@ export async function subscribePlan(
 export async function subscribeAddon(
   priceId: string,
 ): Promise<AddonResponse> {
-  const res = await apiFetch("http://localhost:3001/billing/subscribe", {
+  const res = await apiFetch(`${API_URL}/billing/subscribe`, {
     method: "POST",
     body: JSON.stringify({
       intent: "addon",
@@ -107,7 +108,7 @@ export async function subscribeAddon(
 }
 
 export async function cancelAddon(stripeItemId: string) {
-  return apiFetch(`http://localhost:3001/billing/addon/${stripeItemId}`, {
+  return apiFetch(`${API_URL}/billing/addon/${stripeItemId}`, {
     method: "DELETE",
   });
 }
@@ -118,7 +119,7 @@ export async function submitManualTransfer(payload: {
   reference: string | null;
   }) 
   {
-  const res = await apiFetch("http://localhost:3001/billing/manual-payment", {
+  const res = await apiFetch(`${API_URL}/billing/manual-payment`, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -143,7 +144,7 @@ export async function submitManualTransfer(payload: {
 }
 
 export async function submitCustomPlanRequest(form: any) {
-  const res = await apiFetch("http://localhost:3001/billing/custom-request", {
+  const res = await apiFetch(`${API_URL}/billing/custom-request`, {
     method: "POST",
     body: JSON.stringify(form),
   });
@@ -162,7 +163,7 @@ export async function submitCustomPlanRequest(form: any) {
 
 export async function getManualPayments() {
   try {
-    const res = await apiFetch("http://localhost:3001/billing/manual-payments");
+    const res = await apiFetch(`${API_URL}/billing/manual-payments`);
 
     if (!res) return { ok: false, status: 0, data: null };
 
@@ -189,7 +190,7 @@ export async function getManualPayments() {
 export async function approveManualPayment(id: number) {
   try {
     const res = await apiFetch(
-      `http://localhost:3001/billing/manual-payments/${id}/approve`,
+      `${API_URL}/billing/manual-payments/${id}/approve`,
       { method: "PATCH" }
     );
 
@@ -208,7 +209,7 @@ export async function approveManualPayment(id: number) {
 export async function rejectManualPayment(id: number) {
   try {
     const res = await apiFetch(
-      `http://localhost:3001/billing/manual-payments/${id}/reject`,
+      `${API_URL}/billing/manual-payments/${id}/reject`,
       { method: "PATCH" }
     );
 
@@ -225,7 +226,7 @@ export async function rejectManualPayment(id: number) {
 }
 
 export async function openBillingPortal() {
-  const res = await apiFetch("http://localhost:3001/billing-portal/portal", {
+  const res = await apiFetch(`${API_URL}/billing-portal/portal`, {
     method: "POST",
   });
 
@@ -239,13 +240,13 @@ export async function openBillingPortal() {
 }
 
 export async function cancelSubscription() {
-  return await apiFetch("http://localhost:3001/billing/cancel", {
+  return await apiFetch(`${API_URL}/billing/cancel`, {
     method: "POST",
   });
 }
 
 export async function upgradePlan(priceId: string) {
-  return apiFetch("http://localhost:3001/billing/change-plan", {
+  return apiFetch(`${API_URL}/billing/change-plan`, {
     method: "POST",
     body: JSON.stringify({ newPriceId: priceId }),
   }).then(r => r?.json());
@@ -253,7 +254,7 @@ export async function upgradePlan(priceId: string) {
 
 export async function applyRetentionDiscount(reason: string, customReason?: string) {
   const res = await apiFetch(
-    "http://localhost:3001/billing/apply-retention-discount",
+    `${API_URL}/billing/apply-retention-discount`,
     {
       method: "POST",
       body: JSON.stringify({

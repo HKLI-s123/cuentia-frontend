@@ -8,6 +8,7 @@ import PaymentMethodModal from "./PaymentMethodModal"; // o la ruta donde lo gua
 import { openBillingPortal, upgradePlan } from "../services/billingService";
 import { toast } from "sonner";
 import { getSessionOptional } from "../services/authService";
+import { API_URL } from "@/utils/env";
 
 type PlanStatus = "none" | "active" | "canceled" | "expired" | "past_due";
 
@@ -130,12 +131,17 @@ export default function PricingPage() {
   const [planStatus, setPlanStatus] = useState<PlanStatus>("none");
   const [session, setSession] = useState<any>(null);
   const [activeBots, setActiveBots] = useState<ActiveBot[]>([]);
-  
+  const [sessionLoaded, setSessionLoaded] = useState(false);
+
+  const redirectToLogin = () => {
+    const next = encodeURIComponent("/plans");
+    window.location.href = `/login?next=${next}`;
+  };
 
   let tipo_cuenta = "";
 
   useEffect(() => {
-    publicApiFetch("http://localhost:3001/billing/me-plan")
+    publicApiFetch(`${API_URL}/billing/me-plan`)
       .then(r => r?.json())
     .then(data => {
         setPlanCode(data.plan); // string | null
@@ -164,9 +170,10 @@ export default function PricingPage() {
         
               // fallback por si otro error raro ocurre
               //window.location.href = "/login";
+            } finally {
+                setSessionLoaded(true);
             }
           };
-        
       load();
   }, []);
 
@@ -238,8 +245,13 @@ export default function PricingPage() {
   console.log(tipo_cuenta);
 
   const handleSubscribe = async (priceId: string, planCode: string) => {
+    if (isPublic) {
+      redirectToLogin();
+      return;
+    }
     // Usuario YA tiene plan activo → hacemos upgrade/downgrade
     console.log("plan status",planStatus)
+
     if (planStatus === "canceled") {
       setSelectedPriceId(priceId);
       setSelectedPlan(planCode);
@@ -291,6 +303,10 @@ export default function PricingPage() {
   };
 
   const handleBotSubscribe = async (priceId: string) => {
+    if (isPublic) {
+      redirectToLogin();
+      return;
+    }
     // 🟡 Ya tiene un bot activo (individual o paquete)
     if (planStatus === "active" && planCode !== "cuentia_trial" && tipo_cuenta === "invitado") {
       toast.message("Confirmar cambio de bot", {
@@ -361,6 +377,17 @@ export default function PricingPage() {
     ? "md:grid-cols-2"
     : "md:grid-cols-3";
 
+
+  if (!sessionLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
+        <span className="animate-pulse text-slate-400">
+          Cargando planes…
+        </span>
+      </div>
+    );
+  }
+
   return (
    <>
     <PaymentMethodModal
@@ -385,7 +412,7 @@ export default function PricingPage() {
           className="text-center mb-12"
         >
           <p className="inline-flex items-center gap-2 rounded-full border border-indigo-500/40 bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-200 mb-4">
-            CuentIA Billing · Modo prueba
+            CuentIA Billing
           </p>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
             Planes y precios para{" "}
@@ -573,6 +600,8 @@ export default function PricingPage() {
                 >
                 {loading === priceId
                   ? "Redirigiendo..."
+                  : isPublic
+                  ? "Inicia sesión para contratar"
                   : isCurrentPlan && planStatus === "past_due"
                   ? "Regularizar pago"
                   : isCurrentPlan && planStatus === "expired"
@@ -908,6 +937,8 @@ export default function PricingPage() {
                      ? "Bot activo"
                      : blockedByPack
                      ? "Incluido en paquete"
+                     : isPublic
+                     ? "Inicia sesión para activar"
                      : canBuyBot
                      ? "Activar Bot"
                      : "Requiere plan activo"}
@@ -918,9 +949,9 @@ export default function PricingPage() {
                   </p>
                 )}
           
-                {!canBuyBot && !active && billingMode !== "manual" && (
+                {!canBuyBot && !active && billingMode !== "manual" && !isPublic &&(
                   <p className="text-xs text-yellow-400 mt-2">
-                    Los bots requieren un plan activo.
+                    Los bots requieren un plan activo en cuentas empresariales o individuales.
                   </p>
                 )}
                 {hasStartBotsPack && !active && (
@@ -948,4 +979,4 @@ export default function PricingPage() {
     </div>
    </>
   );
-}
+ }

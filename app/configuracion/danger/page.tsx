@@ -10,6 +10,7 @@ import {
 import { cancelSubscription, getBillingInfo } from "@/app/services/billingService";
 import { apiFetch } from "@/app/services/apiClient";
 import { applyRetentionDiscount } from "@/app/services/billingService";
+import { API_URL } from "@/utils/env";
 
 type PlanInfo = {
   plan: string | null;
@@ -53,7 +54,7 @@ export default function DangerZonePage() {
       }
 
       try {
-          const res = await apiFetch("http://localhost:3001/billing/me-plan");
+          const res = await apiFetch(`${API_URL}/billing/me-plan`);
           const data = await res?.json();
   
           const normalizedPlan = {

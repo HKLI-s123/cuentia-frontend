@@ -1,4 +1,5 @@
 import { apiFetch } from "@/app/services/apiClient";
+import { API_URL } from "@/utils/env";
 
 export type SupportCategory =
   | "Problema técnico"
@@ -17,7 +18,7 @@ export type SupportRequest = {
 };
 
 export async function sendSupportRequest(payload: SupportRequest) {
-  const res = await apiFetch("http://localhost:3001/support", {
+  const res = await apiFetch(`${API_URL}/support`, {
     method: "POST",
     body: JSON.stringify(payload),
   });

@@ -1,3 +1,4 @@
+import { API_URL } from "@/utils/env";
 import { apiFetch } from "./apiClient";
 
 // frontend/services/clientes.ts
@@ -11,16 +12,15 @@ export type ClienteDto = {
   key_path: string;
 };
 
-const API_URL = "http://localhost:3001/clientes"; // Ajusta si es necesario
 
 export const getClientes = async (): Promise<ClienteDto[]> => {
-  const res = await apiFetch(API_URL);
+  const res = await apiFetch(`${API_URL}/clientes`);
   if (!res?.ok) throw new Error("Error al obtener clientes");
   return res.json();
 };
 
 export const createCliente = async (formData: FormData): Promise<ClienteDto> => {
-  const res = await apiFetch(API_URL, {
+  const res = await apiFetch(`${API_URL}/clientes`, {
     method: "POST",
     body: formData,
   });
@@ -29,7 +29,7 @@ export const createCliente = async (formData: FormData): Promise<ClienteDto> => 
 };
 
 export const updateCliente = async (id: number, formData: FormData): Promise<ClienteDto> => {
-  const res = await apiFetch(`${API_URL}/${id}`, {
+  const res = await apiFetch(`${API_URL}/clientes/${id}`, {
     method: "PATCH",
     body: formData,
   });
@@ -38,25 +38,25 @@ export const updateCliente = async (id: number, formData: FormData): Promise<Cli
 };
 
 export const deleteCliente = async (id: number): Promise<void> => {
-  const res = await apiFetch(`${API_URL}/${id}`, { method: "DELETE" });
+  const res = await apiFetch(`${API_URL}/clientes/${id}`, { method: "DELETE" });
   if (!res?.ok) throw new Error("Error al eliminar cliente");
 };
 
 export async function pauseSync(rfc: string) {
-  return apiFetch(`http://localhost:3001/clientes/${rfc}/pause-sync`, {
+  return apiFetch(`${API_URL}/clientes/${rfc}/pause-sync`, {
     method: "PATCH",
   }).then((r) => r?.json());
 }
 
 export async function resumeSync(rfc: string) {
-  return apiFetch(`http://localhost:3001/clientes/${rfc}/resume-sync`, {
+  return apiFetch(`${API_URL}/clientes/${rfc}/resume-sync`, {
     method: "PATCH",
   }).then((r) => r?.json());
 }
 
 
 export async function toggleSync() {
-  const res = await apiFetch("http://localhost:3001/clientes/sync/toggle", {
+  const res = await apiFetch(`${API_URL}/clientes/sync/toggle`, {
     method: "PATCH",
   });
 

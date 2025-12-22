@@ -2,6 +2,7 @@
 
 import { apiFetch } from "@/app/services/apiClient";
 import { getAccessToken } from "./tokenManager";
+import { API_URL } from "@/utils/env";
 
 /**
  * Actualiza el perfil del usuario, requiriendo contraseña
@@ -15,7 +16,7 @@ export async function updateUserProfile(payload: {
   const token = getAccessToken();
   if (!token) throw new Error("No hay token de acceso");
 
-  const res = await apiFetch("http://localhost:3001/auth/update-profile", {
+  const res = await apiFetch(`${API_URL}/auth/update-profile`, {
     method: "PATCH",
     body: JSON.stringify(payload),
   });
@@ -36,7 +37,7 @@ export async function changePassword(oldPassword: string, newPassword: string) {
   const token = getAccessToken();
   if (!token) throw new Error("No hay token de acceso");
 
-  const res = await apiFetch("http://localhost:3001/auth/change-password", {
+  const res = await apiFetch(`${API_URL}/auth/change-password`, {
     method: "POST",
     body: JSON.stringify({
       oldPassword,

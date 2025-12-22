@@ -13,6 +13,7 @@ import { getFinanceStatsChart } from '@/app/services/financeService';
 
 import { getEchartOptions, getWorldMapOptions } from "./data";
 import { apiFetch } from "@/app/services/apiClient";
+import { API_URL } from "@/utils/env";
 
 const EChartClient = dynamic(() => import("@/components/EChartClient"), { ssr: false });
 const BaseVectorMap = dynamic(() => import("@/components/maps/BaseVectorMap"), { ssr: false });
@@ -80,7 +81,7 @@ export const MainRevenueChart = ({ data }: MainRevenueChartProps) => {
     }
 
     const query = uuids.map(u => `uuids=${encodeURIComponent(u)}`).join("&");
-    const response = await apiFetch(`http://localhost:3001/cfdis/by-uuid?${query}`);
+    const response = await apiFetch(`${API_URL}/cfdis/by-uuid?${query}`);
     const data: Factura[] = await response?.json();
     setFacturas(data);
   };
@@ -202,7 +203,7 @@ export const MainExpensesChart = ({ data }: MainExpensesChartProps) => {
     // Construimos query params: ?uuids=UUID-1&uuids=UUID-2
     const query = uuids.map(u => `uuids=${encodeURIComponent(u)}`).join("&");
   
-    const response = await apiFetch(`http://localhost:3001/cfdis/by-uuid?${query}`);
+    const response = await apiFetch(`${API_URL}/cfdis/by-uuid?${query}`);
     const data: Factura[] = await response?.json();
     setFacturas(data);
   };

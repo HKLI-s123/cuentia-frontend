@@ -1,3 +1,4 @@
+import { API_URL } from "@/utils/env";
 import { getAccessToken, setAccessToken } from "./tokenManager";
 
 export async function apiFetch(url: string, options: any = {}) {
@@ -20,7 +21,7 @@ export async function apiFetch(url: string, options: any = {}) {
   if (res.status === 401) {
     console.warn("Access token expirado. Intentando refresh...");
 
-    const refreshRes = await fetch("http://localhost:3001/auth/refresh", {
+    const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
       method: "POST",
       credentials: "include", // IMPORTANTE para cookies HttpOnly
     });
@@ -68,7 +69,7 @@ export async function publicApiFetch(url: string, options: any = {}) {
   // 🔁 Intentar refresh, PERO sin redirect
   if (res.status === 401) {
     const refreshRes = await fetch(
-      "http://localhost:3001/auth/refresh",
+      `${API_URL}/auth/refresh`,
       {
         method: "POST",
         credentials: "include",

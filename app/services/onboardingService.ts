@@ -2,6 +2,7 @@
 import * as asn1js from "asn1js";
 import * as pkijs from "pkijs";
 import { apiFetch } from "./apiClient";
+import { API_URL } from "@/utils/env";
 
 export async function uploadOwnFirma(cer: File, key: File, fielPass: string, rfcFinal: string) {
   const formData = new FormData();
@@ -10,7 +11,7 @@ export async function uploadOwnFirma(cer: File, key: File, fielPass: string, rfc
   formData.append("fielPass", fielPass);
   formData.append("rfc", rfcFinal);
 
-  const res = await apiFetch("http://localhost:3001/clientes/upload-own-firma", {
+  const res = await apiFetch(`${API_URL}/clientes/upload-own-firma`, {
     method: "POST",
     body: formData,
   });
@@ -45,7 +46,7 @@ export async function extractRFCfromCer(file: File): Promise<string | null> {
 }
 
 export async function omitOnboarding() {
-  const res = await apiFetch("http://localhost:3001/auth/omit", {
+  const res = await apiFetch(`${API_URL}/auth/omit`, {
     method: "PATCH",
   });
 
@@ -62,7 +63,7 @@ export async function updateCertificates(cer: File, key: File, fielPass: string,
 
   if (rfc) form.append("rfc", rfc);
 
-  const res = await apiFetch("http://localhost:3001/clientes/update-certificates", {
+  const res = await apiFetch(`${API_URL}/clientes/update-certificates`, {
     method: "POST",
     body: form
   });

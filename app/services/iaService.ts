@@ -1,9 +1,10 @@
+import { API_URL } from "@/utils/env";
 import { Factura } from "../types/factura";
 import { apiFetch } from "./apiClient";
 
 export const analizarFacturaIA = async (factura: Factura, userId: number): Promise<string> => {
   try {
-    const response = await apiFetch("http://localhost:3001/cfdis/ia-factura", {
+    const response = await apiFetch(`${API_URL}/cfdis/ia-factura`, {
       method: "POST",
       body: JSON.stringify({factura, userId}),
     });

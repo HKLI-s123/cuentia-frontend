@@ -5,9 +5,6 @@ import {Fragment, useEffect, useState} from "react";
 import {TbSettings} from "react-icons/tb";
 import {Dropdown, DropdownDivider, DropdownItem, DropdownMenu, DropdownToggle} from "react-bootstrap";
 import {userDropdownItems} from "@/layouts/components/data";
-
-import user2 from "@/assets/images/users/user-2.jpg"
-import Image from "next/image";
 import { getSessionInfo } from "@/app/services/authService";
 
 const UserProfile = () => {

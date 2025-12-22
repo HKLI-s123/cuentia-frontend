@@ -1,3 +1,4 @@
+import { API_URL } from "@/utils/env";
 import { apiFetch } from "./apiClient";
 
 export const sendChatMessage = async ({
@@ -10,7 +11,7 @@ export const sendChatMessage = async ({
   semanas: { id: string; label: string; cantidad: number }[];
 }) => {
   try {
-    const response = await apiFetch("http://localhost:3001/chat", {
+    const response = await apiFetch(`${API_URL}/chat`, {
       method: "POST",
       body: JSON.stringify({ message, rfc, semanas }),
     });
@@ -29,7 +30,7 @@ export const sendChatMessage = async ({
 
 export async function validateGuestKey(key: string): Promise<{ rfc: string } | null> {
   try {
-    const res = await apiFetch("http://localhost:3001/guest/validate", {
+    const res = await apiFetch(`${API_URL}/guest/validate`, {
       method: "POST",
       body: JSON.stringify({ key }),
     });
@@ -47,7 +48,7 @@ export async function validateGuestKey(key: string): Promise<{ rfc: string } | n
 }
 
 export async function activateGuest(rfc: string) {
-  const res = await apiFetch("http://localhost:3001/guest/activate", {
+  const res = await apiFetch(`${API_URL}/guest/activate`, {
     method: "POST",
     body: JSON.stringify({ rfc }),
   });

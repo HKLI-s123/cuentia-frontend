@@ -1,5 +1,6 @@
 // src/components/FacturaIAModal.tsx
 import { apiFetch } from "@/app/services/apiClient";
+import { API_URL } from "@/utils/env";
 import React, { useEffect, useState } from "react";
 import { Modal, Button, Spinner } from "react-bootstrap";
 import { TbBrain } from "react-icons/tb";
@@ -25,7 +26,7 @@ const FacturaIAModal: React.FC<FacturaIAModalProps> = ({
     const fetchContador = async () => {
       try {
         const userId = 1; // simulado
-        const response = await apiFetch(`http://localhost:3001/cfdis/ia-factura/contador?userId=${userId}`);
+        const response = await apiFetch(`${API_URL}/cfdis/ia-factura/contador?userId=${userId}`);
         if (!response?.ok) throw new Error("Error al obtener el contador IA");
         const data = await response.json();
         setUsados(data.usados);

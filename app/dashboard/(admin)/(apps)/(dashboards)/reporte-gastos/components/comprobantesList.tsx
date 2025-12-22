@@ -1,4 +1,5 @@
 import { apiFetch } from "@/app/services/apiClient";
+import { API_URL } from "@/utils/env";
 import { useState, useEffect } from "react";
 import { Card, Button, Table, Form, Spinner } from "react-bootstrap";
 
@@ -39,7 +40,7 @@ export const ComprobantesCliente = ({ userId }: ComprobantesClienteProps) => {
     try {
       let url = "";
   
-      url = `http://localhost:3001/comprobantes?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`;
+      url = `${API_URL}/comprobantes?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`;
       
       const res = await apiFetch(url);
       const data = await res?.json();
@@ -63,7 +64,7 @@ export const ComprobantesCliente = ({ userId }: ComprobantesClienteProps) => {
   const exportarExcel = async () => {
     try {
       const res = await apiFetch(
-        `http://localhost:3001/comprobantes/exportar?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`,
+        `${API_URL}/comprobantes/exportar?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`,
          {
          method: "GET",
          raw: true, // ⬅️ IMPORTANTE: para no hacer res.json() internamente
