@@ -1,26 +1,141 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --- Fix para Collapse de React-Bootstrap cuando no hay Bootstrap CSS --- */
+.collapse:not(.show) {
+  display: none !important;
+}
+.collapse.show {
+  display: block !important;
+  height: auto !important;
+  overflow: visible !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ins-primary: #4f46e5;
+  --ins-primary-rgb: 79, 70, 229;
+  --ins-primary-text-emphasis: #4338ca;
+    /* Texto del link activo */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Override directo a PAGINATION para forzar Indigo */
+.pagination {
+  --ins-pagination-active-bg: #4f46e5 !important;
+  --ins-pagination-active-border-color: #4f46e5 !important;
+  --ins-pagination-active-color: #ffffff !important;
+
+  --ins-pagination-hover-bg: #4338ca !important;
+  --ins-pagination-hover-border-color: #4338ca !important;
+  --ins-pagination-hover-color: #ffffff !important;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.nav-tabs {
+  --ins-nav-tabs-link-active-bg: #4f46e5 !important;
+  --ins-nav-tabs-link-active-border-color: #4f46e5 !important;
+  --ins-nav-tabs-link-active-color: #fff !important;
+
+  --ins-nav-link-hover-color: #4338ca !important;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Color visible para tabs inactivos */
+.nav-tabs .nav-link {
+  color: #4f46e5 !important; /* Indigo 600 */
+  font-weight: 500;
+}
+
+/* Hover */
+.nav-tabs .nav-link:hover {
+  color: #4338ca !important; /* Indigo 700 */
+}
+
+/* Borde inferior del tab activo */
+.nav-tabs .nav-link.active {
+  border-color: #4f46e5 !important;
+}
+
+/* PARA QUE EL TEXTO SUCCESS SIGA VERDE */
+.text-success {
+    color: var(--ins-success) !important;
+}
+
+/* PERO LOS SVG DENTRO DE text-success SEAN INDIGO */
+.text-success svg {
+    stroke: #4f46e5 !important; /* Indigo 600 */
+    fill: #4f46e5 !important;
+}
+
+/* --- Ajuste hover topbar para adaptarlo a la marca CuentIA --- */
+.app-topbar .topbar-menu .topbar-item .topbar-link:hover,
+.app-topbar .topbar-menu .topbar-item .topbar-link:active,
+.app-topbar .topbar-menu .topbar-item .topbar-link:focus {
+    color: #818cf8 !important; /* Indigo-400 */
+}
+
+.btn-primary {
+  --ins-btn-bg: #4f46e5 !important;
+  --ins-btn-border-color: #4f46e5 !important;
+  --ins-btn-hover-bg: #4338ca !important;
+  --ins-btn-hover-border-color: #4338ca !important;
+}
+
+a:hover {
+    color: #4f46e5 !important;
+}
+
+.link-reset:hover {
+    color: #4f46e5 !important;
+}
+
+.support-form-scale {
+  font-size: 1.03rem; /* Subir tamaño general */
+}
+
+.support-form-scale label {
+  font-size: 1.03rem;
+  font-weight: 400;
+}
+
+.support-form-scale input,
+.support-form-scale select,
+.support-form-scale textarea {
+  padding: 0.75rem 1rem;       /* Más altura */
+  font-size: 1.03rem;          /* Inputs más grandes */
+}
+
+.support-form-scale h5,
+.support-form-scale h4 {
+  font-size: 1.30rem;          /* Títulos más resaltados */
+}
+
+.app-footer {
+  background: #f9fafb; /* gris muy claro estilo SaaS */
+  border-top: 1px solid #e5e7eb;
+}
+
+.footer-link {
+  color: #4f46e5; /* indigo-600 */
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+  color: #4338ca; /* indigo-700 */
+  text-decoration: underline;
+}
+
+.link-footer {
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.link-footer:hover {
+  color: #3730a3 !important; /* Indigo-800 */
+  text-decoration: underline;
+}
+
+.footer {
+  font-size: 0.825rem; /* Texto 14px */
 }
