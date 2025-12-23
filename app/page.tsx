@@ -32,7 +32,7 @@ const BRAND = {
   name: "CuentIA",
   tagline: "Inteligencia artificial para tu ",
   subTagline:
-    "Automatiza CFDI, IVA, DIOT y reportes en una sola plataforma. Menos errores, más control, más claridad.",
+    "Automatiza CFDI, IVA, DIOT y reportes en una sola plataforma. Menos errores, menos reprocesos, más control fiscal desde el primer día.",
   ctaPrimary: { label: "Crear cuenta gratis", href: "/register" },
   ctaSecondary: { label: "Ver planes", href: "/plans" },
   contactEmail: "contacto@cuentia.mx",
