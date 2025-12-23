@@ -244,6 +244,12 @@ function FAQItem({ faq }: { faq: FAQ }) {
 export default function CuentIALandingPage() {
   const prefersReducedMotion = useReducedMotion();
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
+  }, []);
+
   const nav = useMemo(
     () => [
       { id: "top", label: "Inicio" },
@@ -410,22 +416,22 @@ export default function CuentIALandingPage() {
   );
 
   const fadeUp = {
-    initial: prefersReducedMotion ? {} : { opacity: 0, y: 12 },
-    animate: prefersReducedMotion ? {} : { opacity: 1, y: 0 },
-    transition: { duration: 0.5 },
+    initial: prefersReducedMotion || isMobile ? {} : { opacity: 0, y: 12 },
+    animate: prefersReducedMotion || isMobile ? {} : { opacity: 1, y: 0 },
+    transition: { duration: 0.45 },
   };
 
   return (
   <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-[#050714] to-indigo-950 text-white">
       {/* Background glow */}
     <div className="pointer-events-none fixed inset-0 overflow-hidden">
-     <div className="absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-indigo-700/20 blur-[140px]" />
-     <div className="absolute top-[25%] right-[-140px] h-[420px] w-[420px] rounded-full bg-indigo-800/15 blur-[140px]" />
-     <div className="absolute bottom-[-180px] left-[-140px] h-[480px] w-[480px] rounded-full bg-indigo-900/20 blur-[160px]" />
+     <div className="absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-indigo-700/20 blur-[80px] md:blur-[140px]" />
+     <div className="absolute top-[25%] right-[-140px] h-[420px] w-[420px] rounded-full bg-indigo-800/15  blur-[80px] md:blur-[140px]" />
+     <div className="absolute bottom-[-180px] left-[-140px] h-[480px] w-[480px] rounded-full bg-indigo-900/20  blur-[100px] md:blur-[160px]" />
     </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-indigo-950/70 backdrop-blur-xl border-b border-indigo-800/40">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-indigo-950/70 backdrop-blur-md md:backdrop-blur-xl border-b border-indigo-800/40">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <a href="#top" className="flex items-center gap-2">
             <div className="h-9 w-9 rounded-2xl bg-white/10 border border-white/10 grid place-items-center">
@@ -453,7 +459,6 @@ export default function CuentIALandingPage() {
               </a>
             ))}
           </nav>
-
           <div className="flex items-center gap-2">
             <Button href={BRAND.ctaSecondary.href} variant="secondary">
               {BRAND.ctaSecondary.label}
@@ -474,7 +479,7 @@ export default function CuentIALandingPage() {
         <div className="mx-auto w-full max-w-6xl px-4 pt-14 md:pt-20 pb-10 md:pb-14">
           <div className="grid gap-10 md:grid-cols-12 md:items-center">
             <motion.div
-              {...fadeUp}
+              {...(!isMobile ? fadeUp : {})}
               className="md:col-span-7"
             >
               <div className="flex flex-wrap gap-2">
@@ -617,8 +622,8 @@ export default function CuentIALandingPage() {
             {features.map((f, idx) => (
               <motion.div
                 key={f.title}
-                initial={prefersReducedMotion ? {} : { opacity: 0, y: 14 }}
-                whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                initial={prefersReducedMotion || isMobile ? {} : { opacity: 0, y: 14 }}
+                whileInView={prefersReducedMotion || isMobile ? {} : { opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.25 }}
                 transition={{ duration: 0.45, delay: idx * 0.03 }}
               >
@@ -673,8 +678,8 @@ export default function CuentIALandingPage() {
             {accounts.map((a, idx) => (
               <motion.div
                 key={a.title}
-                initial={prefersReducedMotion ? {} : { opacity: 0, y: 14 }}
-                whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                initial={prefersReducedMotion || isMobile ? {} : { opacity: 0, y: 14 }}
+                whileInView={prefersReducedMotion || isMobile ? {} : { opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.25 }}
                 transition={{ duration: 0.45, delay: idx * 0.04 }}
                 whileHover={prefersReducedMotion ? {} : { y: -4 }}
@@ -714,8 +719,8 @@ export default function CuentIALandingPage() {
         >
           <div className="grid gap-6 md:grid-cols-12">
             <motion.div
-              initial={prefersReducedMotion ? {} : { opacity: 0, y: 14 }}
-              whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+              initial={prefersReducedMotion || isMobile  ? {} : { opacity: 0, y: 14 }}
+              whileInView={prefersReducedMotion || isMobile ? {} : { opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.25 }}
               transition={{ duration: 0.5 }}
               className="md:col-span-7"
@@ -762,8 +767,8 @@ export default function CuentIALandingPage() {
             </motion.div>
 
             <motion.div
-              initial={prefersReducedMotion ? {} : { opacity: 0, y: 14 }}
-              whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+              initial={prefersReducedMotion || isMobile ? {} : { opacity: 0, y: 14 }}
+              whileInView={prefersReducedMotion || isMobile ? {} : { opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.25 }}
               transition={{ duration: 0.5, delay: 0.05 }}
               className="md:col-span-5"
@@ -823,8 +828,8 @@ export default function CuentIALandingPage() {
               return (
                 <motion.div
                   key={p.name}
-                  initial={prefersReducedMotion ? {} : { opacity: 0, y: 14 }}
-                  whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                  initial={prefersReducedMotion || isMobile ? {} : { opacity: 0, y: 14 }}
+                  whileInView={prefersReducedMotion || isMobile ? {} : { opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.25 }}
                   transition={{ duration: 0.45, delay: idx * 0.05 }}
                 >
@@ -901,8 +906,8 @@ export default function CuentIALandingPage() {
         >
           <div className="grid gap-6 md:grid-cols-12">
             <motion.div
-              initial={prefersReducedMotion ? {} : { opacity: 0, y: 14 }}
-              whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+              initial={prefersReducedMotion || isMobile ? {} : { opacity: 0, y: 14 }}
+              whileInView={prefersReducedMotion || isMobile ? {} : { opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.25 }}
               transition={{ duration: 0.5 }}
               className="md:col-span-7"
@@ -936,8 +941,8 @@ export default function CuentIALandingPage() {
             </motion.div>
 
             <motion.div
-              initial={prefersReducedMotion ? {} : { opacity: 0, y: 14 }}
-              whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+              initial={prefersReducedMotion || isMobile ? {} : { opacity: 0, y: 14 }}
+              whileInView={prefersReducedMotion || isMobile ? {} : { opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.25 }}
               transition={{ duration: 0.5, delay: 0.05 }}
               className="md:col-span-5"
