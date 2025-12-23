@@ -17,16 +17,6 @@ import {
   Lock,
 } from "lucide-react";
 
-/**
- * CuentIA Landing Page
- * - Next.js (App Router) Client Component
- * - TailwindCSS
- * - Framer Motion animations
- *
- * Notes:
- * - Replace CTA hrefs with your real routes.
- * - Replace contact email/domain as needed.
- */
 
 const BRAND = {
   name: "CuentIA",
@@ -490,6 +480,10 @@ export default function CuentIALandingPage() {
               </h1>
               <p className="mt-4 text-base md:text-lg text-slate-300 leading-relaxed max-w-2xl">
                 {BRAND.subTagline}
+              </p>
+
+              <p className="mt-2 text-sm md:text-base text-slate-400 max-w-2xl">
+                Para cualquier persona o equipo que facture o gestione facturación y quiera orden y claridad fiscal.
               </p>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
