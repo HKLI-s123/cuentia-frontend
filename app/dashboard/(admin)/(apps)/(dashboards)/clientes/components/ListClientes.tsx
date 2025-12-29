@@ -61,6 +61,8 @@ export const ClientesLista = () => {
 
   const [session, setSession] = useState<any>(null);
 
+  const currentYear = new Date().getFullYear();
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -193,18 +195,18 @@ const handleSave = async (data: ClienteFormData) => {
       clientes.map(c => ({
         Nombre: c.nombre,
         RFC: c.rfc,
-        CFDIs: c.cfdis,
+        [`CFDIs (${currentYear})`]: c.cfdis,
       }))
     );
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Clientes");
-    XLSX.writeFile(wb, "Clientes.xlsx");
+    XLSX.writeFile(wb, `Clientes_${currentYear}.xlsx`);
   };
     
   const exportPDF = () => {
     const doc = new jsPDF();
   
-    const tableColumn = ["Nombre", "RFC", "CFDIs"];
+    const tableColumn = ["Nombre", "RFC", `CFDIs (${currentYear})`];
     const tableRows = clientes.map(c => [c.nombre, c.rfc, c.cfdis]);
   
     autoTable(doc, {
@@ -212,7 +214,7 @@ const handleSave = async (data: ClienteFormData) => {
       body: tableRows,
     });
   
-    doc.save("Clientes.pdf");
+    doc.save(`Clientes_${currentYear}.pdf`);
   };
 
   if (!session) {
@@ -257,7 +259,7 @@ const handleSave = async (data: ClienteFormData) => {
             <tr>
               <th>Nombre</th>
               <th>RFC</th>
-              <th>CFDIs</th>
+              <th>CFDIs ({currentYear})</th>
               <th style={{ width: "120px" }} className="text-center">
                 Acciones
               </th>
