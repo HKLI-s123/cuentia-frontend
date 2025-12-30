@@ -112,6 +112,17 @@ const ListPagos = () => {
 
   const [visibleRows, setVisibleRows] = useState<Record<number, boolean>>({});
 
+  const getFirstDayOfCurrentMonth = () => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1)
+      .toISOString()
+      .slice(0, 10);
+  };
+  
+  const getToday = () => {
+    return new Date().toISOString().slice(0, 10);
+  };
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -129,6 +140,9 @@ const ListPagos = () => {
         // fallback por si otro error raro ocurre
         window.location.href = "/login";
       }
+      
+      setFechaInicio(getFirstDayOfCurrentMonth());
+      setFechaFin(getToday());
     };
   
     load();
