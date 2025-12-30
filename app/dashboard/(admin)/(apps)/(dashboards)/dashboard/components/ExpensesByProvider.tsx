@@ -40,6 +40,37 @@ const ExpensesByProvider = ({ rfc }: Props) => {
   const [data, setData] = useState<ProviderExpense[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const MAX_ITEMS = 8;
+
+  const processedChartData = (() => {
+    if (!data || data.length === 0) return [];
+  
+    const sorted = [...data].sort((a, b) => b.gastos - a.gastos);
+  
+    if (sorted.length <= MAX_ITEMS) {
+      return sorted.map(p => ({
+        name: p.name,
+        value: p.gastos,
+      }));
+    }
+  
+    const top = sorted.slice(0, MAX_ITEMS);
+    const rest = sorted.slice(MAX_ITEMS);
+  
+    const othersTotal = rest.reduce((acc, p) => acc + p.gastos, 0);
+  
+    return [
+      ...top.map(p => ({
+        name: p.name,
+        value: p.gastos,
+      })),
+      {
+        name: "Otros proveedores",
+        value: othersTotal,
+      },
+    ];
+  })();
+
   const now = new Date();
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     .toISOString()
@@ -153,7 +184,7 @@ const ExpensesByProvider = ({ rfc }: Props) => {
         <CardBody>
           <div style={{ height: 250 }}>
             <ExpensesByProviderChart
-              data={data.map((p) => ({ name: p.name, value: p.gastos }))}
+              data={processedChartData}
             />
           </div>
 
