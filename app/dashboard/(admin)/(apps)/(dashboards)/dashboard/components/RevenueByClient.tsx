@@ -69,6 +69,7 @@ const RevenueByClient = ({ rfc }: Props) => {
   const headers = ["Cliente", "RFC", "Ingresos", "Participacion", "Estatus"];
   // 🔹 Total general para calcular %
   const totalIngresos = data.reduce((acc, c) => acc + c.ingresos, 0);
+
   // 🔹 Filas con datos
   const rows = data.map((client) => [
     client.name,
@@ -103,6 +104,39 @@ const RevenueByClient = ({ rfc }: Props) => {
   // Total general para porcentaje
   const totalIngresos = data.reduce((acc, c) => acc + c.ingresos, 0);
 
+  
+  // ===============================
+  // 🔝 TOP 8 + Otros clientes (solo para gráfica)
+  // ===============================
+  const MAX_ITEMS = 8;
+  
+  const chartData = (() => {
+    const sorted = [...data].sort((a, b) => b.ingresos - a.ingresos);
+  
+    if (sorted.length <= MAX_ITEMS) {
+      return sorted.map(c => ({
+        name: c.name,
+        value: c.ingresos,
+      }));
+    }
+  
+    const top = sorted.slice(0, MAX_ITEMS);
+    const rest = sorted.slice(MAX_ITEMS);
+  
+    const othersTotal = rest.reduce((acc, c) => acc + c.ingresos, 0);
+  
+    return [
+      ...top.map(c => ({
+        name: c.name,
+        value: c.ingresos,
+      })),
+      {
+        name: "Otros clientes",
+        value: othersTotal,
+      },
+    ];
+  })();
+
   if (loading) return <Col xxl={6}><p>Cargando...</p></Col>;
 
   return (
@@ -133,7 +167,7 @@ const RevenueByClient = ({ rfc }: Props) => {
         </CardHeader>
         <CardBody>
           <div style={{ height: 400 }}>
-            <RevenueByClientChart data={data.map(r => ({ name: r.name, value: r.ingresos }))} />
+            <RevenueByClientChart data={chartData} />
           </div>
 
           <div className="table-responsive mt-3">
