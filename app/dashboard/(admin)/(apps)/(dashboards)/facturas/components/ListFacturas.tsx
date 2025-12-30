@@ -143,7 +143,11 @@ const ListFacturas = () => {
 
       const rawData = await getFacturas(params);
 
-      const data: Factura[] = rawData.map((f: any, idx: number) => {
+      const filtradas = rawData.filter(
+        (f: any) => f.tipocomprobante !== "P"
+      );
+
+      const data: Factura[] = filtradas.map((f: any, idx: number) => {
         let movimiento = f.movimiento;
        
         if (f.tipocomprobante === "N") {
@@ -155,8 +159,7 @@ const ListFacturas = () => {
             movimiento = "Ingreso";
           }
         }
-      
-        // 🔑 Nombre correcto según rol fiscal
+              // 🔑 Nombre correcto según rol fiscal
         let contraparteNombre = "";
         
        if (movimiento === "Ingreso") {
@@ -334,9 +337,18 @@ const ListFacturas = () => {
           secCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: seccion.color } };
           secCell.alignment = { horizontal: "center" };
           rowIndex++;
+
+          const terceroLabel =
+          seccion.titulo === "Ingresos"
+            ? "Cliente"
+            : seccion.titulo === "Egresos"
+            ? "Proveedor"
+            : seccion.titulo === "Nómina"
+            ? "Empleado"
+            : "Contraparte";
     
           const headers = [
-            "Fecha", "UUID", "Cliente", "RFC Emisor", "Regimen Emisor", "RFC Receptor",
+            "Fecha", "UUID", terceroLabel, "RFC Emisor", "Regimen Emisor", "RFC Receptor",
             "Regimen Receptor", "SubTotal", "IVA 8%", "IVA 16%", "Total Trasladados",
             "Retencion ISR", "Retencion IVA", "Retencion IEPS", "Total Retenidos",
             "Descuento", "Total", "Moneda", "Tipo de Cambio", "Clasificación",
