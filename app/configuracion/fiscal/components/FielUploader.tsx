@@ -4,11 +4,12 @@ import { toast } from "sonner";
 
 import { extractRFCfromCer } from "@/app/services/onboardingService";
 import { uploadOwnFirma } from "@/app/services/onboardingService";
-import { updateCertificates } from "@/app/services/onboardingService"; // <-- CORRECTO
+import { updateOwnCertificates } from "@/app/services/onboardingService"; // <-- CORRECTO
 
 export default function FielUploaderFiscal({
   rfcInicial,
   onClose,
+  hasOwnRFC,     // 👈 nuevo
   title,
   description,
 }: any) {
@@ -26,32 +27,42 @@ export default function FielUploaderFiscal({
   const [fielPass, setFielPass] = useState("");
 
   const truncateName = (fileName: string) => {
-    if (fileName.length <= 14) return fileName;
-    return fileName.slice(0, 14) + "…";
+  if (fileName.length <= 14) return fileName;
+      return fileName.slice(0, 14) + "…";
   };
-
+  
   const handleSubmit = async () => {
-    if (!archivos.cer || !archivos.key) return toast.error("Debes subir .cer y .key");
-    if (!rfcFinal.trim()) return toast.error("Debes ingresar el RFC");
-    if (!fielPass.trim()) return toast.error("Debes ingresar la contraseña");
-
+    if (!archivos.cer || !archivos.key)
+      return toast.error("Debes subir .cer y .key");
+  
+    if (!rfcFinal.trim())
+      return toast.error("Debes ingresar el RFC");
+  
+    if (!fielPass.trim())
+      return toast.error("Debes ingresar la contraseña");
+  
     try {
-      // --------------------------------
-      // 🚀 Si NO tiene propioRFC → subir por PRIMERA VEZ
-      // --------------------------------
-      console.log("rfc inicial",rfcFinal);
-      if (!rfcFinal) {
-        await uploadOwnFirma(archivos.cer, archivos.key, fielPass, rfcFinal);
+      // 🚀 PRIMERA VEZ → crear cliente "Yo"
+      if (!hasOwnRFC) {
+        await uploadOwnFirma(
+          archivos.cer,
+          archivos.key,
+          fielPass,
+          rfcFinal
+        );
+  
         toast.success("Certificados agregados correctamente");
         onClose();
         return;
       }
-
-      // --------------------------------
-      // 🔄 Si ya tiene propioRFC → actualizar
-      // --------------------------------
-      await updateCertificates(archivos.cer, archivos.key, fielPass, rfcFinal);
-
+  
+      // 🔄 YA EXISTE RFC PROPIO → actualizar
+      await updateOwnCertificates(
+        archivos.cer,
+        archivos.key,
+        fielPass,
+      );
+  
       toast.success("Certificados actualizados con éxito");
       onClose();
     } catch (err: any) {
@@ -174,7 +185,7 @@ export default function FielUploaderFiscal({
         </div>
 
         {/* RFC */}
-        {rfcDetectado && (
+        {!hasOwnRFC && rfcDetectado && (
           <div className="mb-8">
             <label className="font-semibold text-gray-700">RFC detectado</label>
             <input

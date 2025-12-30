@@ -75,3 +75,22 @@ export async function updateCertificates(cer: File, key: File, fielPass: string,
 
   return res.json();
 }
+
+export async function updateOwnCertificates(cer: File, key: File, fielPass: string) {
+  const form = new FormData();
+  form.append("cer", cer);
+  form.append("key", key);
+  form.append("fielPass", fielPass);
+
+  const res = await apiFetch(`${API_URL}/clientes/update-own-certificates`, {
+    method: "POST",
+    body: form
+  });
+
+  if (!res?.ok) {
+    const error = await res?.json().catch(() => ({}));
+    throw new Error(error.message || "Error actualizando certificados");
+  }
+
+  return res.json();
+}

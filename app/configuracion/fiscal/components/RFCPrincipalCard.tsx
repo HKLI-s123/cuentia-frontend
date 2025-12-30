@@ -36,6 +36,7 @@ export default function RFCPrincipalCard({ session }: any) {
       {showFielModal && (
         <FielUploader
           rfc={session.propioRFC}
+          hasOwnRFC={Boolean(session.propioRFC)}   // 🔥 CLAVE
           title={modalTitle}
           description={modalDescription}
           onClose={() => setShowFielModal(false)}
