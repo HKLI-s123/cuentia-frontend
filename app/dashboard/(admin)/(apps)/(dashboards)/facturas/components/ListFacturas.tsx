@@ -143,12 +143,37 @@ const ListFacturas = () => {
 
       const rawData = await getFacturas(params);
 
-      const data: Factura[] = rawData.map((f: any, idx: number) => ({
+      const data: Factura[] = rawData.map((f: any, idx: number) => {
+        let movimiento = f.movimiento;
+       
+        if (f.tipocomprobante === "N") {
+          if (f.rfc_emisor === selectedRFC) {
+            // Tú emites nómina → egreso
+            movimiento = "Nomina";
+          } else {
+            // Tú recibes nómina → ingreso
+            movimiento = "Ingreso";
+          }
+        }
+      
+        // 🔑 Nombre correcto según rol fiscal
+        let contraparteNombre = "";
+        
+       if (movimiento === "Ingreso") {
+          contraparteNombre = f.razonsocialreceptor;
+        } else if (movimiento === "Egreso") {
+          contraparteNombre = f.razonsocialemisor;
+        } else if (movimiento === "Nomina") {
+          // Empleado (receptor) cuando tú emites nómina
+          contraparteNombre = f.razonsocialreceptor;
+        }
+
+        return {
         id: idx + 1,
         uuid: f.uuid,
         cliente: {
           id: idx + 1,
-          nombre: f.razonsocialreceptor || f.razonsocialemisor,
+          nombre: contraparteNombre || "—",
         },
         rfc_emisor: f.rfc_emisor,
         rfc_receptor: f.rfc_receptor,
@@ -157,10 +182,7 @@ const ListFacturas = () => {
         clasificacion: f.clasificacion,
         status: f.status,
         fecha_emision: f.fecha,
-        movimiento:
-        f.tipocomprobante === "N"
-          ? "Nomina"
-          : f.movimiento,
+        movimiento,
         tipocomprobante: f.tipocomprobante,
         totalretenidos: f.totalretenidos,
         iva8: f.iva8,
@@ -175,7 +197,8 @@ const ListFacturas = () => {
         tipopago: f.tipopago,
         metodopago: f.metodopago,
         usocfdi: f.usocfdi,
-      }));
+        };
+      });
 
       setFacturas(data);
     } catch (error) {
@@ -806,7 +829,21 @@ const ListFacturas = () => {
               <Table className="table-centered table-custom table-sm table-nowrap table-hover mb-0">
                 <thead>
                   <tr>
-                    {(tipoCuenta === "empresarial" || tipoCuenta === "empleado") && <th>Cliente</th>}
+                    {(tipoCuenta === "empresarial" || tipoCuenta === "empleado") && 
+                         <th>
+                         {/*
+                           El header se adapta al tipo de movimiento que se está mostrando.
+                           Usamos el primer registro visible como referencia.
+                         */}
+                         {paginatedFacturas[0]?.movimiento === "Ingreso"
+                           ? "Cliente"
+                           : paginatedFacturas[0]?.movimiento === "Egreso"
+                           ? "Proveedor"
+                           : paginatedFacturas[0]?.movimiento === "Nomina"
+                           ? "Empleado"
+                           : "Contraparte"}
+                       </th>
+                    }
                     <th>RFC Emisor</th>
                     <th>RFC Receptor</th>
                     <th onClick={() => requestSort("movimiento")} style={{ cursor: "pointer" }}>
