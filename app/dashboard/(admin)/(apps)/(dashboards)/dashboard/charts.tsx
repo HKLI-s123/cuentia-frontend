@@ -366,7 +366,7 @@ export const ExpensesByProviderChart = ({ data }: ExpensesByProviderChartProps) 
           }
         ]
       })}
-      style={{ height: 320, width: "100%" }}
+      style={{ height: 350, width: "100%" }}
     />
   )
 }
