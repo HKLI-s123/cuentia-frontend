@@ -146,7 +146,6 @@ const ListFacturas = () => {
       const data: Factura[] = rawData.map((f: any, idx: number) => ({
         id: idx + 1,
         uuid: f.uuid,
-        folio: f.folio,
         cliente: {
           id: idx + 1,
           nombre: f.razonsocialreceptor || f.razonsocialemisor,
@@ -314,7 +313,7 @@ const ListFacturas = () => {
           rowIndex++;
     
           const headers = [
-            "Fecha", "Folio", "Cliente", "RFC Emisor", "Regimen Emisor", "RFC Receptor",
+            "Fecha", "UUID", "Cliente", "RFC Emisor", "Regimen Emisor", "RFC Receptor",
             "Regimen Receptor", "SubTotal", "IVA 8%", "IVA 16%", "Total Trasladados",
             "Retencion ISR", "Retencion IVA", "Retencion IEPS", "Total Retenidos",
             "Descuento", "Total", "Moneda", "Tipo de Cambio", "Clasificación",
@@ -354,7 +353,7 @@ const ListFacturas = () => {
             facturasRfc.forEach(f => {
                 const row = ws.addRow([
                 new Date(f.fecha_emision).toLocaleDateString(),
-                f.folio || "", f.cliente?.nombre || "", f.rfc_emisor || "", f.regimenfiscal || "",
+                f.uuid || "", f.cliente?.nombre || "", f.rfc_emisor || "", f.regimenfiscal || "",
                 f.rfc_receptor || "", f.regimenfiscalreceptor || "",
                 toPesos(f, f.subtotal), toPesos(f, f.iva8), toPesos(f, f.iva16), toPesos(f, f.totaltrasladado),
                 toPesos(f, f.retencionisr), toPesos(f, f.retencioniva), toPesos(f, f.retencionieps),
@@ -390,7 +389,7 @@ const ListFacturas = () => {
             data.forEach(f => {
               const row = ws.addRow([
                 new Date(f.fecha_emision).toLocaleDateString(),
-                f.folio || "", f.cliente?.nombre || "", f.rfc_emisor || "", f.regimenfiscal || "",
+                f.uuid || "", f.cliente?.nombre || "", f.rfc_emisor || "", f.regimenfiscal || "",
                 f.rfc_receptor || "", f.regimenfiscalreceptor || "", f.subtotal || 0, f.iva8 || 0,
                 f.iva16 || 0, f.totaltrasladado || 0, f.retencionisr || 0, f.retencioniva || 0,
                 f.retencionieps || 0, f.totalretenidos || 0, f.descuento || 0, f.total || 0,
