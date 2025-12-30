@@ -341,7 +341,7 @@ export const ExpensesByProviderChart = ({ data }: ExpensesByProviderChartProps) 
       getOptions={() => ({
         tooltip: { trigger: "axis", formatter: "{b}: <strong>${c}</strong>" },
         legend: { show: false },
-        grid: { left: "3%", right: "4%", bottom: "3%", containLabel: true },
+        grid: { left: "4%", right: "4%", top: "10%", bottom: "15%", containLabel: true },
         xAxis: {
           type: "category",
           data: data.map(item => item.name), // usar la propiedad de proveedor de tu data
@@ -349,10 +349,12 @@ export const ExpensesByProviderChart = ({ data }: ExpensesByProviderChartProps) 
         },
         yAxis: {
           type: "value",
+          splitNumber: 4, // menos líneas horizontales
         },
         series: [
           {
             type: "bar",
+            barMaxWidth: 50, // 👈 clave
             data: data.map(item => ({
               value: item.value,
               itemStyle: {
@@ -364,7 +366,7 @@ export const ExpensesByProviderChart = ({ data }: ExpensesByProviderChartProps) 
           }
         ]
       })}
-      style={{ height: 250, width: "100%" }}
+      style={{ height: 320, width: "100%" }}
     />
   )
 }

@@ -182,7 +182,7 @@ const ExpensesByProvider = ({ rfc }: Props) => {
         </CardHeader>
 
         <CardBody>
-          <div style={{ height: 250 }}>
+          <div style={{ height: 320 }}>
             <ExpensesByProviderChart
               data={processedChartData}
             />
