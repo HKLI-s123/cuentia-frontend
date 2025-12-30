@@ -158,7 +158,10 @@ const ListFacturas = () => {
         clasificacion: f.clasificacion,
         status: f.status,
         fecha_emision: f.fecha,
-        movimiento: f.movimiento,
+        movimiento:
+        f.tipocomprobante === "N"
+          ? "Nomina"
+          : f.movimiento,
         tipocomprobante: f.tipocomprobante,
         totalretenidos: f.totalretenidos,
         iva8: f.iva8,
@@ -278,7 +281,7 @@ const ListFacturas = () => {
       const secciones = [
         { titulo: "Ingresos", color: "FF2E75B6", filtro: (f: Factura) => f.movimiento === "Ingreso" },
         { titulo: "Egresos", color: "FF555555", filtro: (f: Factura) => f.movimiento === "Egreso" },
-        { titulo: "Nómina", color: "FFA0A0A0", filtro: (f: Factura) => f.tipocomprobante === "N" },
+        { titulo: "Nómina", color: "FFA0A0A0", filtro: (f: Factura) => f.movimiento === "Nomina" },
       ];
     
       // Función para sumar columnas financieras
