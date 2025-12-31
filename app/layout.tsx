@@ -1,18 +1,23 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import { Toaster } from "sonner";
-import { GoogleOAuthProvider } from "@react-oauth/google";
+import type { Metadata } from "next"
+import "./globals.css"
+import { Toaster } from "sonner"
+import { GoogleOAuthProvider } from "@react-oauth/google"
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+import { Roboto, Open_Sans } from "next/font/google"
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const openSans = Open_Sans({
   subsets: ["latin"],
-});
+  weight: ["300", "400", "500", "600", "700", "800"],
+  style: ["normal", "italic"],
+  variable: "--font-open-sans",
+})
+
+const roboto = Roboto({
+  subsets: ["latin"],
+  weight: ["100", "300", "400", "500", "700", "900"],
+  style: ["normal", "italic"],
+  variable: "--font-roboto",
+})
 
 export const metadata: Metadata = {
   title: "CuentIA - Inteligencia fiscal para todos",
@@ -20,26 +25,18 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
   },
-};
-
-console.log(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
+}
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <html lang="en">
-      <head>
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {/* 🔥 Notification system */}
+    <html lang="en" className={`${roboto.variable} ${openSans.variable}`}>
+      <body>
         <Toaster richColors position="top-right" />
 
-        {/* 🔥 Google Login Provider (envuelve toda la app) */}
         <GoogleOAuthProvider
           clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}
         >
@@ -47,5 +44,5 @@ export default function RootLayout({
         </GoogleOAuthProvider>
       </body>
     </html>
-  );
+  )
 }

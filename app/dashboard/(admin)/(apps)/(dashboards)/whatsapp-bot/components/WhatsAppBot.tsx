@@ -2,6 +2,7 @@
 
 import { getSessionInfo } from "@/app/services/authService";
 import { useOnboardingRedirect } from "@/hooks/useUserSessionGuard";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Container, Row, Col, Card, Button, Spinner } from "react-bootstrap";
 import { TbBrandWhatsapp, TbRocket } from "react-icons/tb";
@@ -9,6 +10,7 @@ import { TbBrandWhatsapp, TbRocket } from "react-icons/tb";
 export const WhatsappBot = () => {
   const [hasBot, setHasBot] = useState<boolean | null>(null); // null = cargando
   const [session, setSession] = useState<any>(null);
+  const [showInstructions, setShowInstructions] = useState(true);
 
   useEffect(() => {
     const load = async () => {
@@ -69,6 +71,28 @@ export const WhatsappBot = () => {
                 Conversa con tu empresa como si hablaras con un amigo.
               </p>
 
+              <div className="d-flex justify-content-between align-items-center mt-4">
+                <h5 className="mb-0">Guía de uso del bot</h5>
+              
+                <Button
+                  variant="link"
+                  className="text-decoration-none"
+                  onClick={() => setShowInstructions((prev) => !prev)}
+                >
+                  {showInstructions ? "Ocultar instrucciones " : "¿Cómo funciona?"}
+                </Button>
+              </div>
+
+              <AnimatePresence initial={false}>
+              {showInstructions && (
+                <motion.div
+                  key="instructions"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  style={{ overflow: "hidden" }}
+                >
               <div className="mt-4 text-start">
                 <Card className="border-0 bg-light">
                   <Card.Body>
@@ -154,6 +178,9 @@ export const WhatsappBot = () => {
                   </Card.Body>
                 </Card>
               </div>
+              </motion.div>
+              )}
+              </AnimatePresence>
 
 
               <div className="d-flex justify-content-center gap-3 mt-4">

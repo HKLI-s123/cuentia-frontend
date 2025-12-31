@@ -139,3 +139,54 @@ a:hover {
 .footer {
   font-size: 0.825rem; /* Texto 14px */
 }
+
+.btn-link {
+  /* Tipografía */
+  --ins-btn-font-weight: 500;
+
+  /* 🎨 Color CuentIA */
+  --ins-btn-color: #4f46e5 !important;              /* indigo-600 */
+  --ins-btn-hover-color: #4338ca !important;        /* indigo-700 */
+  --ins-btn-active-color: #3730a3 !important;       /* indigo-800 */
+
+  /* Fondo y borde */
+  --ins-btn-bg: transparent;
+  --ins-btn-border-color: transparent;
+  --ins-btn-hover-border-color: transparent;
+  --ins-btn-active-border-color: transparent;
+
+  /* Estados */
+  --ins-btn-disabled-color: #94a3b8;     /* slate-400 */
+  --ins-btn-disabled-border-color: transparent;
+
+  /* Focus accesible */
+  --ins-btn-focus-shadow-rgb: 79, 70, 229 !important; /* indigo-600 */
+  --ins-btn-box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25) !important;
+
+  /* UX */
+  text-decoration: none;
+  transition: color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+.btn-link:focus-visible {
+  outline: none;
+  box-shadow: var(--ins-btn-box-shadow);
+}
+
+.footer-social {
+  color: #4f46e5 !important; /* Indigo CuentIA */
+  font-size: 1.15rem;
+  opacity: 0.85;
+  transition: color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.footer-social:hover {
+  color: #4338ca !important;
+  opacity: 1;
+  transform: translateY(-1px);
+}
+

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { apiFetch } from "@/app/services/apiClient";
 import { getSessionInfo } from "@/app/services/authService";
 import { API_URL } from "@/utils/env";
+import { motion, AnimatePresence } from "framer-motion";
 
 export const WhatsappComprobantes = () => {
   const [qr, setQr] = useState<string | null>(null);
@@ -17,6 +18,7 @@ export const WhatsappComprobantes = () => {
   const [hasContract, setHasContract] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
   const [type, setType] = useState<string | null>(null);
+  const [showInstructions, setShowInstructions] = useState(true);
 
   useEffect(() => {
     const loadSession = async () => {
@@ -252,6 +254,30 @@ export const WhatsappComprobantes = () => {
                 procesará automáticamente. Se guardarán en tu contabilidad y podrás exportarlos a Excel.
               </p>
 
+              <div className="d-flex justify-content-between align-items-center mt-4">
+                <h5 className="mb-0">Guía de uso del bot</h5>
+              
+                <Button
+                  variant="link"
+                  className="text-decoration-none"
+                  onClick={() => setShowInstructions((prev) => !prev)}
+                >
+                  {showInstructions ? "Ocultar instrucciones " : "¿Cómo funciona?"}
+                </Button>
+              </div>
+
+
+
+              <AnimatePresence initial={false}>
+              {showInstructions && (
+                <motion.div
+                  key="instructions"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  style={{ overflow: "hidden" }}
+                >
               <div className="mt-4 text-start">
                 <Card className="border-0 bg-light">
                   <Card.Body>
@@ -303,6 +329,9 @@ export const WhatsappComprobantes = () => {
                   </Card.Body>
                 </Card>
               </div>
+              </motion.div>
+              )}
+              </AnimatePresence>
 
 
               {showReconnect && !connected && (

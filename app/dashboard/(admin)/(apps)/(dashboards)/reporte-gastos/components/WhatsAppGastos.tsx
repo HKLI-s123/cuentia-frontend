@@ -276,7 +276,7 @@ export const WhatsappGastos = () => {
                   className="text-decoration-none"
                   onClick={() => setShowInstructions((prev) => !prev)}
                 >
-                  {showInstructions ? "Ocultar instrucciones " : "Ver instrucciones "}
+                  {showInstructions ? "Ocultar instrucciones " : "¿Cómo funciona?"}
                 </Button>
               </div>
 
