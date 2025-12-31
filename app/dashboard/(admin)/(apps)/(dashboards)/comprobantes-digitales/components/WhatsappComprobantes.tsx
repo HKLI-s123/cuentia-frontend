@@ -49,7 +49,7 @@ export const WhatsappComprobantes = () => {
     apiFetch(`${API_URL}/whatsapp/status/${clientId}/${BOT_TYPE}`)
       .then((res) => res?.json())
       .then((data) => {
-        setHasContract(data.hasContract ?? false);
+        setHasContract(data.contracted);
 
         if (data.connected) {
           setConnected(true);
@@ -64,9 +64,11 @@ export const WhatsappComprobantes = () => {
           setConnected(false);
           setShowReconnect(false);
         }
+        console.log(data);
       })
       .catch((err) => console.error(err));
   }, [userId]);
+
 
   const handleReconnect = async () => {
     const clientId = `${BOT_TYPE}-${userId}`;
@@ -249,6 +251,59 @@ export const WhatsappComprobantes = () => {
                 Envía tus comprobantes de transferencias o efectivo directamente y el sistema los
                 procesará automáticamente. Se guardarán en tu contabilidad y podrás exportarlos a Excel.
               </p>
+
+              <div className="mt-4 text-start">
+                <Card className="border-0 bg-light">
+                  <Card.Body>
+                    <h5 className="mb-3">¿Cómo usar correctamente el Bot de Comprobantes?</h5>
+              
+                    <ul className="mb-3">
+                      <li className="mb-2">
+                        <strong>Usa un teléfono exclusivo para este bot.</strong><br />
+                        Recomendamos utilizar un número dedicado únicamente a recibir comprobantes,
+                        para mayor seguridad y para evitar sobrecargar el bot con mensajes personales.
+                      </li>
+              
+                      <li className="mb-2">
+                        <strong>¿Qué puedes enviar?</strong><br />
+                        Puedes enviar:
+                        <ul className="mt-1">
+                          <li>Fotos de notas de venta (ingresos en efectivo).</li>
+                          <li>Capturas de pantalla de transferencias.</li>
+                        </ul>
+                      </li>
+              
+                      <li className="mb-2">
+                        <strong>¿Cómo funciona el registro?</strong><br />
+                        Toma la foto o captura, envíala por WhatsApp al número con el que iniciaste sesión
+                        y espera el mensaje de confirmación.  
+                        Después, solo recarga esta página para ver el comprobante registrado en la tabla.
+                      </li>
+              
+                      <li className="mb-2">
+                        <strong>No envíes muchas imágenes al mismo tiempo.</strong><br />
+                        Para evitar bloqueos por spam:
+                        <ul className="mt-1">
+                          <li>Máximo <strong>3 imágenes por envío</strong>.</li>
+                          <li>Espera al menos <strong>15 segundos</strong> entre cada imagen.</li>
+                        </ul>
+                      </li>
+              
+                      <li className="mb-2">
+                        <strong>Si el bot se desconecta, no te preocupes.</strong><br />
+                        Puedes dar clic en <em>“Iniciar bot”</em> nuevamente.
+                        Tus comprobantes <strong>no se pierden</strong>, siempre quedan guardados en tu cuenta.
+                      </li>
+                    </ul>
+              
+                    <p className="mb-0 text-muted" style={{ fontSize: "0.9rem" }}>
+                      💡 Consejo: una buena organización desde el inicio te ahorra errores,
+                      retrabajos y aclaraciones contables más adelante.
+                    </p>
+                  </Card.Body>
+                </Card>
+              </div>
+
 
               {showReconnect && !connected && (
                 <div className="mt-4">

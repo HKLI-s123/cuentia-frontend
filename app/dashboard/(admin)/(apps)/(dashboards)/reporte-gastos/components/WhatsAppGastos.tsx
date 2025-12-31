@@ -266,6 +266,59 @@ export const WhatsappGastos = () => {
                 Los datos serán registrados en un <strong>Excel</strong> listo para tus reportes contables.
               </p>
 
+              <div className="mt-4 text-start">
+                <Card className="border-0 bg-light">
+                  <Card.Body>
+                    <h5 className="mb-3">¿Cómo usar correctamente el Bot de Comprobantes de Gastos?</h5>
+              
+                    <ul className="mb-3">
+                      <li className="mb-2">
+                        <strong>Usa un teléfono exclusivo para este bot.</strong><br />
+                        Recomendamos utilizar un número dedicado únicamente a enviar tickets y
+                        comprobantes de gastos, para mayor seguridad y mejor organización.
+                      </li>
+              
+                      <li className="mb-2">
+                        <strong>¿Qué tipo de comprobantes puedes enviar?</strong><br />
+                        Puedes enviar:
+                        <ul className="mt-1">
+                          <li>Fotos de tickets de compra.</li>
+                          <li>Imágenes de notas de compra o recibos físicos.</li>
+                        </ul>
+                      </li>
+              
+                      <li className="mb-2">
+                        <strong>¿Cómo funciona el registro?</strong><br />
+                        Toma la foto o captura del comprobante, envíala por WhatsApp al número con el que
+                        iniciaste sesión y espera el mensaje de confirmación.  
+                        Una vez confirmado, recarga esta página para ver el gasto registrado en la tabla.
+                      </li>
+              
+                      <li className="mb-2">
+                        <strong>No envíes demasiadas imágenes al mismo tiempo.</strong><br />
+                        Para evitar bloqueos por spam:
+                        <ul className="mt-1">
+                          <li>Envía máximo <strong>3 imágenes por mensaje</strong>.</li>
+                          <li>Espera al menos <strong>15 segundos</strong> entre cada envío.</li>
+                        </ul>
+                      </li>
+              
+                      <li className="mb-2">
+                        <strong>Si el bot se desconecta, no te preocupes.</strong><br />
+                        Solo da clic en <em>“Iniciar Bot”</em> nuevamente.
+                        Todos tus comprobantes de gastos <strong>permanecen guardados</strong> en tu cuenta.
+                      </li>
+                    </ul>
+              
+                    <p className="mb-0 text-muted" style={{ fontSize: "0.9rem" }}>
+                      💡 Consejo: enviar comprobantes claros y bien enfocados mejora la lectura automática
+                      y evita registros incompletos en tus reportes.
+                    </p>
+                  </Card.Body>
+                </Card>
+              </div>
+
+
               {/* 🟡 Mostrar Reconectar */}
               {showReconnect && !connected && (
                 <div className="mt-4">

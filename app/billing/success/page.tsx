@@ -103,7 +103,7 @@ export default function Success() {
 
         {/* Botón volver */}
         <motion.a
-          href="/dashboard/dashboard"
+          href="/dashboard/overview"
           whileTap={{ scale: 0.96 }}
           className="mt-10 inline-block bg-gradient-to-r from-indigo-500 to-cyan-400 text-slate-900 
           font-semibold py-3 px-6 rounded-xl shadow-lg shadow-black/40 hover:opacity-90 transition"

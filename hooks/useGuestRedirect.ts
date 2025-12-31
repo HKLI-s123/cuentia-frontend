@@ -10,7 +10,7 @@ export function useGuestRedirect() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace("/dashboard/dashboard");
+      router.replace("/dashboard/overview");
     }
   }, [user, loading]);
 

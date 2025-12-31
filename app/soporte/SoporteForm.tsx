@@ -83,7 +83,7 @@ export default function SoporteForm() {
           {session?.verified ? (
             // 👉 Usuario verificado → puede ir al dashboard
             <a
-              href="/dashboard/dashboard"
+              href="/dashboard/overview"
               className="text-indigo-600 hover:text-indigo-800 hover:underline fw-semibold d-flex align-items-center gap-2"
             >
               ← Volver al dashboard

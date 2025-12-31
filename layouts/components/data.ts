@@ -85,7 +85,7 @@ export const userDropdownItems: UserDropdownItemType[] = [
 export const menuItems: MenuItemType[] = [
     {key: 'menu', label: 'Menu', isTitle: true},
     {
-        key: 'dashboard', label: 'Dashboard', icon: TbLayoutDashboard, url: '/dashboard/dashboard',
+        key: 'dashboard', label: 'Dashboard', icon: TbLayoutDashboard, url: '/dashboard/overview',
     },
     {key: 'servicios', label: 'servicios', isTitle: true},
     {
@@ -101,7 +101,7 @@ export const menuItems: MenuItemType[] = [
         label: 'IA',
         icon: TbRobot,
         children: [
-            {key: 'chatcontable', label: 'Asistente IA contable', url: '/chat/chat'},
+            {key: 'chatcontable', label: 'Asistente IA contable', url: '/chat/assistant'},
             {key: 'whatsapp-bot', label: 'WhatsApp Bot', url: '/dashboard/whatsapp-bot'},
         ]
     },

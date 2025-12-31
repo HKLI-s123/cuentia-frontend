@@ -59,7 +59,7 @@ export default function OnboardingPage() {
 
     // Invitado NO pasa onboarding
     if (session.tipoCuenta === "invitado") {
-      router.replace("/dashboard/dashboard");
+      router.replace("/dashboard/overview");
       return;
     }
 
@@ -67,7 +67,7 @@ export default function OnboardingPage() {
 
     // Ya tiene onboarding → fuera
     if (session.propioRFC) {
-      router.replace("/dashboard/dashboard");
+      router.replace("/dashboard/overview");
       return;
     }
   }, [session]);
@@ -92,7 +92,7 @@ export default function OnboardingPage() {
       await uploadOwnFirma(archivos.cer, archivos.key, fielPass, rfcFinal);
 
       toast.success("Archivos subidos correctamente");
-      router.push("/dashboard/dashboard");
+      router.push("/dashboard/overview");
     } catch (err: any) {
       toast.error(err.message || "Error al subir la información");
     }
@@ -275,7 +275,7 @@ export default function OnboardingPage() {
                try {
                  await omitOnboarding();
                  toast.success("Onboarding omitido");
-                 router.push("/dashboard/dashboard");
+                 router.push("/dashboard/overview");
                } catch (err: any) {
                  console.error(err);
                  toast.error(err.message || "No se pudo omitir");

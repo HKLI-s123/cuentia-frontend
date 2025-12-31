@@ -128,7 +128,7 @@ export default function TransferPage() {
 
             <div className="mt-6">
               <a
-                href="/dashboard/dashboard"
+                href="/dashboard/overview"
                 className="text-indigo-300 hover:text-indigo-200 underline text-sm"
               >
                 Volver al dashboard

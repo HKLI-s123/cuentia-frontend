@@ -35,13 +35,13 @@ export default function GoogleSetupPage() {
 
         // ❗ Si el provider NO es google → salida inmediata
         if (me.provider !== "google") {
-          router.push("/dashboard/dashboard");
+          router.push("/dashboard/overview");
           return;
         }
 
         // ❗ Si ya tiene tipo_cuenta diferente del default
         if (me.tipo_cuenta !== null) {
-          router.push("/dashboard/dashboard");
+          router.push("/dashboard/overview");
           return;
         }
 
@@ -50,7 +50,7 @@ export default function GoogleSetupPage() {
 
       } catch (err) {
         console.error("Error:", err);
-        router.push("/dashboard/dashboard");
+        router.push("/dashboard/overview");
       }
     };
 
@@ -106,7 +106,7 @@ export default function GoogleSetupPage() {
       if (tipoCuenta === "empresarial" || tipoCuenta === "individual") {
         router.push("/onboarding");
       } else {
-        router.push("/dashboard/dashboard");
+        router.push("/dashboard/overview");
       }
 
     } catch (err: any) {

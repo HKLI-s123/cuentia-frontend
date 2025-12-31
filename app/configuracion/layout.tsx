@@ -34,7 +34,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
   // ⛔ Esperar sesión antes de mostrar menú
   if (tipoCuenta === "empleado") {
-      window.location.href = "/dashboard/dashboard";
+      window.location.href = "/dashboard/overview";
   }
 
   // LINKS BASE
@@ -71,7 +71,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
       <aside className="w-64 bg-white shadow-lg border-r p-6">
         {/* 🔙 REGRESAR AL DASHBOARD */}
         <Link
-          href="/dashboard/dashboard"
+          href="/dashboard/overview"
           className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6"
         >
           <ArrowLeft size={16} />

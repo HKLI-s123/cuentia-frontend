@@ -917,6 +917,22 @@ export default function CuentIALandingPage() {
                     <div className="mt-1 font-semibold">{BRAND.domain}</div>
                   </div>
                 </div>
+                <div className="rounded-2xl bg-indigo-900/40 border border-indigo-800/30 p-4 mt-3">
+                  <div className="text-xs text-slate-300">
+                    WhatsApp (Demo y ventas)
+                  </div>
+                
+                  <a
+                    href="https://wa.me/526564053919?text=Hola%2C%20me%20interesa%20una%20demo%20de%20CuentIA.%0AQuisiera%20conocer%20c%C3%B3mo%20funciona%20para%20mi%20operaci%C3%B3n."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-flex items-center gap-2 font-semibold text-white hover:text-indigo-300 transition"
+                  >
+                    Hablar por WhatsApp
+                    <MessageCircle className="h-4 w-4" />
+                  </a>
+                </div>
+
 
                 <div className="mt-6 flex flex-wrap gap-3">
                   <Button href={BRAND.ctaPrimary.href} variant="primary">

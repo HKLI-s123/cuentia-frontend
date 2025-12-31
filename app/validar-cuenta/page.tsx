@@ -19,7 +19,11 @@ export default function ValidarCuentaPage() {
   if (!user) redirect("/login");
 
   // 🔒 Usuario autenticado PERO ya verificado → lo sacamos
-  if (user.verified) redirect("/onboarding");
+  if(user.tipo_cuenta !== 'invitado'){
+    if (user.verified) redirect("/onboarding");
+  }else{
+    if (user.verified) redirect("/dashboard/overview");
+  }
 
   const handleLogout = async () => {
     const success = await logoutUser();

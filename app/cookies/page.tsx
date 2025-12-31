@@ -30,7 +30,7 @@ export default function CookiesPage() {
 
           {/* ===== Botón Regresar ===== */}
           <div className="mb-4">
-            <Link href="/dashboard/dashboard" className="btn btn-outline-primary">
+            <Link href="/dashboard/overview" className="btn btn-outline-primary">
               ← Regresar al Dashboard
             </Link>
           </div>

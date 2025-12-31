@@ -49,7 +49,7 @@ export default function ManualPaymentsAdmin() {
     const result = await getManualPayments();
 
     if (!result.ok && result.status === 403) {
-      router.push("/dashboard/dashboard");
+      router.push("/dashboard/overview");
       return;
     }
 

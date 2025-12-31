@@ -24,8 +24,8 @@ const PLANS = [
   {
     name: "Individual",
     code: "cuentia_plan_individual",
-    monthlyPriceId: "price_1Seg0XKWIz2QT93cwnyee3uL",
-    annualPriceId: "price_1SdbKmKWIz2QT93cQznrJBRF",
+    monthlyPriceId: "price_1Sfp9MKg1JUMkNoEzMOiQnNa",
+    annualPriceId: "price_1Sfp9MKg1JUMkNoEYAD0iqqT",
     monthlyText: "$99 MXN/mes",
     annualText: "$79 MXN/mes (facturado anualmente)",
     tag: "Ideal para freelancers",
@@ -42,8 +42,8 @@ const PLANS = [
   {
     name: "Profesional",
     code: "cuentia_plan_profesional",
-    monthlyPriceId: "price_1ScxMCKWIz2QT93ceaPmuDXE",
-    annualPriceId: "price_1SdbNyKWIz2QT93cl42TW56c",
+    monthlyPriceId: "price_1Sfp9JKg1JUMkNoEmC2nRqEO",
+    annualPriceId: "price_1Sfp9JKg1JUMkNoElTzwbuXS",
     monthlyText: "$499 MXN/mes",
     annualText: "$399 MXN/mes (facturado anualmente)",
     tag: "Mejor balance",
@@ -61,8 +61,8 @@ const PLANS = [
   {
     name: "Empresarial",
     code: "cuentia_plan_empresarial",
-    monthlyPriceId: "price_1ScxTTKWIz2QT93cmuNGNUzW",
-    annualPriceId: "price_1SdbXkKWIz2QT93cjnbrz4j9",
+    monthlyPriceId: "price_1Sfp9GKg1JUMkNoEyZO6WjNR",
+    annualPriceId: "price_1Sfp9GKg1JUMkNoEMnk3xLUz",
     monthlyText: "$1,499 MXN/mes",
     annualText: "$1,199 MXN/mes (facturado anualmente)",
     tag: "Ideal para PyMEs",
@@ -80,8 +80,8 @@ const PLANS = [
   {
     name: "Despacho",
     code: "cuentia_plan_despacho",
-    monthlyPriceId: "price_1ScxWrKWIz2QT93cmJHS21xI",
-    annualPriceId: "price_1SdbeaKWIz2QT93cxf6XXXOq",
+    monthlyPriceId: "price_1Sfp9EKg1JUMkNoE6mnfkyE6",
+    annualPriceId: "price_1Sfp9EKg1JUMkNoE8pNg8e9Y",
     monthlyText: "$3,999 MXN/mes",
     annualText: "$3,199 MXN/mes (facturado anualmente)",
     tag: "Para despachos contables",
@@ -103,14 +103,14 @@ const PLANS = [
 const BOTS = [
   {
     name: "Bot de Comprobantes",
-    priceId: "price_1ScxiyKWIz2QT93c6K8sc0Cl",
+    priceId: "price_1Sfp92Kg1JUMkNoEx3TnaGkO",
     priceText: "$49 MXN/mes",
     description:
       "Captura una foto de tu comprobante o transferencia y obtén todos los datos listos para registrar ingresos. Olvídate de teclear: procesa y factura más rápido.",
   },
   {
     name: "Bot de Gastos",
-    priceId: "price_1ScxhdKWIz2QT93cIt58WcIg",
+    priceId: "price_1Sfp9AKg1JUMkNoEqeudW1zj",
     priceText: "$49 MXN/mes",
     description:
       "Escanea tus tickets con una foto. El OCR extrae automáticamente los datos, clasifica el gasto y lo deja listo para tu contabilidad. Rápido, preciso y sin esfuerzo.",
@@ -716,6 +716,8 @@ export default function PricingPage() {
                       >
                         {loading === priceId
                           ? "Redirigiendo..."
+                          : isPublic
+                          ? "Inicia sesión para contratar"
                           : isCurrentPlan && planStatus === "past_due"
                           ? "Regularizar pago"
                           : isCurrentPlan && planStatus === "expired"
@@ -831,7 +833,7 @@ export default function PricingPage() {
                     }
                     disabled={hasStartBotsPack || hasIndividualBots}
                     onClick={() => {
-                      setSelectedPriceId("price_1Sf7A2KWIz2QT93cyeeWTbiY");
+                      setSelectedPriceId("price_1Sfp8TKg1JUMkNoEMfEgWzZ0");
                       setSelectedPlan("cuentia_start_bots");
                       setShowModal(true);
                     }}

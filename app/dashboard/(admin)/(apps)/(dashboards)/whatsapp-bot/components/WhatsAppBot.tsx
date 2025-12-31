@@ -67,10 +67,94 @@ export const WhatsappBot = () => {
               <h2 className="mb-3">🤖 Tu Asistente Contable en WhatsApp</h2>
               <p className="text-muted">
                 Conversa con tu empresa como si hablaras con un amigo.
-                Consulta tus <strong>ingresos</strong>, <strong>gastos</strong>,
-                descarga tu <strong>Constancia de Situación Fiscal</strong> y revisa tu{" "}
-                <strong>Opinión de Cumplimiento</strong>, todo desde WhatsApp.
               </p>
+
+              <div className="mt-4 text-start">
+                <Card className="border-0 bg-light">
+                  <Card.Body>
+                    <h5 className="mb-3">¿Qué puedes hacer con tu Asistente Contable?</h5>
+              
+                    <p className="mb-3">
+                      Este bot funciona como tu <strong>asistente financiero y contable</strong>.
+                      Puedes hacerle preguntas y solicitar reportes directamente desde WhatsApp,
+                      como si estuvieras chateando con una persona.
+                    </p>
+              
+                    <ul className="mb-3">
+                      <li className="mb-2">
+                        <strong>Consulta tus ingresos y egresos</strong><br />
+                        Pregunta por tus ingresos totales, gastos del mes o un
+                        resumen general de tu flujo de dinero.
+                      </li>
+              
+                      <li className="mb-2">
+                        <strong>Analiza tu información</strong><br />
+                        Puedes solicitar:
+                        <ul className="mt-1">
+                          <li>- Resumen de flujo de efectivo.</li>
+                          <li>- Top de ingresos.</li>
+                          <li>- Top de gastos.</li>
+                          <li>- Ingresos por cliente.</li>
+                          <li>- Gastos por proveedor.</li>
+                        </ul>
+                      </li>
+              
+                      <li className="mb-2">
+                        <strong>Consulta impuestos y control</strong><br />
+                        Pregunta por tu <strong>IVA trasladado</strong>, control de egresos
+                        y otros indicadores clave de tu operación.
+                      </li>
+              
+                      <li className="mb-2">
+                        <strong>Exporta tu información</strong><br />
+                        Solicita la exportación de tus comprobantes de gastos o ventas guardados
+                        en <strong>Excel</strong> para análisis o respaldo.
+                      </li>
+                    </ul>
+              
+                    <hr />
+              
+                    <h6 className="mt-3">Según tu tipo de cuenta</h6>
+                    <ul className="mb-3">
+                      <li className="mb-2">
+                        <strong>Cuenta individual:</strong><br />
+                        Puedes consultar toda tu información financiera y contable
+                        correspondiente a tu actividad personal.
+                      </li>
+              
+                      <li className="mb-2">
+                        <strong>Cuenta empresarial:</strong><br />
+                        Puedes realizar estas consultas <strong>por cada RFC </strong>
+                        que tengas registrado como cliente dentro de tu cuenta.
+                      </li>
+                    </ul>
+              
+                    <hr />
+              
+                    <h6 className="mt-3">Recomendaciones importantes</h6>
+                    <ul className="mb-2">
+                      <li className="mb-2">
+                        <strong>Registra un número fijo y de uso personal.</strong><br />
+                        El bot utiliza tu número de WhatsApp como método de
+                        <strong> autenticación</strong>, por lo que recomendamos usar
+                        un número que solo tú controles.
+                      </li>
+              
+                      <li className="mb-2">
+                        <strong>Evita compartir el acceso.</strong><br />
+                        Para mantener la seguridad de tu información financiera,
+                        no compartas el número con terceros.
+                      </li>
+                    </ul>
+              
+                    <p className="mb-0 text-muted" style={{ fontSize: "0.9rem" }}>
+                      💡 Consejo: mientras más organizada esté tu información,
+                      más precisas y útiles serán las respuestas del asistente.
+                    </p>
+                  </Card.Body>
+                </Card>
+              </div>
+
 
               <div className="d-flex justify-content-center gap-3 mt-4">
                 {session.tipoCuenta === "invitado" ? (
