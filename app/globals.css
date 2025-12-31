@@ -190,3 +190,7 @@ a:hover {
   transform: translateY(-1px);
 }
 
+[data-sidenav-size="condensed"] .logo {
+  background: transparent !important;
+}
+
