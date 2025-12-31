@@ -105,19 +105,33 @@ const MenuItem = ({item}: { item: MenuItemType }) => {
         }
     }
 
+    const handleClick = (e: React.MouseEvent) => {
+      toggleBackdrop();
+    
+      if (item.isSpecial && item.url) {
+        e.preventDefault(); // ⛔ evita el Link de Next
+        window.location.href = item.url; // 🔥 navegación dura
+      }
+    };
+
     return (
         <li className={`side-nav-item ${isActive ? "active" : ""}`}>
-            <Link href={item.url ?? '/'} onClick={toggleBackdrop}
-                  className={`side-nav-link  ${isActive ? "active" : ""} ${item.isDisabled ? "disabled" : ""} ${item.isSpecial ? "special-menu" : ""}`}>
-                {
-                    item.icon && <span className="menu-icon"><item.icon/></span>
-                }
-                <span className="menu-text">{item.label}</span>
-                {
-                    item.badge &&
-                    <span className={`badge text-bg-${item.badge.variant} opacity-50`}>{item.badge.text}</span>
-                }
-            </Link>
+          <Link
+            href={item.url ?? "/"}
+            onClick={handleClick}
+            className={`side-nav-link ${isActive ? "active" : ""} 
+              ${item.isDisabled ? "disabled" : ""} 
+              ${item.isSpecial ? "special-menu" : ""}`}
+          >
+            {item.icon && <span className="menu-icon"><item.icon /></span>}
+            <span className="menu-text">{item.label}</span>
+        
+            {item.badge && (
+              <span className={`badge text-bg-${item.badge.variant} opacity-50`}>
+                {item.badge.text}
+              </span>
+            )}
+          </Link>
         </li>
     )
 }

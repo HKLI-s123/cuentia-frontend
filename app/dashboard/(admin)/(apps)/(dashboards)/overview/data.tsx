@@ -403,7 +403,13 @@ export const getClientRevenueChartOptions = (): EChartsOption => ({
 export const getEchartOptions = (data: { name: string; value: number }[]): EChartsOption => {
 
   return ({
-    tooltip: { show: true },
+    tooltip: {
+      show: true ,
+      position: (point, params, dom, rect, size) => {
+        return ['50%', '0%']; // centrado arriba
+      },
+      appendToBody: false,     
+    },
     series: [
       {
         type: 'pie',
