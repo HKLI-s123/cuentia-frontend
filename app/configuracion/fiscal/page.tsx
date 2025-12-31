@@ -23,8 +23,6 @@ export default function FiscalConfigPage() {
     load();
   }, []);
 
-  console.log(session);
-
   if (loading) return <Spinner />;
   if (!session) return <div>Error cargando sesión</div>;
 

@@ -63,8 +63,6 @@ export default function OnboardingPage() {
       return;
     }
 
-    console.log(session);
-
     // Ya tiene onboarding → fuera
     if (session.propioRFC) {
       router.replace("/dashboard/overview");

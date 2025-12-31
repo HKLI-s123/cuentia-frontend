@@ -442,8 +442,6 @@ export const FinanceChart = ({ rfc, startDate, endDate }: FinanceChartProps) => 
   useEffect(() => {
     getFinanceStatsChart(rfc, startDate, endDate).then((data) => {
  
-      console.log(startDate, endDate);
-
       const category = data.map((row: any) => {
         const fecha = new Date(row.fecha)
         const day = fecha.getDate().toString().padStart(2, '0')

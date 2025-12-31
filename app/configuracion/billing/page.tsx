@@ -82,9 +82,6 @@ export default function FacturacionPage() {
     loadPlan();
   }, []);
 
-  
-  console.log(planInfo?.status);
-
   const trialDaysRemaining =
   planInfo?.plan === "cuentia_trial" && planInfo?.trialEndsAt
     ? Math.max(
@@ -95,14 +92,10 @@ export default function FacturacionPage() {
         )
       )
     : null;
-
-    console.log("pruebaaa",trialDaysRemaining);
     
     const hasActivePlan =
       planInfo?.status !== "canceled";
-      
-    console.log("payment method",planInfo?.paymentMethod);
-  
+        
     const isFreePlan = !planInfo?.plan;
     const daysRemaining = getDaysRemaining(planInfo?.currentPeriodEnd);
     
@@ -284,8 +277,6 @@ export default function FacturacionPage() {
 
     load();
   }, []);
-
-  console.log("fin",planInfo);
 
   const rawPaymentMethod = planInfo?.paymentMethod;
   

@@ -36,8 +36,6 @@ export default function SoporteForm() {
     load();
   }, []);
 
-  console.log(session);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));

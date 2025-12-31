@@ -1,6 +1,7 @@
 "use client";
 
 import {Fragment, useEffect, useState} from "react";
+import { usePathname } from "next/navigation";
 import VerticalLayout from "@/layouts/VerticalLayout";
 import HorizontalLayout from "@/layouts/HorizontalLayout";
 import {useLayoutContext} from "@/context/useLayoutContext";
@@ -12,6 +13,7 @@ import CookiesBanner from "@/components/CookiesBanner";
 const MainLayout = ({children}: ChildrenType) => {
 
     const {orientation} = useLayoutContext();
+    const pathname = usePathname();
 
     const [hasMounted, setHasMounted] = useState(false);
 
@@ -22,7 +24,7 @@ const MainLayout = ({children}: ChildrenType) => {
     if (!hasMounted) return <Loader height="100vh"/>;
 
     return (
-        <Fragment>
+        <Fragment key={pathname}>
             {orientation === 'vertical' && <VerticalLayout>{children}</VerticalLayout>}
             {orientation === 'horizontal' && <HorizontalLayout>{children}</HorizontalLayout>}
 

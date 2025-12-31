@@ -158,8 +158,6 @@ export default function RegisterPage() {
       
 
       const profile = await fetchMe();
-
-      console.log(profile);
       
       if (!profile.verified) {
         router.push("/validar-cuenta");

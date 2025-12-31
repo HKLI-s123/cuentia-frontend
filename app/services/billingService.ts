@@ -124,8 +124,6 @@ export async function submitManualTransfer(payload: {
     body: JSON.stringify(payload),
   });
 
-  console.log(payload);
-
   if (!res) throw new Error("No response from server");
 
   const data = await res.json().catch(() => ({}));

@@ -36,8 +36,6 @@ export async function apiFetch(url: string, options: any = {}) {
     const data = await refreshRes.json();
     setAccessToken(data.accessToken);
 
-    console.log("Token refrescado, repitiendo request...");
-
     // ---- Repetimos la petición original con el nuevo token ----
     const retryHeaders = {
       ...headers,

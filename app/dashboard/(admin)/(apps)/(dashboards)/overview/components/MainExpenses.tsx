@@ -41,7 +41,6 @@ const MainExpenses = ({ rfc }: Props) => {
   const fetchExpenses = async () => {
     try {
       const data = await getMainExpenses(rfc, startDate, endDate)
-      console.log("API getMainExpenses raw:", data) // <- mira qué llega
       setExpenses(data)
     } catch (err) {
       console.error("fetchExpenses error", err)
@@ -55,8 +54,6 @@ const MainExpenses = ({ rfc }: Props) => {
     uuids: e.uuids
   }))
   
-  console.log("chartData:", chartData)
-
   // Cargar datos cuando ya estén listas las fechas
   useEffect(() => {
     if (startDate && endDate) {

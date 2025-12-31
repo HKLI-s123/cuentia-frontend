@@ -62,8 +62,10 @@ const UserProfile = () => {
                                 ) : (
                                     // 🔗 Items normales con URL
                                     <DropdownItem
-                                        as={Link}
-                                        href={item.url}
+                                        as="button"
+                                        onClick={() => {
+                                          window.location.href = item.url!;
+                                        }}
                                         className={item.class}
                                     >
                                         {item.icon && <item.icon className="me-2 fs-17 align-middle" />}

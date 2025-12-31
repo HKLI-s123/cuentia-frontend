@@ -41,24 +41,18 @@ export const WhatsappGastos = () => {
   }, []);
 
   const BOT_TYPE = "gastos";
-  console.log("type", type);
 
   useEffect(() => {
     if (!userId) return;   // 👈 evitar ejecutar sin ID
 
     const clientId = `${BOT_TYPE}-${userId}`;
 
-    console.log(clientId);
-
     apiFetch(`${API_URL}/whatsapp/status/${clientId}/${BOT_TYPE}`)
       .then((res) => res?.json())
       .then((data) => {
-        console.log("status:", data);
 
         // ✅ Simulamos que el backend devuelve hasContract
         setHasContract(data.contracted);
-
-        console.log(hasContract);
 
         if (data.connected) {
           setConnected(true);

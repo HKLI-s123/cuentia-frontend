@@ -152,7 +152,6 @@ export default function PricingPage() {
         setBillingMode(data.billingMode);
         setActiveBots(Array.isArray(data.bots) ? data.bots : []);
       
-        console.log(data);
       });
 
       const load = async () => {
@@ -214,8 +213,6 @@ export default function PricingPage() {
       // Bot individual: solo el que coincida con su priceId
       return INVITADO_BOT_PLAN_TO_PRICE[planCode ?? ""] === priceId;
     }
-    console.log(priceId)
-    console.log(activeBots);
     return activeBots.some(bot => bot.priceId === priceId);
   };
 
@@ -242,16 +239,12 @@ export default function PricingPage() {
       )
     : activeBots.length > 0;
 
-  console.log(tipo_cuenta);
-
   const handleSubscribe = async (priceId: string, planCode: string) => {
     if (isPublic) {
       redirectToLogin();
       return;
     }
     // Usuario YA tiene plan activo → hacemos upgrade/downgrade
-    console.log("plan status",planStatus)
-
     if (planStatus === "canceled") {
       setSelectedPriceId(priceId);
       setSelectedPlan(planCode);
@@ -268,7 +261,6 @@ export default function PricingPage() {
       return;
     }
 
-    console.log(planActual);
     if (planStatus === "active" && planActual !== "cuentia_trial") {
       toast.message("Confirmar cambio de plan", {
         description:
@@ -341,10 +333,6 @@ export default function PricingPage() {
   };
 
   const canBuyBot = (tipo_cuenta === "invitado") || (planStatus === "active" && planCode !== "cuentia_trial" && billingMode === 'stripe');
-
-  console.log(planStatus)
-
-  console.log(canBuyBot);
 
   const tipoCuenta = session?.tipoCuenta as TipoCuenta | undefined;
 
@@ -889,8 +877,6 @@ export default function PricingPage() {
           {BOTS.map((bot) => {
             const active = isBotActive(bot.priceId);
           
-            console.log("activeeEE",active);
-
             const blockedByPack = hasStartBotsPack;
 
             return (

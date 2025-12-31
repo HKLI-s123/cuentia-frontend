@@ -66,7 +66,6 @@ export const WhatsappComprobantes = () => {
           setConnected(false);
           setShowReconnect(false);
         }
-        console.log(data);
       })
       .catch((err) => console.error(err));
   }, [userId]);

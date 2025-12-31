@@ -75,9 +75,6 @@ const MainRevenue = ({ rfc }: Props) => {
     uuids: e.uuids
   }))
   
-  console.log("chartData:", chartData)
-
-
   return (
     <Col xs={12}>
       <Card>

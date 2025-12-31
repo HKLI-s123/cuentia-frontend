@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Fragment, useEffect, useState } from "react";
 import {
   User, Building2, Settings, Bot, CreditCard,
   Users, AlertTriangle, Bell,
@@ -12,30 +12,39 @@ import { getSessionInfo } from "@/app/services/authService";
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [tipoCuenta, setTipoCuenta] = useState<string | null>(null);
 
   // 🔥 Cargar sesión
   useEffect(() => {
+    let mounted = true;
+
     const load = async () => {
       try {
         const s = await getSessionInfo();
+        if (!mounted) return;
+
+        if (s.tipoCuenta === "empleado") {
+          router.replace("/dashboard/overview");
+          return;
+        }
+
         setTipoCuenta(s.tipoCuenta);
       } catch {
         setTipoCuenta(null);
       }
     };
     load();
-  }, []);
 
-  // ⛔ Esperar sesión antes de mostrar menú
+    return () => {
+      mounted = false;
+    };
+  }, [router]);
+
   if (tipoCuenta === null) {
     return <div className="p-10">Cargando configuración...</div>;
   }
 
-  // ⛔ Esperar sesión antes de mostrar menú
-  if (tipoCuenta === "empleado") {
-      window.location.href = "/dashboard/overview";
-  }
 
   // LINKS BASE
   const links = [
@@ -66,6 +75,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   }
 
   return (
+   <Fragment key={pathname}>
     <div className="flex min-h-screen bg-gray-50">
       
       <aside className="w-64 bg-white shadow-lg border-r p-6">
@@ -98,5 +108,6 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
       <main className="flex-1 p-10">{children}</main>
     </div>
+   </Fragment>
   );
 }

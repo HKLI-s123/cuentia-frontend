@@ -45,8 +45,6 @@ export const ComprobantesCliente = ({ userId }: ComprobantesClienteProps) => {
       const res = await apiFetch(url);
       const data = await res?.json();
 
-      console.log(data);
-
       // 👇 Aseguramos que siempre se asigne un array
       const comprobantesArray: Comprobante[] = Array.isArray(data)
         ? data

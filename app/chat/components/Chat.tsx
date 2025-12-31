@@ -117,8 +117,6 @@ export const Chat = ({}:ChatProps) => {
     }
   }, [session]);
 
-  console.log(tipoCuenta);
-
   // Detecta cuando se selecciona periodo
   useEffect(() => {
     if (periodoSeleccion) {
@@ -157,8 +155,6 @@ export const Chat = ({}:ChatProps) => {
       rfc: rfc,          // RFC seleccionado
       semanas: semanasParaEnviar,   // array con semanas seleccionadas
     });
-
-    console.log("📊 datos crudos:", botResponse.raw);
 
     setMessages((prev) => [...prev, { role: "bot", content: botResponse.reply, raw: botResponse.raw}]);
     

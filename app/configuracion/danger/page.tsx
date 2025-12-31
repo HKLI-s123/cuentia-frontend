@@ -97,14 +97,12 @@ export default function DangerZonePage() {
   const canCancel =
     planInfo?.plan !== "Free" && planInfo?.status !== "canceled";
 
-    console.log(session.guestRfc);
   // =====================================
   // 🚫 RESTRICCIÓN: Invitado con propioRFC
   // =====================================
   const isInvitedLinkedToCompany =
     session.tipoCuenta === "invitado" && session.guestRfc;
 
-    console.log(session.tipoCuenta)
   // =============================
   // 🟥 Eliminar cuenta
   // =============================

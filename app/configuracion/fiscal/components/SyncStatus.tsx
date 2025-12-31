@@ -15,15 +15,11 @@ export default function SyncStatus({ syncStatus: initialStatus, lastSync }: any)
     return <div className="p-4">Cargando estado de sincronización...</div>;
   }
 
-  console.log("estatuuuus",syncStatus)
-
   const handleToggle = async () => {
     try {
       const data = await toggleSync(); // { syncStatus, syncPaused, message }
 
       setSyncStatus(data.syncStatus);
-
-      console.log(data.syncStatus);
 
       toast.success(data.message);
     } catch (err) {

@@ -35,8 +35,6 @@ const Page = () => {
         const data = await getSessionInfo();
         setSession(data);
 
-        console.log("yooo",data);
-
         // -------------------------------
         // 🆕 Validar si la cuenta es nueva (< 24h)
         // -------------------------------

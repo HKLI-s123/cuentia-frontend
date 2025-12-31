@@ -68,7 +68,6 @@ export const ClientesLista = () => {
       try {
         const data = await getSessionInfo();
         setSession(data);
-        console.log("YO ", session);
       } catch (err: any) {
         console.error("Error cargando sesión:", err);
   
@@ -89,8 +88,6 @@ export const ClientesLista = () => {
   // 2) Redirección onboarding
   // ------------------------------
   useOnboardingRedirect(session);
-
-  console.log(session);
 
   const isConsulta = session?.role === "consulta";
 

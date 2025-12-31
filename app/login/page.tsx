@@ -227,15 +227,11 @@ export default function SignIn() {
                     const data = await googleLogin(googleToken);
             
                     window.__accessToken = data.accessToken;
-
-                    console.log("token:",window.__accessToken);
             
                     const profile = await fetchMe();
             
                     if (!profile) return router.push("/login");
                     if (!profile.verified) return router.push("/validar-cuenta");
-
-                    console.log('rfc propio:', profile.propioRFC);
 
                     if (!profile.tipo_cuenta) {
                       return router.push("/google/setup");

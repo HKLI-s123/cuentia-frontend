@@ -21,8 +21,6 @@ export default function MetodoPagoModal({
   const isTransfer = paymentMethod === "transfer";
   const isCard = !!paymentMethod && paymentMethod !== "transfer";
 
-  console.log("metoodoo",paymentMethod)
-
   return (
     <Dialog open={open} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" />

@@ -9,8 +9,6 @@ export async function registerUser(data: any) {
     { action: "register" }
   );
 
-  console.log("TOKEN ENVIADO:", recaptchaToken);
-
   // 2. Preparar payload JSON
   const payload = {
     ...data,
