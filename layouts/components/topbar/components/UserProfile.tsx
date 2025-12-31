@@ -4,7 +4,7 @@ import Link from "next/link";
 import {Fragment, useEffect, useState} from "react";
 import {Dropdown, DropdownDivider, DropdownItem, DropdownMenu, DropdownToggle} from "react-bootstrap";
 import {userDropdownItems} from "@/layouts/components/data";
-import {TbChevronDown} from "react-icons/tb";
+import {TbChevronDown, TbUsers} from "react-icons/tb";
 import Image from "next/image";
 import user2 from "@/assets/images/users/user-2.jpg";
 import { getSessionInfo } from "@/app/services/authService";
@@ -69,6 +69,28 @@ const UserProfile = () => {
       load();
     }, []);
 
+   const computedItems = (() => {
+     if (!session) return userDropdownItems;
+   
+     let items = [...userDropdownItems];
+   
+     if (session.tipoCuenta === "empresarial") {
+       const index = items.findIndex(
+         (i) => i.label === "Configuración de la cuenta"
+       );
+   
+       if (index !== -1) {
+         items.splice(index + 1, 0, {
+           label: "Agregar colaboradores",
+           icon: TbUsers,
+           url: "/configuracion/equipo",
+         });
+       }
+     }
+   
+     return items;
+   })();
+
     return (
         <div className="topbar-item nav-user">
             {planInfo?.plan && (
@@ -94,7 +116,7 @@ const UserProfile = () => {
                 </DropdownToggle>
 
                 <DropdownMenu className="dropdown-menu-end">
-                    {userDropdownItems.map((item, idx) => (
+                    {computedItems.map((item, idx) => (
                         <Fragment key={idx}>
                             {item.isHeader ? (
                                 <div className="dropdown-header noti-title">

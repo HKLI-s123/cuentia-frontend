@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {Fragment, useEffect, useState} from "react";
-import {TbSettings} from "react-icons/tb";
+import {TbSettings, TbUsers} from "react-icons/tb";
 import {Dropdown, DropdownDivider, DropdownItem, DropdownMenu, DropdownToggle} from "react-bootstrap";
 import {userDropdownItems} from "@/layouts/components/data";
 import { getSessionInfo } from "@/app/services/authService";
@@ -22,6 +22,29 @@ const UserProfile = () => {
       load();
     }, []);
 
+    const computedItems = (() => {
+      if (!session) return userDropdownItems;
+    
+      let items = [...userDropdownItems];
+    
+      if (session.tipoCuenta === "empresarial") {
+        const index = items.findIndex(
+          (i) => i.label === "Configuración de la cuenta"
+        );
+    
+        if (index !== -1) {
+          items.splice(index + 1, 0, {
+            label: "Agregar colaboradores",
+            icon: TbUsers,
+            url: "/configuracion/equipo",
+          });
+        }
+      }
+    
+      return items;
+    })();
+
+
     return (
         <div className="sidenav-user">
             <div className="d-flex justify-content-between align-items-center">
@@ -37,7 +60,7 @@ const UserProfile = () => {
                     </DropdownToggle>
 
                     <DropdownMenu>
-                        {userDropdownItems.map((item, idx) => (
+                        {computedItems.map((item, idx) => (
                             <Fragment key={idx}>
                                 {item.isHeader ? (
                                     <div className="dropdown-header noti-title">

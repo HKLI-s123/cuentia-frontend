@@ -457,8 +457,9 @@ const ListNotasCredito = () => {
     return (
       <div className="flex flex-col items-center justify-center h-[70vh] gap-4 text-center">
         <h2 className="text-xl font-bold">Acceso Invitado</h2>
-        <p>Pega tu clave de invitado para continuar</p>
-  
+        <p className="text-sm opacity-80">
+            La clave solo es necesaria para acceder a información fiscal (CFDIs / RFC).
+        </p>  
         <input
           type="text"
           className="border p-2 rounded-md w-64"
@@ -492,6 +493,23 @@ const ListNotasCredito = () => {
         >
           Validar clave
         </button>
+        <div className="mt-4 w-full max-w-md rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-700">
+            <p className="font-semibold mb-1">
+              ¿Solo quieres usar los bots de WhatsApp?
+            </p>
+            <p className="mb-3 text-indigo-600">
+              No necesitas una clave de invitado para eso.
+            </p>
+          
+            <button
+              onClick={() => {
+                window.location.href = "/dashboard/reporte-gastos";
+              }}
+              className="inline-flex items-center gap-2 font-semibold text-indigo-700 hover:underline"
+            >
+              Ir a Bots de WhatsApp
+            </button>
+        </div>
       </div>
     );
   }
