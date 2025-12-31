@@ -4,6 +4,7 @@ import { Toaster } from "sonner"
 import { GoogleOAuthProvider } from "@react-oauth/google"
 
 import { Roboto, Open_Sans } from "next/font/google"
+import GlobalToaster from "@/components/GlobalToaster"
 
 const openSans = Open_Sans({
   subsets: ["latin"],
@@ -35,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${roboto.variable} ${openSans.variable}`}>
       <body>
-        <Toaster richColors position="top-right" />
+        <GlobalToaster/>
 
         <GoogleOAuthProvider
           clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}

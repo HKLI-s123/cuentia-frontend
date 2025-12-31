@@ -7,7 +7,6 @@ import HorizontalLayout from "@/layouts/HorizontalLayout";
 import {useLayoutContext} from "@/context/useLayoutContext";
 import {ChildrenType} from "@/types";
 import Loader from "@/components/Loader";
-import { Toaster } from "sonner";
 import CookiesBanner from "@/components/CookiesBanner";
 
 const MainLayout = ({children}: ChildrenType) => {
@@ -30,7 +29,6 @@ const MainLayout = ({children}: ChildrenType) => {
 
             <CookiesBanner />
 
-            <Toaster position="top-right" richColors closeButton />
         </Fragment>
     )
 }
