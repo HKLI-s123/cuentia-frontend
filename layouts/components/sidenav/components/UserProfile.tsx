@@ -26,7 +26,7 @@ const UserProfile = () => {
         <div className="sidenav-user">
             <div className="d-flex justify-content-between align-items-center">
                 <div>
-                    <Link href="/" className="link-reset">
+                    <Link href="#" className="link-reset">
                         <span className="sidenav-user-name fw-bold">{session?.nombre ?? "Cargando..."}</span>
                     </Link>
                 </div>

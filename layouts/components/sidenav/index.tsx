@@ -28,7 +28,7 @@ const Sidenav = () => {
     return (
         <div className="sidenav-menu">
 
-            <Link href="/" className="logo mt-2">
+            <Link href="#" className="logo mt-2">
                 <span className="logo logo-light">
                     <span className="logo-lg"><Image src={logo.src} alt="logo" width={92.3} height={26}/></span>
                     <span className="logo-sm"><Image src={logoSm.src} alt="small logo" width={30.55} height={26}/></span>
