@@ -61,12 +61,14 @@ const getDateRange = (key: string) => {
     startDate = firstDay.toISOString().split("T")[0];
     endDate = lastDay.toISOString().split("T")[0];
   } else if (key === "annual-ct") {
-    const firstDay = new Date(today.getFullYear(), 0, 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const year = today.getFullYear();
 
-    startDate = firstDay.toISOString().split("T")[0];
-    endDate = lastDay.toISOString().split("T")[0];
-  }
+  const firstDay = new Date(year, 0, 1);
+  const lastDay = new Date(year, 11, 31); // 🔥 CLAVE
+
+  startDate = firstDay.toISOString().split("T")[0];
+  endDate = lastDay.toISOString().split("T")[0];
+}
 
   return { startDate, endDate };
 };
