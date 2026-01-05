@@ -923,7 +923,7 @@ export default function CuentIALandingPage() {
                   </div>
                 
                   <a
-                    href="https://wa.me/526564053919?text=Hola%2C%20me%20interesa%20una%20demo%20de%20CuentIA.%0AQuisiera%20conocer%20c%C3%B3mo%20funciona%20para%20mi%20operaci%C3%B3n."
+                    href="https://wa.me/526568330819?text=Hola%2C%20me%20interesa%20una%20demo%20de%20CuentIA.%0AQuisiera%20conocer%20c%C3%B3mo%20funciona%20para%20mi%20operaci%C3%B3n."
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-1 inline-flex items-center gap-2 font-semibold text-white hover:text-indigo-300 transition"

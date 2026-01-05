@@ -117,7 +117,7 @@ export default function SoporteForm() {
                     </p>
                     <p className="mb-1 d-flex align-items-center gap-2">
                       <TbBrandWhatsapp className="text-green-500" />  
-                      <a href="https://wa.me/526564053919" target="_blank" className="text-reset">
+                      <a href="https://wa.me/526568330819" target="_blank" className="text-reset">
                         WhatsApp directo
                       </a>
                     </p>
