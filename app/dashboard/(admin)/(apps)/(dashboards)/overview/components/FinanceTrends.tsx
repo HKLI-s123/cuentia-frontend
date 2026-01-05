@@ -58,8 +58,12 @@ const getDateRange = (key: string) => {
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-    startDate = firstDay.toISOString().split("T")[0];
-    endDate = lastDay.toISOString().split("T")[0];
+    const toYMD = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    
+    startDate = toYMD(firstDay);
+    endDate   = toYMD(lastDay);
+
   } else if (key === "annual-ct") {
   const year = today.getFullYear();
 

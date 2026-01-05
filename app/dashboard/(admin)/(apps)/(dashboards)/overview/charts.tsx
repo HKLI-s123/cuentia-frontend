@@ -443,11 +443,7 @@ export const FinanceChart = ({ rfc, startDate, endDate }: FinanceChartProps) => 
     getFinanceStatsChart(rfc, startDate, endDate).then((data) => {
  
       const category = data.map((row: any) => {
-        const fecha = new Date(row.fecha)
-        const day = fecha.getDate().toString().padStart(2, '0')
-        const month = (fecha.getMonth() + 1).toString().padStart(2, '0')
-        const year = fecha.getFullYear()
-        return `${year}-${month}-${day}`
+        return row.fecha;
       })
       const ingresos = data.map((row: any) => row.ingresos)
       const egresos = data.map((row: any) => row.egresos)
