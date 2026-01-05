@@ -106,7 +106,7 @@ export default function GoogleSetupPage() {
       if (tipoCuenta === "empresarial" || tipoCuenta === "individual") {
         window.location.href="/onboarding";
       } else {
-        router.push("/dashboard/overview");
+        window.location.href="/dashboard/overview";
       }
 
     } catch (err: any) {

@@ -86,7 +86,7 @@ export default function SignIn() {
         return;
       }
 
-      router.push("/dashboard/overview");
+      window.location.href="/dashboard/overview";
 
     } catch (err: any) {
       toast.error(err.message || "Error al iniciar sesión");
@@ -111,7 +111,7 @@ export default function SignIn() {
         if (!profile) return window.location.href="/login";
         if (!profile.verified) return window.location.href="/validar-cuenta";
   
-        router.push("/dashboard/overview");
+        window.location.href="/dashboard/overview";
   
       } catch (err) {
         console.error(err);
