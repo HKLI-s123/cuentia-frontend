@@ -67,7 +67,7 @@ export default function RestablecerPage() {
       const result = await resetPassword(token!, password);
 
       toast.success(result.message || "Contraseña actualizada");
-      router.push("/login");
+      window.location.href="/login";
     } catch (err: any) {
       toast.error(err.message || "No se pudo restablecer la contraseña");
     } finally {

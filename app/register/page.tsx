@@ -160,7 +160,7 @@ export default function RegisterPage() {
       const profile = await fetchMe();
       
       if (!profile.verified) {
-        router.push("/validar-cuenta");
+        window.location.href="/validar-cuenta";
         return;
       }
 

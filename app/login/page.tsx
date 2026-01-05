@@ -77,12 +77,12 @@ export default function SignIn() {
       const profile = await fetchMe();
 
       if (!profile) {
-        router.push("/login");
+        window.location.href="/login";
         return;
       }
 
       if (!profile.verified) {
-        router.push("/validar-cuenta");
+        window.location.href="/validar-cuenta";
         return;
       }
 
@@ -108,8 +108,8 @@ export default function SignIn() {
   
         const profile = await fetchMe();
   
-        if (!profile) return router.push("/login");
-        if (!profile.verified) return router.push("/validar-cuenta");
+        if (!profile) return window.location.href="/login";
+        if (!profile.verified) return window.location.href="/validar-cuenta";
   
         router.push("/dashboard/overview");
   
@@ -230,11 +230,11 @@ export default function SignIn() {
             
                     const profile = await fetchMe();
             
-                    if (!profile) return router.push("/login");
-                    if (!profile.verified) return router.push("/validar-cuenta");
+                    if (!profile) return window.location.href="/login";
+                    if (!profile.verified) return window.location.href="/validar-cuenta";
 
                     if (!profile.tipo_cuenta) {
-                      return router.push("/google/setup");
+                      return window.location.href="/google/setup";
                     }                    
                         
                   } catch (err) {

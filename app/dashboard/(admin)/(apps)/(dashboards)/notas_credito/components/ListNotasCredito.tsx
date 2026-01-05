@@ -92,6 +92,34 @@ const ListNotasCredito = () => {
     return new Date().toISOString().slice(0, 10);
   };
   
+  const excelDate = (value?: string) => {
+    if (!value) return "";
+  
+    // ISO
+    if (value.includes("T")) {
+      return new Date(value);
+    }
+  
+    // YYYY-MM-DD
+    if (value.includes("-")) {
+      return new Date(value + "T00:00:00");
+    }
+  
+    // DD/MM/YYYY
+    if (value.includes("/")) {
+      const [d, m, y] = value.split("/");
+      return new Date(`${y}-${m}-${d}T00:00:00`);
+    }
+  
+    return value;
+  };
+
+  const safeSheetName = (name: string) => {
+    return name
+      .replace(/[\\\/\?\*\[\]:]/g, "")
+      .substring(0, 31);
+  };
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -160,6 +188,8 @@ const ListNotasCredito = () => {
 
   // fetch notas de crédito
   const fetchNotas = async () => {
+    if (!selectedRFC || !fechaInicio || !fechaFin) return; // 🔒 BLOQUEO
+
     try {
       const params = {
         rfc: selectedRFC,
@@ -202,6 +232,7 @@ const ListNotasCredito = () => {
   };
 
   useEffect(() => {
+    if (!selectedRFC || !fechaInicio || !fechaFin) return; // 🔒 BLOQUEO
     fetchNotas();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRFC, fechaInicio, fechaFin]);
@@ -293,10 +324,16 @@ const ListNotasCredito = () => {
     // Agrupar notas por mes
     const notasPorMes: Record<string, NotaCredito[]> = {};
     notas.forEach((n) => {
-      const mes = new Date(n.fecha_emision).toLocaleString("es-MX", {
-        month: "long",
-        year: "numeric",
-      });
+      const d = new Date(n.fecha_emision);
+      const year = d.getFullYear();
+      const month = d.getMonth(); // 0-11
+    
+      const meses = [
+        "enero", "febrero", "marzo", "abril", "mayo", "junio",
+        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+      ];
+    
+      const mes = `${meses[month]} de ${year}`;
       if (!notasPorMes[mes]) notasPorMes[mes] = [];
       notasPorMes[mes].push(n);
     });
@@ -312,7 +349,7 @@ const ListNotasCredito = () => {
     };
   
     for (const [mes, notasMes] of Object.entries(notasPorMes)) {
-      const ws = wb.addWorksheet(mes);
+      const ws = wb.addWorksheet(safeSheetName(mes));
   
       // Fila 1: Título
       const headers = [
@@ -343,7 +380,7 @@ const ListNotasCredito = () => {
       // Filas de datos
       notasMes.forEach((n, i) => {
         const row = ws.addRow([
-          n.fecha_emision,
+          excelDate(n.fecha_emision),
           n.uuid,
           n.rfc_emisor,
           n.nombre_emisor,
@@ -368,6 +405,8 @@ const ListNotasCredito = () => {
           n.metodo_pago,
           n.estatus,
         ]);
+
+        row.getCell(1).numFmt = "dd/mm/yyyy"; // Fecha emisión
   
         row.eachCell({ includeEmpty: true }, (cell) => {
           cell.fill = {

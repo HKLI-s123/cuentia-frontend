@@ -20,7 +20,7 @@ export function withSessionGuard(Component: any) {
 
     // No autenticado
     if (!user) {
-      router.replace("/login");
+      window.location.href="/login";
       return null;
     }
 

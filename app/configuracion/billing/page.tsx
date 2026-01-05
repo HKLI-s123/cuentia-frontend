@@ -322,7 +322,7 @@ export default function FacturacionPage() {
         </div>
       
         <div
-          onClick={() => router.push("/plans")}
+          onClick={() => window.location.href = "/plans"}
           className={`inline-flex items-center gap-2 px-4 py-1 mt-3 rounded-full text-white cursor-pointer hover:opacity-90 transition ${planStyles.badge}`}
         >
           {formatPlanName(planInfo?.plan || "")}

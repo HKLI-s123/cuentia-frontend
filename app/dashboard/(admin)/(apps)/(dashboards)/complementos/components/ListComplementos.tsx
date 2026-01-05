@@ -123,6 +123,51 @@ const ListPagos = () => {
     return new Date().toISOString().slice(0, 10);
   };
 
+  const formatFiscalDate = (value?: string) => {
+    if (!value) return "";
+  
+    // Si viene con hora (ISO)
+    if (value.includes("T")) {
+      return value.split("T")[0].split("-").reverse().join("/");
+    }
+  
+    // Si ya viene YYYY-MM-DD
+    if (value.includes("-")) {
+      return value.split("-").reverse().join("/");
+    }
+  
+    return value;
+  };
+
+  const safeSheetName = (name: string) => {
+    return name
+      .replace(/[\\\/\?\*\[\]:]/g, "") // elimina caracteres ilegales
+      .substring(0, 31); // Excel max 31 chars
+  };
+
+  const excelDate = (value?: string) => {
+    if (!value) return "";
+  
+    // ISO
+    if (value.includes("T")) {
+      return new Date(value);
+    }
+  
+    // YYYY-MM-DD
+    if (value.includes("-")) {
+      return new Date(value + "T00:00:00");
+    }
+  
+    // DD/MM/YYYY
+    if (value.includes("/")) {
+      const [d, m, y] = value.split("/");
+      return new Date(`${y}-${m}-${d}T00:00:00`);
+    }
+  
+    return value;
+  };
+
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -189,6 +234,7 @@ const ListPagos = () => {
 
   // fetch pagos from service
   const fetchPagos = async () => {
+    if (!selectedRFC || !fechaInicio || !fechaFin) return; // 🔒 BLOQUEO
     try {
       const params = {
         rfc: selectedRFC,
@@ -228,7 +274,7 @@ const ListPagos = () => {
         imp_saldo_insoluto: Number(p.imp_saldo_insoluto ?? 0),
         objeto_imp_dr: p.objeto_imp_dr ?? "",
         metodo_pago_dr: p.metodo_pago_dr ?? "",
-        fecha_factura: p.fecha_factura ?? "",
+        fecha_factura: formatFiscalDate(p.fecha_factura) ?? "",
         forma_pago_factura: p.forma_pago_factura ?? "",
         condiciones_pago: p.condiciones_pago ?? "",
         subtotal: Number(p.subtotal ?? 0),
@@ -264,6 +310,7 @@ const ListPagos = () => {
   };
 
   useEffect(() => {
+    if (!selectedRFC || !fechaInicio || !fechaFin) return; // 🔒 BLOQUEO
     fetchPagos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRFC, fechaInicio, fechaFin]);
@@ -280,8 +327,8 @@ const ListPagos = () => {
       valueB = Number(valueB);
     }
     if (key === "fecha_pago" || key === "fecha_emision" || key === "fecha_factura") {
-      valueA = new Date(valueA).getTime();
-      valueB = new Date(valueB).getTime();
+      valueA = valueA || "";
+      valueB = valueB || "";
     }
 
     if (valueA < valueB) return direction === "asc" ? -1 : 1;
@@ -366,10 +413,35 @@ const ListPagos = () => {
     // Agrupar pagos por mes
     const pagosPorMes: Record<string, Pago[]> = {};
     pagos.forEach((p) => {
-      const mes = new Date(p.fecha_pago || p.fecha_emision).toLocaleString("es-MX", {
-        month: "long",
-        year: "numeric",
-      });
+    const fechaBase = p.fecha_pago || p.fecha_emision; // ISO o YYYY-MM-DD
+    
+    let year = "";
+    let month = "";
+    
+    if (fechaBase.includes("T")) {
+      // ISO
+      const [y, m] = fechaBase.split("T")[0].split("-");
+      year = y;
+      month = m;
+    } else if (fechaBase.includes("-")) {
+      // YYYY-MM-DD
+      const [y, m] = fechaBase.split("-");
+      year = y;
+      month = m;
+    } else {
+      // DD/MM/YYYY
+      const [d, m, y] = fechaBase.split("/");
+      year = y;
+      month = m;
+    }
+      
+      const meses = [
+        "enero", "febrero", "marzo", "abril", "mayo", "junio",
+        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+      ];
+      
+      const mes = `${meses[Number(month) - 1]} de ${year}`;
+
       if (!pagosPorMes[mes]) pagosPorMes[mes] = [];
       pagosPorMes[mes].push(p);
     });
@@ -389,7 +461,7 @@ const ListPagos = () => {
       // Ordenar por UUID de factura
       pagosMes.sort((a, b) => (a.uuid_factura || "").localeCompare(b.uuid_factura || ""));
   
-      const ws = wb.addWorksheet(mes);
+      const ws = wb.addWorksheet(safeSheetName(mes));
   
       const headers = [
         "Fecha Emisión", "UUID Complemento", "UUID Factura", "RFC Emisor", "Nombre Emisor", "Régimen Emisor",
@@ -433,19 +505,23 @@ const ListPagos = () => {
       // Filas de datos
       pagosMes.forEach((p, i) => {
         const row = ws.addRow([
-          p.fecha_emision, p.uuid_complemento, p.uuid_factura, p.rfc_emisor, p.nombre_emisor, p.regimen_emisor,
-          p.rfc_receptor, p.nombre_receptor, p.regimen_receptor, p.fecha_pago, p.forma_pago,
+          excelDate(p.fecha_emision), p.uuid_complemento, p.uuid_factura, p.rfc_emisor, p.nombre_emisor, p.regimen_emisor,
+          p.rfc_receptor, p.nombre_receptor, p.regimen_receptor, excelDate(p.fecha_pago), p.forma_pago,
           p.moneda_pago, p.tipo_cambio_pago, p.monto, p.rfc_cta_ordenante, p.banco_ordenante,
           p.cta_ordenante, p.rfc_cta_beneficiario, p.cta_beneficiario, p.serie,
           p.folio, p.moneda_dr, p.equivalencia_dr, p.num_parcialidad, p.imp_saldo_ant, p.imp_pagado,
-          p.imp_saldo_insoluto, p.objeto_imp_dr, p.metodo_pago_dr, p.fecha_factura, p.forma_pago_factura,
+          p.imp_saldo_insoluto, p.objeto_imp_dr, p.metodo_pago_dr, excelDate(p.fecha_factura), p.forma_pago_factura,
           p.condiciones_pago, p.subtotal, p.descuento, p.moneda, p.tipo_cambio, p.total,
           p.tipo_comprobante, p.metodo_pago, p.total_imp_trasladados, p.total_imp_retenidos,
           p.base_16, p.importe_trasladado_16, p.tipo_factor_16, p.tasa_cuota_16, p.impuesto_retenido,
           p.base_8, p.importe_trasladado_8, p.tipo_factor_8, p.tasa_cuota_8, p.base_exento,
           p.impuesto_exento, p.tipo_exento,
         ]);
-  
+
+        row.getCell(1).numFmt = "dd/mm/yyyy";  // Fecha Emisión
+        row.getCell(10).numFmt = "dd/mm/yyyy"; // Fecha Pago
+        row.getCell(30).numFmt = "dd/mm/yyyy"; // Fecha Factura
+
         // Estilo alternado + bordes
         row.eachCell((cell) => {
           cell.fill = {
@@ -698,7 +774,7 @@ const ListPagos = () => {
                     return (
                       <tr key={pago.id}>
                         {(tipoCuenta === "empresarial" || tipoCuenta === "empleado") && <td>{pago.uuid_complemento}</td>}
-                        <td>{new Date(pago.fecha_pago).toLocaleDateString()}</td>
+                        <td>{formatFiscalDate(pago.fecha_pago)}</td>
                         <td>{pago.rfc_emisor}</td>
                         <td>{pago.rfc_receptor}</td>
                         <td><strong>${safeNum(pago.monto).toLocaleString()}</strong></td>

@@ -72,7 +72,7 @@ export const MainRevenueChart = ({ data }: MainRevenueChartProps) => {
   const [selectedDescripcion, setSelectedDescripcion] = useState<string | null>(null);
   const [facturas, setFacturas] = useState<Factura[]>([]);
   const [search, setSearch] = useState("");
-
+  
   // Función para obtener facturas por UUIDs
   const fetchFacturas = async (uuids: string[]) => {
     if (!uuids || uuids.length === 0) {
@@ -101,6 +101,13 @@ export const MainRevenueChart = ({ data }: MainRevenueChartProps) => {
   const filteredFacturas = facturas.filter(f =>
     f.uuid.includes(search) || f.rfc_emisor.includes(search) || f.razonsocialemisor.includes(search)
   );
+
+  const formatFiscalDate = (value?: string) => {
+    if (!value) return "";
+    if (value.includes("T")) return value.split("T")[0].split("-").reverse().join("/");
+    if (value.includes("-")) return value.split("-").reverse().join("/");
+    return value;
+  };
 
   return (
     <>
@@ -152,7 +159,14 @@ export const MainRevenueChart = ({ data }: MainRevenueChartProps) => {
           onChange={e => setSearch(e.target.value)}
           style={{ marginBottom: 16 }}
         />
-       <div style={{ width: "100%", overflowX: "auto" }}>
+        <div
+          style={{
+            width: "100%",
+            maxHeight: "420px",   // 👈 altura máxima del listado
+            overflowY: "auto",    // 👈 scroll vertical
+            overflowX: "auto",    // mantiene scroll horizontal si hace falta
+          }}
+        >
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
@@ -169,7 +183,7 @@ export const MainRevenueChart = ({ data }: MainRevenueChartProps) => {
             {filteredFacturas.map(f => (
               <tr key={f.uuid}>
                 <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{f.uuid}</td>
-                <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{f.fecha}</td>
+                <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{formatFiscalDate(f.fecha)}</td>
                 <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{f.rfc_emisor}</td>
                 <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{f.razonsocialemisor}</td>
                 <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{f.moneda}</td>
@@ -190,7 +204,7 @@ export const MainExpensesChart = ({ data }: MainExpensesChartProps) => {
   const [selectedDescripcion, setSelectedDescripcion] = useState<string | null>(null);
   const [facturas, setFacturas] = useState<Factura[]>([]);
   const [search, setSearch] = useState("");
-    const [darkMode, setDarkMode] = useState(false); // 🌙 Estado del modo oscuro
+  const [darkMode, setDarkMode] = useState(false); // 🌙 Estado del modo oscuro
 
 
   // Función para obtener facturas por UUIDs
@@ -244,6 +258,12 @@ export const MainExpensesChart = ({ data }: MainExpensesChartProps) => {
     color: darkMode ? "#eaeaea" : "#000",
   };
 
+  const formatFiscalDate = (value?: string) => {
+    if (!value) return "";
+    if (value.includes("T")) return value.split("T")[0].split("-").reverse().join("/");
+    if (value.includes("-")) return value.split("-").reverse().join("/");
+    return value;
+  };
 
   return (
     <>
@@ -298,7 +318,14 @@ export const MainExpensesChart = ({ data }: MainExpensesChartProps) => {
           onChange={e => setSearch(e.target.value)}
           style={{ marginBottom: 16 }}
         />
-       <div style={{ width: "100%", overflowX: "auto" }}>
+        <div
+          style={{
+            width: "100%",
+            maxHeight: "420px",   // 👈 altura máxima del listado
+            overflowY: "auto",    // 👈 scroll vertical
+            overflowX: "auto",    // mantiene scroll horizontal si hace falta
+          }}
+        >
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
@@ -315,7 +342,7 @@ export const MainExpensesChart = ({ data }: MainExpensesChartProps) => {
             {filteredFacturas.map(f => (
               <tr key={f.uuid}>
                 <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{f.uuid}</td>
-                <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{f.fecha}</td>
+                <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{formatFiscalDate(f.fecha)}</td>
                 <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{f.rfc_emisor}</td>
                 <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{f.razonsocialemisor}</td>
                 <td style={{ padding: "8px", borderBottom: "1px solid #eee" }}>{f.moneda}</td>
@@ -335,17 +362,35 @@ export const MainExpensesChart = ({ data }: MainExpensesChartProps) => {
 export const ExpensesByProviderChart = ({ data }: ExpensesByProviderChartProps) => {
     const colors = ["#4caf50", "#2196f3", "#ff9800", "#9c27b0", "#f44336", "#00bcd4"];
 
+    const truncate = (text: string, max = 18) =>
+      text.length > max ? text.slice(0, max) + "…" : text;
+
   return (
     <EChartClient
       extensions={[BarChart, TooltipComponent, LegendComponent, GridComponent, CanvasRenderer]}
       getOptions={() => ({
-        tooltip: { trigger: "axis", formatter: "{b}: <strong>${c}</strong>" },
+        tooltip: {
+          trigger: "axis",
+          formatter: (params: any) => {
+            const p = params[0];
+            return `
+              <strong>${p.name}</strong><br/>
+              Gasto: $${Number(p.value).toLocaleString("es-MX")}
+            `;
+          },
+        },
         legend: { show: false },
         grid: { left: "4%", right: "4%", top: "10%", bottom: "15%", containLabel: true },
         xAxis: {
           type: "category",
           data: data.map(item => item.name), // usar la propiedad de proveedor de tu data
-          axisLabel: { interval: 0, rotate: 30 } // rotar etiquetas largas
+          axisLabel: {
+            interval: 0,
+            rotate: 45,              // 👈 más rotación
+            width: 120,              // 👈 ancho máximo
+            overflow: "truncate",    // 👈 clave
+            formatter: (value: string) => truncate(value, 22),
+          },
         },
         yAxis: {
           type: "value",
@@ -375,17 +420,33 @@ export const ExpensesByProviderChart = ({ data }: ExpensesByProviderChartProps) 
 export const RevenueByClientChart = ({ data }: ClientsRevenueProps) => {
   const colors = ["#4caf50", "#2196f3", "#ff9800", "#9c27b0", "#f44336", "#00bcd4"];
 
+  const truncate = (text: string, max = 22) =>
+    text.length > max ? text.slice(0, max) + "…" : text;
+
   return (
     <EChartClient
       extensions={[BarChart, TooltipComponent, LegendComponent, GridComponent, CanvasRenderer]}
       getOptions={() => ({
-        tooltip: { trigger: "axis", formatter: "{b}: <strong>${c}</strong>" },
+        tooltip: {
+          trigger: "axis",
+          formatter: (params: any) => {
+            const p = params[0];
+            return `
+              <strong>${p.name}</strong><br/>
+              Ingresos: $${Number(p.value).toLocaleString("es-MX")}
+            `;
+          },
+        },
         legend: { show: false },
         grid: { left: "4%", right: "4%", top: "10%", bottom: "15%", containLabel: true },
         xAxis: {
           type: "category",
           data: data.map(item => item.name), // usar la propiedad de cliente de tu data
-          axisLabel: { interval: 0, rotate: 30 } // rotar etiquetas largas
+          axisLabel: {
+             interval: 0, 
+             rotate: 30,
+             formatter: (value: string) => truncate(value),
+            }, // rotar etiquetas largas
         },
         yAxis: {
           type: "value",

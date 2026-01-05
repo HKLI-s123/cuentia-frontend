@@ -36,13 +36,13 @@ export default function OnboardingPage() {
         const data = await getSessionInfo();
 
         if (!data.verified) {
-          router.push("/validar-cuenta");
+          window.location.href="/validar-cuenta";
           return;
         }
 
         setSession(data);
       } catch (err) {
-        router.push("/login");
+        window.location.href="/login";
       } finally {
         setLoading(false);
       }

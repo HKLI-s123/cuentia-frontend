@@ -148,6 +148,8 @@ const ListFacturas = () => {
   };
 
   const fetchFacturas = async () => {
+    if (!selectedRFC || !fechaInicio || !fechaFin) return; // 🔒 BLOQUEO
+
     try {
       const params = {
         rfc: selectedRFC,
@@ -163,6 +165,10 @@ const ListFacturas = () => {
 
       const data: Factura[] = filtradas.map((f: any, idx: number) => {
         let movimiento = f.movimiento;
+
+        const fechaFiscal = f.fecha
+          ? f.fecha.substring(0, 10) // YYYY-MM-DD
+          : "";
        
         if (f.tipocomprobante === "N") {
           if (f.rfc_emisor === selectedRFC) {
@@ -198,7 +204,7 @@ const ListFacturas = () => {
         total: Number(f.total),
         clasificacion: f.clasificacion,
         status: f.status,
-        fecha_emision: f.fecha,
+        fecha_emision: fechaFiscal,
         movimiento,
         tipocomprobante: f.tipocomprobante,
         totalretenidos: f.totalretenidos,
@@ -225,6 +231,7 @@ const ListFacturas = () => {
   };
 
   useEffect(() => {
+    if (!selectedRFC || !fechaInicio || !fechaFin) return;
     fetchFacturas()
   }, [selectedRFC, fechaInicio, fechaFin])
 
@@ -241,8 +248,8 @@ const ListFacturas = () => {
       valueB = Number(valueB);
     }
     if (key === "fecha_emision") {
-      valueA = new Date(valueA).getTime();
-      valueB = new Date(valueB).getTime();
+      valueA = valueA;
+      valueB = valueB;
     }
 
     if (valueA < valueB) return direction === "asc" ? -1 : 1;
@@ -306,7 +313,16 @@ const ListFacturas = () => {
     
       const facturasPorMes: Record<string, Factura[]> = {};
       data.forEach((f) => {
-        const mes = new Date(f.fecha_emision).toLocaleString("es-MX", { month: "long", year: "numeric" });
+        const [year, month] = f.fecha_emision.split("-");
+        
+        const mes = new Date(
+          Number(year),
+          Number(month) - 1,
+          1
+        ).toLocaleString("es-MX", {
+          month: "long",
+          year: "numeric",
+        });
         if (!facturasPorMes[mes]) facturasPorMes[mes] = [];
         facturasPorMes[mes].push(f);
       });
@@ -401,7 +417,7 @@ const ListFacturas = () => {
             for (const [rfc, facturasRfc] of Object.entries(rfcGroups)) {
             facturasRfc.forEach(f => {
                 const row = ws.addRow([
-                new Date(f.fecha_emision).toLocaleDateString(),
+                f.fecha_emision.split("-").reverse().join("/"),
                 f.uuid || "", f.cliente?.nombre || "", f.rfc_emisor || "", f.regimenfiscal || "",
                 f.rfc_receptor || "", f.regimenfiscalreceptor || "",
                 toPesos(f, f.subtotal), toPesos(f, f.iva8), toPesos(f, f.iva16), toPesos(f, f.totaltrasladado),
@@ -437,7 +453,7 @@ const ListFacturas = () => {
             // Ingresos y Nómina: listado simple
             data.forEach(f => {
               const row = ws.addRow([
-                new Date(f.fecha_emision).toLocaleDateString(),
+                f.fecha_emision.split("-").reverse().join("/"),
                 f.uuid || "", f.cliente?.nombre || "", f.rfc_emisor || "", f.regimenfiscal || "",
                 f.rfc_receptor || "", f.regimenfiscalreceptor || "", f.subtotal || 0, f.iva8 || 0,
                 f.iva16 || 0, f.totaltrasladado || 0, f.retencionisr || 0, f.retencioniva || 0,
@@ -665,7 +681,7 @@ const ListFacturas = () => {
             f.cliente?.nombre || "",
             f.rfc_emisor,
             f.rfc_receptor,
-            new Date(f.fecha_emision).toLocaleDateString(),
+            f.fecha_emision.split("-").reverse().join("/"),
             f.total,
             f.totalretenidos,
             f.status,
@@ -915,7 +931,7 @@ const ListFacturas = () => {
                         <td>{factura?.rfc_receptor}</td>
                         <td>{factura.movimiento}</td>
                         <td><strong>${factura.total.toLocaleString()}</strong></td>
-                        <td>{new Date(factura.fecha_emision).toLocaleDateString()}</td>
+                        <td>{factura.fecha_emision.split("-").reverse().join("/")}</td>
                         <td>
                           <TbCircleFilled className={`fs-xs text-${factura.status === "Vigente" ? "success" : factura.status === "Pendiente" ? "warning" : "danger"} me-1`} />
                           {factura.status}

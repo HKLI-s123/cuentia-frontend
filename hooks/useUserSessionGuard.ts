@@ -30,7 +30,7 @@ export function useOnboardingRedirect(session: any) {
     // 2️⃣ Verificación obligatoria
     if (!session.verified) {
       if (pathname !== "/validar-cuenta") {
-        router.push("/validar-cuenta");
+        window.location.href="/validar-cuenta";
       }
       return;
     }
@@ -41,7 +41,7 @@ export function useOnboardingRedirect(session: any) {
     // 4️⃣ Individual = requiere propioRFC obligatorio
     if (session.tipoCuenta === "individual") {
       if (!session.propioRFC) {
-        router.push("/onboarding");
+        window.location.href="/onboarding";
       }
       return;
     }
@@ -53,7 +53,7 @@ export function useOnboardingRedirect(session: any) {
         if (session.omitOnboarding === true) {
           return; // permitir
         }
-        router.push("/onboarding");
+        window.location.href="/onboarding";
       }
       return;
     }

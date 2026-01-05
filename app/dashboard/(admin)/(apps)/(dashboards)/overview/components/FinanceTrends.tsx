@@ -177,11 +177,13 @@ const FinanceTrends = ({ rfc }: Props) => {
             <Row className="g-0">
               {/* Chart dinámico con fechas */}
               <Col xxl={8} className="border-end border-dashed">
-                <FinanceChart
-                  rfc={rfc}
-                  startDate={startDate}
-                  endDate={endDate}
-                />
+                {startDate && endDate && (
+                  <FinanceChart
+                    rfc={rfc}
+                    startDate={startDate}
+                    endDate={endDate}
+                  />
+                )}
               </Col>
 
               {/* KPIs */}

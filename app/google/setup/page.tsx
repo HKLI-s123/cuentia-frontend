@@ -104,7 +104,7 @@ export default function GoogleSetupPage() {
       // Empresarial → onboarding
       // Individual / invitado → dashboard
       if (tipoCuenta === "empresarial" || tipoCuenta === "individual") {
-        router.push("/onboarding");
+        window.location.href="/onboarding";
       } else {
         router.push("/dashboard/overview");
       }

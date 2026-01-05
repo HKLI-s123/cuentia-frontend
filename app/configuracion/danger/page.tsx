@@ -48,7 +48,7 @@ export default function DangerZonePage() {
         const b = await getBillingInfo();
         setBilling(b);
       } catch {
-        router.push("/login");
+        window.location.href="/login";
       } finally {
         setLoading(false);
       }
@@ -122,7 +122,7 @@ export default function DangerZonePage() {
       localStorage.removeItem("accessToken");
 
       toast.success("Cuenta eliminada correctamente");
-    //  router.push("/login");
+      window.location.href="/login";
     } catch (err: any) {
       toast.error(err.message || "No se pudo eliminar la cuenta");
     }

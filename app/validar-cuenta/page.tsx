@@ -29,7 +29,7 @@ export default function ValidarCuentaPage() {
     const success = await logoutUser();
     if (success) {
       toast.success("Sesión cerrada");
-      router.push("/login");
+      window.location.href="/login";
     }
   };
 

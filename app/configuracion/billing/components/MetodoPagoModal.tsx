@@ -87,7 +87,7 @@ export default function MetodoPagoModal({
             </button>
 
             <button
-              onClick={() => router.push("/plans")}
+              onClick={() => window.location.href = "/plans"}
               className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
             >
               Ir a planes
