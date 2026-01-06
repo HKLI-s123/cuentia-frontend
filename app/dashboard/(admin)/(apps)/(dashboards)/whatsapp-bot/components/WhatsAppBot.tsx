@@ -6,40 +6,48 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Container, Row, Col, Card, Button, Spinner } from "react-bootstrap";
 import { TbBrandWhatsapp, TbRocket } from "react-icons/tb";
+import {getWhatsappBotStatus, setWhatsappBotPhone} from "@/app/services/botService";
+import { ConfirmRemovePhoneModal } from "./ConfirmRemovePhoneModal";
+import { BotPhoneModal } from "./BotPhoneModal";
+import { toast } from "sonner";
 
 export const WhatsappBot = () => {
-  const [hasBot, setHasBot] = useState<boolean | null>(null); // null = cargando
   const [session, setSession] = useState<any>(null);
+  const [botStatus, setBotStatus] = useState<any>(null);
+  const [loadingBot, setLoadingBot] = useState(true);
   const [showInstructions, setShowInstructions] = useState(true);
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
 
   useEffect(() => {
     const load = async () => {
       try {
         const data = await getSessionInfo();
         setSession(data);
-
-        // 🔒 Validar que esté verificado
+  
         if (!data.verified) {
           window.location.href = "/validar-cuenta";
           return;
         }
-
-        // TODO: cuando conectes al backend de bots, aquí setHasBot(true/false)
-        setHasBot(false);
-
+  
+        const status = await getWhatsappBotStatus();
+        setBotStatus(status);
       } catch (err: any) {
-        console.error("Error cargando sesión:", err);
-
-        // 🔐 Si no hay sesión → al login
+        console.error(err);
+  
         if (err?.status === 401 || err?.status === 403) {
           localStorage.removeItem("accessToken");
           window.location.href = "/login";
         }
+      } finally {
+        setLoadingBot(false);
       }
     };
-
+  
     load();
   }, []);
+  
 
   useOnboardingRedirect(session);
 
@@ -51,8 +59,7 @@ export const WhatsappBot = () => {
     );
   }
 
-  // ⏳ Mientras carga
-  if (!session || hasBot === null) {
+  if (!session || loadingBot) {
     return (
       <Container fluid className="mt-4 text-center">
         <Spinner animation="border" role="status" />
@@ -181,33 +188,119 @@ export const WhatsappBot = () => {
               </motion.div>
               )}
               </AnimatePresence>
-
-
-              <div className="d-flex justify-content-center gap-3 mt-4">
-                {session.tipoCuenta === "invitado" ? (
-                  <Button variant="secondary" size="lg" disabled>
-                    <TbRocket className="me-2" /> No disponible
-                  </Button>
-                ) : hasBot ? (
-                  <Button
-                    variant="success"
-                    size="lg"
-                    href="https://wa.me/521XXXXXXXXXX"
-                    target="_blank"
-                  >
-                    <TbBrandWhatsapp className="me-2" /> Abrir en WhatsApp
-                  </Button>
-                ) : (
-                  <Button variant="primary" size="lg">
-                    <TbRocket className="me-2" /> Contratar Bot
-                  </Button>
-                )}
-              </div>
+                <div className="d-flex flex-column align-items-center gap-3 mt-4">
+                
+                  {/* 🚫 Invitado */}
+                  {session.tipoCuenta === "invitado" && (
+                    <Button variant="secondary" size="lg" disabled>
+                      <TbRocket className="me-2" /> No disponible
+                    </Button>
+                  )}
+                
+                  {/* 🆕 No tiene número */}
+                  {session.tipoCuenta !== "invitado" && !botStatus.hasPhone && (
+                    <>
+                      <Button
+                       variant="primary" 
+                       size="lg"
+                       onClick={() => {
+                        setModalTitle("Agregar número de WhatsApp");
+                        setShowPhoneModal(true);
+                      }}                    
+                       >
+                        + Agregar número
+                      </Button>
+                
+                      {botStatus.userPhone && (
+                        <Button
+                          variant="outline-secondary"
+                          size="lg"
+                          onClick={async () => {
+                            try {
+                              if (!botStatus.userPhone) {
+                                toast.error("No hay un número registrado en tu cuenta.");
+                                return;
+                              }
+                        
+                              await setWhatsappBotPhone(botStatus.userPhone);
+                        
+                              const refreshed = await getWhatsappBotStatus();
+                              setBotStatus(refreshed);
+                        
+                              toast.success("Se usó el número registrado en tu cuenta.");
+                            } catch (err: any) {
+                              toast.error(err.message || "Error al usar el número de tu cuenta.");
+                            }
+                          }}
+                        >
+                          Usar número de mi cuenta ({botStatus.userPhone})
+                        </Button>
+                      )}
+                    </>
+                  )}
+                
+                  {/* ✅ Tiene número */}
+                  {session.tipoCuenta !== "invitado" && botStatus.hasPhone && (
+                    <>
+                      <div className="text-muted">
+                        Número configurado: <strong>{botStatus.phone}</strong>
+                      </div>
+                
+                      <Button
+                        variant="success"
+                        size="lg"
+                        href={`https://wa.me/521XXXXXX`}
+                        target="_blank"
+                      >
+                        <TbBrandWhatsapp className="me-2" /> Abrir en WhatsApp
+                      </Button>
+                
+                      <div className="d-flex gap-2">
+                        <Button
+                          variant="outline-primary"
+                          disabled={!botStatus.canChangeToday}
+                          onClick={() => {
+                            setModalTitle("Cambiar número de WhatsApp");
+                            setShowPhoneModal(true);
+                          }}
+                        >
+                           Cambiar número
+                        </Button>
+                
+                        <Button
+                          variant="outline-danger"
+                          disabled={!botStatus.canRemoveToday}
+                          onClick={() => setShowRemoveModal(true)}
+                        >
+                          Quitar número
+                        </Button>
+                      </div>
+                
+                      {!botStatus.canChangeToday && !botStatus.canRemoveToday && (
+                        <div className="text-muted mt-2" style={{ fontSize: "0.85rem" }}>
+                           Ya realizaste cambios hoy. Podrás modificarlo mañana.
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
             </Card.Body>
           </Card>
         </Col>
       </Row>
-    </Container>
+      <BotPhoneModal
+        show={showPhoneModal}
+        title={modalTitle}
+        onClose={() => setShowPhoneModal(false)}
+        onSuccess={setBotStatus}
+      />
+      
+      <ConfirmRemovePhoneModal
+        show={showRemoveModal}
+        onClose={() => setShowRemoveModal(false)}
+        onSuccess={setBotStatus}
+      />
+    </Container>    
   );
 };
 
