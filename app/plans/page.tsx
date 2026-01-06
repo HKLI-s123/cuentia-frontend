@@ -24,7 +24,7 @@ const PLANS = [
   {
     name: "Individual",
     code: "cuentia_plan_individual",
-    monthlyPriceId: "price_1Sfp9MKg1JUMkNoEzMOiQnNa",
+    monthlyPriceId: "price_1Sfp9MKg1JUMkNoETWeHPMaK",
     annualPriceId: "price_1Sfp9MKg1JUMkNoEYAD0iqqT",
     monthlyText: "$99 MXN/mes",
     annualText: "$79 MXN/mes (facturado anualmente)",
