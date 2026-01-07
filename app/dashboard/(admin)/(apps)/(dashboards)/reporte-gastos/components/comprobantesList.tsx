@@ -23,7 +23,7 @@ export const ComprobantesCliente = ({ userId }: ComprobantesClienteProps) => {
   const [comprobantes, setComprobantes] = useState<Comprobante[]>([]);
   const [loading, setLoading] = useState(false);
   const [fechaInicio, setFechaInicio] = useState(() => {
-    const now = new Date();
+  const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1)
       .toISOString()
       .split("T")[0];
@@ -35,6 +35,16 @@ export const ComprobantesCliente = ({ userId }: ComprobantesClienteProps) => {
       .split("T")[0];
   });
 
+  const safeNumber = (value: any): number => {
+    if (value === null || value === undefined) return 0;
+    if (typeof value === "number") return value;
+  
+    const cleaned = value.toString().replace(/[^0-9.-]/g, "");
+    const parsed = Number(cleaned);
+  
+    return isNaN(parsed) ? 0 : parsed;
+  };
+  
   const cargarComprobantes = async () => {
     setLoading(true);
     try {
@@ -95,12 +105,6 @@ export const ComprobantesCliente = ({ userId }: ComprobantesClienteProps) => {
       cargarComprobantes();
     }
   }, [userId, fechaInicio, fechaFin]);
-
-  useEffect(() => {
-    if (comprobantes.length > 0) {
-      console.log("DEBUG TOTAL:", comprobantes[0].Total, typeof comprobantes[0].Total);
-    }
-  }, [comprobantes]);  
 
   return (
     <Card className="mt-4 shadow-sm">
@@ -168,14 +172,13 @@ export const ComprobantesCliente = ({ userId }: ComprobantesClienteProps) => {
               <tbody>
                 {comprobantes.map((c) => (
                   <tr key={c.id}>
-                    <td>{c.Total}</td>
                     <td>{c.Fecha || "—"}</td>
                     <td>{c.Nombre_del_emisor_del_ticket || "—"}</td>
                     <td>{c.rfc || "—"}</td>
                     <td>{c.Numero_de_ticket || "—"}</td>
-                    <td>${Number(c.Total || 0).toLocaleString()}</td>
-                    <td>{c.Iva8 ?? "—"}</td>
-                    <td>{c.Iva16 ?? "—"}</td>
+                    <td>${safeNumber(c.Total).toLocaleString("es-MX")}</td>
+                    <td>${safeNumber(c.Iva8).toLocaleString("es-MX")}</td>
+                    <td>${safeNumber(c.Iva16).toLocaleString("es-MX")}</td>
                     <td>
                       {c.createdAt
                         ? new Date(c.createdAt).toLocaleString("es-MX")
