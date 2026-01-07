@@ -80,13 +80,23 @@ export default function TransferPage() {
                 <b className="text-indigo-300">Banco:</b> BBVA
               </p>
               <p className="mb-1">
+                <b className="text-indigo-300">Beneficiario:</b> Sergio Rosales
+              </p>
+              <p className="mb-1">
                 <b className="text-indigo-300">CLABE:</b> 012164015504841260
               </p>
+            
               <p className="mt-2">
                 <b className="text-indigo-300">Referencia:</b>{" "}
                 <span className="font-mono bg-slate-900 px-2 py-1 rounded">
                   {reference}
                 </span>
+              </p>
+            
+              <p className="mt-3 text-xs text-slate-400">
+                Por el momento, los depósitos se reciben a nombre de una{" "}
+                <span className="text-slate-300 font-medium">persona física</span>. 
+                Próximamente, CuentIA contará con cuenta empresarial.
               </p>
             </div>
 

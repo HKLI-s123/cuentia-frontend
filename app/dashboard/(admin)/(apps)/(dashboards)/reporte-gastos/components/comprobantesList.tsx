@@ -96,6 +96,12 @@ export const ComprobantesCliente = ({ userId }: ComprobantesClienteProps) => {
     }
   }, [userId, fechaInicio, fechaFin]);
 
+  useEffect(() => {
+    if (comprobantes.length > 0) {
+      console.log("DEBUG TOTAL:", comprobantes[0].Total, typeof comprobantes[0].Total);
+    }
+  }, [comprobantes]);  
+
   return (
     <Card className="mt-4 shadow-sm">
       <Card.Header className="d-flex justify-content-between align-items-center">
@@ -162,6 +168,7 @@ export const ComprobantesCliente = ({ userId }: ComprobantesClienteProps) => {
               <tbody>
                 {comprobantes.map((c) => (
                   <tr key={c.id}>
+                    <td>{c.Total}</td>
                     <td>{c.Fecha || "—"}</td>
                     <td>{c.Nombre_del_emisor_del_ticket || "—"}</td>
                     <td>{c.rfc || "—"}</td>

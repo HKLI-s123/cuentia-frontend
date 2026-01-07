@@ -94,7 +94,7 @@ const UserProfile = () => {
     return (
         <div className="topbar-item nav-user">
             {planInfo?.plan && (
-              <Link
+              <a
                 href="/plans"
                 className={`px-2 py-0.5 rounded-full text-xs font-semibold ${badgeStyles()}`}
                 title="Ver detalles del plan"
@@ -102,7 +102,7 @@ const UserProfile = () => {
                 {planInfo.status === "trialing"
                   ? `Trial · ${getTrialDays()} días`
                   : `${formatPlanName(planInfo.plan)} · Activo`}
-              </Link>
+              </a>
             )}
             <Dropdown align="end">
                 <DropdownToggle as={'a'} className="topbar-link dropdown-toggle drop-arrow-none px-2">
