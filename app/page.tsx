@@ -1018,6 +1018,9 @@ export default function CuentIALandingPage() {
               <div>
                 <div className="font-semibold">© {new Date().getFullYear()} {BRAND.name}</div>
                 <div className="text-sm text-slate-400">Inteligencia fiscal y financiera</div>
+                <div className="text-xs text-slate-500 mt-1">
+                  Un producto de <span className="font-medium">Aurenix™</span>
+                </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">

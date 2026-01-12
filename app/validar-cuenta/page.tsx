@@ -97,7 +97,7 @@ export default function ValidarCuentaPage() {
           transition={{ delay: 0.6 }}
           className="text-sm text-gray-400 mt-6"
         >
-          CuentIA © {new Date().getFullYear()} — Inteligencia fiscal para todos.
+          CuentIA © {new Date().getFullYear()} — Inteligencia fiscal para todos · Un producto de Aurenix™. Todos los derechos reservados.
         </motion.p>
       </motion.div>
     </div>

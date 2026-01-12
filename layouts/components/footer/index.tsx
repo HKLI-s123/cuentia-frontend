@@ -17,7 +17,7 @@ const Footer = () => {
         >
           {/* Texto */}
           <span className="text-muted">
-            © 2025 - {currentYear} {appName}. Todos los derechos reservados.
+            © 2025 - {currentYear} {appName} · Un producto de <strong>Aurenix™</strong>. Todos los derechos reservados.
           </span>
 
           {/* Links + redes */}

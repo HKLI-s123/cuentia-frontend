@@ -119,10 +119,9 @@ export default function TerminosPage() {
           {/* FOOTER */}
           <div className="text-center mt-4">
             <small className="text-muted">
-              © {new Date().getFullYear()} CuentIA — Todos los derechos reservados.
+              © {new Date().getFullYear()} CuentIA · Un producto de Aurenix™. Todos los derechos reservados.
             </small>
           </div>
-
         </div>
       </div>
     </div>
