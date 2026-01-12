@@ -444,10 +444,21 @@ export default function CuentIALandingPage() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* 🔹 Login (discreto) */}
+            <a
+              href="/login"
+              className="hidden sm:inline text-sm text-slate-300 hover:text-white transition"
+            >
+              Iniciar sesión
+            </a>
+          
+            {/* CTA secundario */}
             <Button href={BRAND.ctaSecondary.href} variant="secondary">
               {BRAND.ctaSecondary.label}
             </Button>
+          
+            {/* CTA principal */}
             <Button
               href={BRAND.ctaPrimary.href}
               variant="primary"

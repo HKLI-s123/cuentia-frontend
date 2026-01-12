@@ -111,13 +111,46 @@ export default function NovedadesPage() {
             </h1>
 
             <p className="mt-4 text-slate-300 text-lg leading-relaxed">
-              CuentIA evoluciona constantemente. Estas son las próximas
-              funcionalidades que estamos preparando para ti.
+              CuentIA evoluciona constantemente. Estas son las funcionalidades que estamos construyendo para llevar
+              CuentIA al siguiente nivel.
             </p>
           </motion.div>
         </div>
       </section>
-
+      {/* ASISTENTE FISCAL INTELIGENTE */}
+      <Section
+        eyebrow="En desarrollo"
+        title="Asistente Fiscal Inteligente"
+        subtitle="Monitoreo automático de tu operación fiscal, sin que tengas que pedirlo."
+      >
+        <Card
+          icon={<Sparkles className="h-6 w-6 text-white" />}
+          title="Alertas fiscales proactivas"
+          description="Estamos construyendo un asistente que analiza tu información fiscal de forma continua para detectar riesgos, inconsistencias y oportunidades antes de que se conviertan en problemas."
+          bullets={[
+            "Detección automática de inconsistencias de IVA",
+            "Alertas por CFDI duplicados o incompletos",
+            "Identificación de usos de CFDI atípicos",
+            "Notificaciones directas en tu buzón CuentIA",
+            "Análisis independiente por RFC (ideal para empresas y despachos)",
+          ]}
+          highlight={
+            <>
+              <div className="text-sm font-semibold text-white">
+                Beneficio para usuarios actuales
+              </div>
+              <p className="mt-1 text-sm text-slate-300">
+                Este módulo se liberará primero para usuarios activos de CuentIA.
+                Quienes ya cuenten con una suscripción tendrán{" "}
+                <span className="text-indigo-400 font-semibold">
+                  beneficios preferenciales y condiciones especiales
+                </span>{" "}
+                al activarlo.
+              </p>
+            </>
+          }
+        />
+      </Section>
       {/* COBRANZA */}
       <Section
         eyebrow="Próximamente"
@@ -137,7 +170,7 @@ export default function NovedadesPage() {
           highlight={
             <>
               <div className="text-sm font-semibold text-white">
-                🎁 Beneficio por adopción temprana
+                Beneficio por adopción temprana
               </div>
               <p className="mt-1 text-sm text-slate-300">
                 Si ya eres usuario de CuentIA, recibirás un{" "}

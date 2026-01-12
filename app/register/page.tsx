@@ -221,6 +221,12 @@ export default function RegisterPage() {
               >
                 Continuar
               </button>
+              <p className="text-sm text-center text-gray-600 mt-4">
+                ¿Ya tienes cuenta?{" "}
+                <a href="/login" className="text-indigo-700 font-medium hover:underline">
+                  Inicia sesión
+                </a>
+              </p>
             </>
           )}
 
