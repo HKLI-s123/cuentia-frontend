@@ -55,15 +55,15 @@ export default function AvisoLegalPage() {
 
             <ul className="list-group list-group-flush bg-white mb-3">
               <li className="list-group-item">
-                <strong>Nombre:</strong> Sergio Ivanovich Rosales Márquez
+                <strong>Titular de la plataforma:</strong> Aurenix
               </li>
               <li className="list-group-item">
-                <strong>Régimen fiscal:</strong> Persona Física con Actividad Empresarial
+                <strong>Marca comercial:</strong> CuentIA
               </li>
               <li className="list-group-item">
-                <strong>Marca registrada:</strong> CuentIA (IMPI, México)
+                <strong>Tipo de servicio:</strong> Plataforma tecnológica de software
               </li>
-              <li class-name="list-group-item">
+              <li className="list-group-item">
                 <strong>Correo de contacto:</strong> soporte@cuentia.mx
               </li>
             </ul>
@@ -82,10 +82,11 @@ export default function AvisoLegalPage() {
 
           <Section title="3. Propiedad intelectual">
             <p>
-              Todo el contenido disponible en CuentIA, incluyendo nombre comercial, marca,
+              Todo el contenido disponible en la plataforma CuentIA, incluyendo nombre comercial,
               diseño, código fuente, algoritmos, textos, interfaces, logotipos y documentación,
-              es propiedad exclusiva del Titular y está protegido por la legislación mexicana
-              e internacional.
+              es propiedad exclusiva de Aurenix o cuenta con los derechos de uso correspondientes,
+              y está protegido por la legislación mexicana e internacional en materia de propiedad
+              intelectual.
             </p>
 
             <p className="mb-0">

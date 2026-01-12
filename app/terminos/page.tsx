@@ -89,9 +89,9 @@ export default function TerminosPage() {
 
           <Section title="6. Limitación de responsabilidad">
             <p>
-              CuentIA no se responsabiliza por daños derivados del mal uso de la plataforma,
-              errores presentes en CFDI generados por terceros o información incompleta del
-              contribuyente.
+              La plataforma CuentIA, como producto tecnológico, no se responsabiliza por daños
+              derivados del mal uso del servicio, errores presentes en CFDI generados por terceros
+              o información incompleta o incorrecta proporcionada por el contribuyente.
             </p>
           </Section>
 
