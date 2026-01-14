@@ -124,6 +124,16 @@ export default function PaymentMethodModal({
           </div>
 
           <p className="text-xs text-slate-400 mt-6 text-center">
+            Si requieres factura, registra tus datos fiscales en{" "}
+            <a
+              href="/configuracion/billing"
+              className="text-indigo-400 hover:text-indigo-300 font-semibold"
+            >
+              Configuración → Facturación
+            </a>
+          </p>
+
+          <p className="text-xs text-slate-400 mt-6 text-center">
             Podrás cambiar tu método de pago en cualquier momento.
           </p>
         </motion.div>
