@@ -123,6 +123,11 @@ export default function PaymentMethodModal({
             </motion.button>
           </div>
 
+          {/* Nota IVA */}
+          <p className="text-[11px] text-slate-400 mt-4 text-center">
+            Todos nuestros precios incluyen IVA.
+          </p>
+
           <p className="text-xs text-slate-400 mt-6 text-center">
             Si requieres factura, registra tus datos fiscales en{" "}
             <a
