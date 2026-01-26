@@ -426,8 +426,7 @@ const ListFacturas = () => {
                 f.moneda || "", f.tipocambio || "", f.movimiento || "", f.tipocomprobante || "",
                 f.tipopago || "", f.metodopago || "", f.usocfdi || "", f.status || ""
               ]);
-              console.log(f.tipopago);
-                  if (f.tipopago?.toLowerCase() === "01") {
+                  if (f.tipopago === "01") {
                     row.eachCell((cell) => {
                       cell.fill = {
                         type: "pattern",
@@ -463,7 +462,7 @@ const ListFacturas = () => {
                 f.tipopago || "", f.metodopago || "", f.usocfdi || "", f.status || ""
               ]);
   
-              if (f.tipopago?.toLowerCase() === "efectivo") {
+              if (f.tipopago === "01") {
                     row.eachCell((cell) => {
                       cell.fill = {
                         type: "pattern",
