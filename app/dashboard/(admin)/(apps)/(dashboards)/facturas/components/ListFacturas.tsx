@@ -426,6 +426,7 @@ const ListFacturas = () => {
                 f.moneda || "", f.tipocambio || "", f.movimiento || "", f.tipocomprobante || "",
                 f.tipopago || "", f.metodopago || "", f.usocfdi || "", f.status || ""
               ]);
+              console.log(f.tipopago);
                   if (f.tipopago?.toLowerCase() === "01") {
                     row.eachCell((cell) => {
                       cell.fill = {
