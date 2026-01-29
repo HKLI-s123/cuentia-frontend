@@ -190,7 +190,7 @@ export const ComprobantesDigitalesList = ({
                     <td>{c.banco_emisor || "—"}</td>
                     <td>{c.banco_receptor || "—"}</td>
                     <td>{c.fecha_operacion || "—"}</td>
-                    <td>${Number(c.monto || 0).toLocaleString()}</td>
+                    <td>{c.monto || "-"}</td>
                     <td>{c.titular_receptor || "—"}</td>
           
                     <td>
