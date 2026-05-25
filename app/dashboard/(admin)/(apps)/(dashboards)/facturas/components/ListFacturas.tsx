@@ -6,7 +6,7 @@ import { saveAs } from "file-saver";
 import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle, Col, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Table, Modal, Form } from 'react-bootstrap'
 import { TbCircleFilled, TbDotsVertical, TbFileExport, TbArrowDown, TbArrowUp } from 'react-icons/tb'
 import CardPagination from '@/components/cards/CardPagination'
-import { getFacturas } from "../../../../../../services/financeService"  // 🔹 nuevo servicio
+import { getFacturas, getPagos } from "../../../../../../services/financeService"  // 🔹 nuevo servicio
 import { analizarFacturaIA } from "../../../../../../services/iaService" // 👈 nuevo servicio IA
 import { TbBrain } from "react-icons/tb";
 import { Factura } from "../../../../../../types/factura";
@@ -307,13 +307,31 @@ const ListFacturas = () => {
     if (!selectedRFC || !fechaInicio || !fechaFin) return;
     setLoadingFlujo(true);
     try {
-      // Fetch sin filtrar tipo P
-      const rawData = await getFacturas({ rfc: selectedRFC, startDate: fechaInicio, endDate: fechaFin });
+      // Fetch en paralelo: facturas PUE + complementos de pago (cada uno con su monto correcto)
+      const [todasFacturas, pagosData] = await Promise.all([
+        getFacturas({ rfc: selectedRFC, startDate: fechaInicio, endDate: fechaFin }),
+        getPagos({ rfc: selectedRFC, startDate: fechaInicio, endDate: fechaFin }),
+      ]);
 
-      // Incluir tipo P + cualquier factura con metodopago PUE
-      const flujoData = rawData.filter(
-        (f: any) => f.tipocomprobante === "P" || f.metodopago === "PUE"
-      );
+      // Solo facturas PUE (excluir tipo P, esos vienen del endpoint de pagos)
+      const pueRows = todasFacturas.filter((f: any) => f.metodopago === "PUE");
+
+      // Normalizar complementos de pago al mismo shape que facturas
+      const pagosRows = pagosData.map((p: any) => ({
+        fecha: p.fecha_pago || p.fecha_emision || "",
+        uuid: p.uuid_complemento || "",
+        rfc_emisor: p.rfc_emisor || "",
+        razonsocialemisor: p.nombre_emisor || p.rfc_emisor || "",
+        rfc_receptor: p.rfc_receptor || "",
+        razonsocialreceptor: p.nombre_receptor || p.rfc_receptor || "",
+        total: p.monto,          // monto real del complemento de pago
+        tipocomprobante: "P",
+        metodopago: "",
+        tipopago: p.forma_pago || "",
+        status: "",
+      }));
+
+      const flujoData = [...pueRows, ...pagosRows];
 
       if (flujoData.length === 0) {
         toast.info("No hay facturas de flujo de efectivo en el periodo seleccionado.");
