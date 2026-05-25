@@ -219,7 +219,7 @@ const Page = () => {
         Array.isArray(session?.clientes) &&
         session.clientes.length > 0 && (
           <div className="p-4 mb-4 rounded-xl bg-yellow-100 border border-yellow-300 text-yellow-800">
-            <strong>Bienvenido 🎉</strong>
+            <strong>¡Bienvenido!</strong>
             <p className="mt-1 text-sm">
               Estamos realizando la sincronización inicial de tus CFDIs.  
               Este proceso puede tardar hasta 48 horas en completarse.

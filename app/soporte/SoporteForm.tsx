@@ -113,7 +113,7 @@ export default function SoporteForm() {
                       <TbMail /> soporte@cuentia.mx
                     </p>
                        <p className="mb-1 d-flex align-items-center gap-2">
-                      <TbPhone /> +52 656 405 3919
+                      <TbPhone /> +52 656 833 0819
                     </p>
                     <p className="mb-1 d-flex align-items-center gap-2">
                       <TbBrandWhatsapp className="text-green-500" />  

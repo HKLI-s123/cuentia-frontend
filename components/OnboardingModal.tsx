@@ -31,24 +31,23 @@ const STEPS_INDIVIDUAL: Step[] = [
   },
   {
     icon: <Download className="h-8 w-8 text-indigo-400" />,
-    title: "Descarga tus XMLs del SAT",
+    title: "CuentIA descarga tus facturas automáticamente",
     description:
-      "Entra al portal del SAT y descarga tus facturas en formato XML. CuentIA los procesará automáticamente para darte una visión clara de tus ingresos y egresos.",
-    action: { label: "Ir al portal del SAT", href: "https://www.sat.gob.mx" },
+      "CuentIA se conecta al SAT y obtiene todos tus CFDIs de forma automática, manteniéndolos siempre actualizados.",
   },
   {
     icon: <BarChart2 className="h-8 w-8 text-indigo-400" />,
-    title: "Consulta tus facturas",
+    title: "Tu resumen fiscal",
     description:
-      "Explora tus ingresos y egresos en el dashboard. Filtra por fecha, proveedor o tipo de comprobante para tener siempre el control de tus finanzas.",
-    action: { label: "Ver facturas", href: "/dashboard/facturas" },
+      "En el dashboard verás de un vistazo: ingresos y egresos del periodo, utilidad estimada, ISR e IVA estimados, y tus principales fuentes de ingreso y gasto.",
+    action: { label: "Ver dashboard", href: "/dashboard" },
   },
   {
     icon: <FileSpreadsheet className="h-8 w-8 text-indigo-400" />,
-    title: "Exporta en Excel",
+    title: "Facturas y reportes en Excel",
     description:
-      "Genera reportes detallados de Ingresos, Egresos y Nómina en Excel o PDF con un solo clic. Ideales para tu contador o para tus propios registros.",
-    action: { label: "Ver reportes", href: "/dashboard/reporte-gastos" },
+      "En Facturas consulta el detalle completo de tus CFDIs: facturas de ingreso y egreso, complementos de pago y notas de crédito. Exporta cualquier vista en Excel con un clic.",
+    action: { label: "Ver facturas", href: "/dashboard/facturas" },
   },
 ];
 
@@ -63,29 +62,29 @@ const STEPS_EMPRESARIAL: Step[] = [
     icon: <Users className="h-8 w-8 text-indigo-400" />,
     title: "Registra tus clientes (RFCs)",
     description:
-      "En la sección Clientes puedes agregar los RFCs de tus empresas o clientes. CuentIA descargará y procesará automáticamente sus CFDIs.",
+      "En la sección Clientes agrega el RFC de cada cliente. CuentIA se conecta al SAT y descarga sus facturas de forma automática, manteniéndolas siempre al día.",
     action: { label: "Ir a Clientes", href: "/dashboard/clientes" },
   },
   {
     icon: <BarChart2 className="h-8 w-8 text-indigo-400" />,
-    title: "Consulta sus facturas",
+    title: "Tu resumen fiscal por cliente",
     description:
-      "Revisa ingresos, egresos y nómina de cada RFC desde el dashboard. Filtra por cliente, fecha o tipo de comprobante.",
-    action: { label: "Ver facturas", href: "/dashboard/facturas" },
+      "En el dashboard verás el resumen de cada cliente: ingresos y egresos del periodo, utilidad estimada, ISR e IVA estimados y sus principales movimientos.",
+    action: { label: "Ver dashboard", href: "/dashboard" },
   },
   {
     icon: <FileSpreadsheet className="h-8 w-8 text-indigo-400" />,
-    title: "Exporta reportes en Excel",
+    title: "Facturas y reportes en Excel",
     description:
-      "Genera reportes detallados por cliente en Excel o PDF. Perfectos para auditorías, presentaciones o entrega a tu equipo contable.",
-    action: { label: "Ver reportes", href: "/dashboard/reporte-gastos" },
+      "En Facturas consulta el detalle de cada cliente: facturas de ingreso y egreso, complementos de pago y notas de crédito. Exporta todo en Excel con un clic.",
+    action: { label: "Ver facturas", href: "/dashboard/facturas" },
   },
   {
     icon: <Settings className="h-8 w-8 text-indigo-400" />,
     title: "Agrega colaboradores",
     description:
       "Invita a tu equipo desde Configuración → Colaboradores. Asigna roles y define a qué RFCs puede acceder cada uno.",
-    action: { label: "Ir a Configuración", href: "/configuracion" },
+    action: { label: "Ir a Configuración", href: "/configuracion/equipo" },
   },
 ];
 
