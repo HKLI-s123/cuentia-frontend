@@ -28,6 +28,7 @@ const ListFacturas = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showExportModal, setShowExportModal] = useState(false);
   const [tipoExport, setTipoExport] = useState<"TODO" | "PUE" | "PPD">("TODO");
+  const [loadingFlujo, setLoadingFlujo] = useState(false);
   const [tipoCuenta, setTipoCuenta] = useState<"individual" | "empresarial" | "invitado" | "empleado" | null>(null);
   const [clientes, setClientes] = useState<{ rfc: string; nombre: string }[]>([]);
   const [searchCliente, setSearchCliente] = useState("");
@@ -300,6 +301,155 @@ const ListFacturas = () => {
     }
   
     exportToExcel(facturasFiltradas);
+  };
+
+  const exportarFlujoEfectivo = async () => {
+    if (!selectedRFC || !fechaInicio || !fechaFin) return;
+    setLoadingFlujo(true);
+    try {
+      // Fetch sin filtrar tipo P
+      const rawData = await getFacturas({ rfc: selectedRFC, startDate: fechaInicio, endDate: fechaFin });
+
+      // Incluir tipo P + cualquier factura con metodopago PUE
+      const flujoData = rawData.filter(
+        (f: any) => f.tipocomprobante === "P" || f.metodopago === "PUE"
+      );
+
+      if (flujoData.length === 0) {
+        toast.info("No hay facturas de flujo de efectivo en el periodo seleccionado.");
+        return;
+      }
+
+      const ingresos = flujoData.filter((f: any) => f.rfc_emisor === selectedRFC);
+      const egresos  = flujoData.filter((f: any) => f.rfc_emisor !== selectedRFC);
+
+      const wb = new ExcelJS.Workbook();
+      wb.creator = "CuentIA";
+      wb.created = new Date();
+
+      const ws = wb.addWorksheet("Flujo de Efectivo");
+
+      // ── Título principal ──
+      ws.mergeCells("A1:J1");
+      const tituloCell = ws.getCell("A1");
+      tituloCell.value = `Flujo de Efectivo — ${selectedRFC} | ${fechaInicio} al ${fechaFin}`;
+      tituloCell.font = { bold: true, size: 14, color: { argb: "FFFFFFFF" } };
+      tituloCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E78" } };
+      tituloCell.alignment = { horizontal: "center" };
+
+      const HEADERS = ["Fecha", "UUID", "Contraparte", "RFC Emisor", "RFC Receptor", "Total", "Tipo Comprobante", "Método Pago", "Forma Pago", "Estatus"];
+      const HEADER_STYLE = (color: string) => (cell: ExcelJS.Cell, col: number) => {
+        if (col > HEADERS.length) return;
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
+        cell.alignment = { horizontal: "center" };
+      };
+
+      const addSection = (
+        titulo: string,
+        color: string,
+        headerColor: string,
+        rows: any[]
+      ) => {
+        // Título sección
+        ws.mergeCells(`A${ws.lastRow!.number + 2}:J${ws.lastRow!.number + 2}`);
+        const secRow = ws.lastRow!;
+        secRow.getCell(1).value = titulo;
+        secRow.getCell(1).font = { bold: true, size: 12, color: { argb: "FFFFFFFF" } };
+        secRow.getCell(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
+        secRow.getCell(1).alignment = { horizontal: "center" };
+
+        // Encabezados
+        const hRow = ws.addRow(HEADERS);
+        hRow.eachCell({ includeEmpty: true }, (cell, col) => HEADER_STYLE(headerColor)(cell, col));
+
+        // Datos
+        rows.forEach((f: any) => {
+          const contraparte = f.rfc_emisor === selectedRFC
+            ? (f.razonsocialreceptor || f.rfc_receptor || "")
+            : (f.razonsocialemisor  || f.rfc_emisor   || "");
+          ws.addRow([
+            (f.fecha || f.fecha_emision || "").substring(0, 10).split("-").reverse().join("/"),
+            f.uuid || "",
+            contraparte,
+            f.rfc_emisor || "",
+            f.rfc_receptor || "",
+            parseFloat(f.total) || 0,
+            f.tipocomprobante || "",
+            f.metodopago || "",
+            f.tipopago || "",
+            f.status || "",
+          ]);
+        });
+
+        // Total sección
+        const totalSec = rows.reduce((acc: number, f: any) => acc + (parseFloat(f.total) || 0), 0);
+        const totRow = ws.addRow(["", "", "", "", `TOTAL ${titulo.toUpperCase()}`, totalSec, "", "", "", ""]);
+        totRow.eachCell({ includeEmpty: true }, (cell, col) => {
+          if (col > HEADERS.length) return;
+          cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF404040" } };
+          cell.alignment = { horizontal: "center" };
+          if (typeof cell.value === "number") cell.numFmt = "$#,##0.00";
+        });
+
+        return totalSec;
+      };
+
+      // Secciones
+      const totalIng = addSection("Ingresos", "FF2E75B6", "FF5B9BD5", ingresos);
+      const totalEgr = addSection("Egresos",  "FF555555", "FF777777", egresos);
+
+      // ── Resumen final ──
+      ws.addRow([]);
+      ws.mergeCells(`A${ws.lastRow!.number + 1}:J${ws.lastRow!.number + 1}`);
+      const resRow = ws.lastRow!;
+      resRow.getCell(1).value = "RESUMEN DE LIQUIDEZ";
+      resRow.getCell(1).font = { bold: true, size: 12, color: { argb: "FFFFFFFF" } };
+      resRow.getCell(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E78" } };
+      resRow.getCell(1).alignment = { horizontal: "center" };
+
+      const summaryRows = [
+        ["Total Ingresos", totalIng],
+        ["Total Egresos", totalEgr],
+        ["Liquidez Neta", totalIng - totalEgr],
+      ];
+      summaryRows.forEach(([label, value]) => {
+        const r = ws.addRow([label, value, "", "", "", "", "", "", "", ""]);
+        r.getCell(1).font = { bold: true };
+        r.getCell(2).numFmt = "$#,##0.00";
+        const isNeta = label === "Liquidez Neta";
+        if (isNeta) {
+          [1, 2].forEach(c => {
+            r.getCell(c).fill = {
+              type: "pattern", pattern: "solid",
+              fgColor: { argb: (value as number) >= 0 ? "FF92D050" : "FFFF0000" },
+            };
+          });
+        }
+      });
+
+      // Estilos generales
+      ws.columns = Array(HEADERS.length).fill({ width: 22 });
+      ws.eachRow({ includeEmpty: false }, row => {
+        row.eachCell({ includeEmpty: false }, (cell, col) => {
+          if (col > HEADERS.length) return;
+          cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } };
+          if (typeof cell.value === "number") cell.numFmt = "$#,##0.00";
+        });
+      });
+
+      const buffer = await wb.xlsx.writeBuffer();
+      saveAs(
+        new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
+        `FlujoEfectivo_${selectedRFC}.xlsx`
+      );
+    } catch (err) {
+      console.error(err);
+      toast.error("No se pudo generar el reporte de flujo de efectivo.");
+    } finally {
+      setLoadingFlujo(false);
+    }
   };
   
   
@@ -869,6 +1019,16 @@ const ListFacturas = () => {
               onClick={() => setShowExportModal(true)}
             >
               <TbFileExport className="me-1" /> Reporte detallado
+            </Button>
+            <Button
+              variant="outline-primary"
+              size="sm"
+              disabled={!selectedRFC || loadingFlujo}
+              className="text-nowrap mb-1 mb-md-0"
+              onClick={exportarFlujoEfectivo}
+            >
+              <TbFileExport className="me-1" />
+              {loadingFlujo ? "Generando..." : "Flujo de efectivo"}
             </Button>
             {(tipoCuenta === "empresarial" || tipoCuenta === "empleado") && (
               <Button

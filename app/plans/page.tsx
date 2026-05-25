@@ -24,14 +24,14 @@ const PLANS = [
   {
     name: "Individual",
     code: "cuentia_plan_individual",
-    monthlyPriceId: "price_1Sfp9MKg1JUMkNoEzMOiQnNa",
-    annualPriceId: "price_1Sfp9MKg1JUMkNoEYAD0iqqT",
-    monthlyText: "$99 MXN/mes",
-    annualText: "$79 MXN/mes (facturado anualmente)",
+    monthlyPriceId: "price_1TZHlBKg1JUMkNoEhUi663pN",
+    annualPriceId: "price_1TZHlsKg1JUMkNoEEuQfmvG8",
+    monthlyText: "$199 MXN/mes",
+    annualText: "$159 MXN/mes (facturado anualmente)",
     tag: "Ideal para freelancers",
     popular: false,
     features: [
-      "1 RFC",
+      "Hasta 10,000 XMLs/facturas al mes",
       "Motor CFDI",
       "Dashboard",
       "IA contable (límite diario incluido)",
@@ -42,14 +42,15 @@ const PLANS = [
   {
     name: "Profesional",
     code: "cuentia_plan_profesional",
-    monthlyPriceId: "price_1Sfp9JKg1JUMkNoEmC2nRqEO",
-    annualPriceId: "price_1Sfp9JKg1JUMkNoElTzwbuXS",
-    monthlyText: "$499 MXN/mes",
-    annualText: "$399 MXN/mes (facturado anualmente)",
+    monthlyPriceId: "price_1TZHmrKg1JUMkNoEeHnuCKOt",
+    annualPriceId: "price_1TZHnVKg1JUMkNoEh7DSh5K5",
+    monthlyText: "$349 MXN/mes",
+    annualText: "$279 MXN/mes (facturado anualmente)",
     tag: "Mejor balance",
     popular: true,
     features: [
-      "Hasta 10 RFCs",
+      "RFCs ilimitados",
+      "Hasta 50,000 XMLs/facturas al mes",
       "Dashboard multi-RFC",
       "Usuarios y roles",
       "Bot Fiscal WhatsApp",
@@ -61,14 +62,15 @@ const PLANS = [
   {
     name: "Empresarial",
     code: "cuentia_plan_empresarial",
-    monthlyPriceId: "price_1Sfp9GKg1JUMkNoEyZO6WjNR",
-    annualPriceId: "price_1Sfp9GKg1JUMkNoEMnk3xLUz",
-    monthlyText: "$1,499 MXN/mes",
-    annualText: "$1,199 MXN/mes (facturado anualmente)",
+    monthlyPriceId: "price_1TZHoJKg1JUMkNoEJfKMtQa1",
+    annualPriceId: "price_1TZHpUKg1JUMkNoEX13M1ATt",
+    monthlyText: "$649 MXN/mes",
+    annualText: "$519 MXN/mes (facturado anualmente)",
     tag: "Ideal para PyMEs",
     popular: false,
     features: [
-      "Hasta 50 RFCs",
+      "RFCs ilimitados",
+      "Hasta 100,000 XMLs/facturas al mes",
       "Dashboard corporativo multi-RFC",
       "Usuarios ilimitados",
       "Bot Fiscal Avanzado",
@@ -80,18 +82,18 @@ const PLANS = [
   {
     name: "Despacho",
     code: "cuentia_plan_despacho",
-    monthlyPriceId: "price_1Sfp9EKg1JUMkNoE6mnfkyE6",
-    annualPriceId: "price_1Sfp9EKg1JUMkNoE8pNg8e9Y",
-    monthlyText: "$3,999 MXN/mes",
-    annualText: "$3,199 MXN/mes (facturado anualmente)",
+    monthlyPriceId: "price_1TalTYKg1JUMkNoEqgqbpQTT",
+    annualPriceId: "price_1TalUkKg1JUMkNoEPiPE2Rs8",
+    monthlyText: "$999 MXN/mes",
+    annualText: "$799 MXN/mes (facturado anualmente)",
     tag: "Para despachos contables",
     popular: false,
     features: [
-      "Hasta 300 RFCs",
+      "RFCs ilimitados",
+      "Hasta 300,000 XMLs/facturas al mes",
       "Dashboard corporativo multi-RFC",
       "Colaboradores ilimitados",
       "Control por cliente",
-      "Automatizaciones contables",
       "Bot Fiscal Avanzado",
       "Asistente contable con IA (uso intensivo diario)",
       "Análisis masivo de CFDI con IA (cuotas diarias elevadas)",
@@ -530,6 +532,7 @@ export default function PricingPage() {
                         ? "Facturación mensual"
                         : "Cobro anual adelantado"}
                     </div>
+                    <div className="text-xs text-slate-500 mt-0.5">Precios incluyen IVA e impuestos</div>
                   </div>
                     {isCurrentPlan && planStatus === "active" && (
                       <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-400/60 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
@@ -652,6 +655,7 @@ export default function PricingPage() {
                           ? "Facturación mensual"
                           : "Cobro anual adelantado"}
                       </div>
+                      <div className="text-xs text-slate-500 mt-0.5">Precios incluyen IVA e impuestos</div>
                         {isCurrentPlan && planStatus === "active" && (
                           <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-400/60 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
                             <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -734,14 +738,14 @@ export default function PricingPage() {
             Plan Personalizado
           </h2>
           <p className="text-purple-200 mb-4 max-w-xl">
-            Ideal para empresas que requieren mayor flexibilidad que la ofrecida en nuestros planes estándar. 
-            Ajustamos el servicio a su volumen de RFCs, procesos operativos y necesidades de integración, 
+            Ideal para empresas que requieren mayor capacidad de procesamiento que la ofrecida en nuestros planes estándar.
+            Ajustamos el volumen de XMLs/facturas mensuales, procesos operativos y necesidades de integración,
             brindando una solución a la medida.
           </p>
         
           <ul className="space-y-2 text-purple-100/90 text-sm mb-6">
             <li className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-purple-300" /> RFCs ilimitados
+              <Check className="h-4 w-4 text-purple-300" /> Volumen de XMLs/facturas personalizado
             </li>
             <li className="flex items-center gap-2">
               <Check className="h-4 w-4 text-purple-300" /> Usuarios y roles avanzados

@@ -16,6 +16,7 @@ import { withSessionGuard } from "@/app/providers/withSessionGuard";
 import { getSessionInfo } from "@/app/services/authService";
 import { activateGuest, validateGuestKey } from "@/app/services/chatService";
 import { toast } from "sonner";
+import OnboardingModal from "@/components/OnboardingModal";
 
 const Page = () => {
   const [session, setSession] = useState<any>(null);
@@ -27,7 +28,8 @@ const Page = () => {
   const [invitePanelVisible, setInvitePanelVisible] = useState(false);
   const [guestKey, setGuestKey] = useState("");
 
-  const [isNewAccount, setIsNewAccount] = useState(false); // 👈 NUEVO
+  const [isNewAccount, setIsNewAccount] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -47,6 +49,14 @@ const Page = () => {
           if (hours < 24) {
             setIsNewAccount(true);
           }
+        }
+
+        // Mostrar onboarding si la cuenta es nueva y no lo ha descartado
+        const dismissed = typeof window !== "undefined"
+          ? localStorage.getItem("cuentia_onboarding_dismissed")
+          : null;
+        if (!dismissed && data.tipoCuenta !== "invitado") {
+          setShowOnboarding(true);
         }
 
 
@@ -192,6 +202,13 @@ const Page = () => {
   // ------------------------------
   return (
     <Container fluid>
+      {showOnboarding && (tipoCuenta === "individual" || tipoCuenta === "empresarial") && (
+        <OnboardingModal
+          tipoCuenta={tipoCuenta}
+          onClose={() => setShowOnboarding(false)}
+        />
+      )}
+
       <PageBreadcrumb title="Dashboard" />
 
       {/* -------------------------------------- */}
