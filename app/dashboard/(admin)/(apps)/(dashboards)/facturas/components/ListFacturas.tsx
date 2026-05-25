@@ -316,15 +316,25 @@ const ListFacturas = () => {
       // Solo facturas PUE (excluir tipo P, esos vienen del endpoint de pagos)
       const pueRows = todasFacturas.filter((f: any) => f.metodopago === "PUE");
 
+      // Deduplicar por uuid_complemento: cada complemento de pago tiene N rows en pagos_cfdi
+      // (una por cada DoctoRelacionado), todas con el mismo monto total del pago.
+      // Tomamos solo la primera ocurrencia de cada uuid_complemento para no multiplicar el monto.
+      const complementosUnicos = new Map<string, any>();
+      for (const p of pagosData) {
+        if (!complementosUnicos.has(p.uuid_complemento)) {
+          complementosUnicos.set(p.uuid_complemento, p);
+        }
+      }
+
       // Normalizar complementos de pago al mismo shape que facturas
-      const pagosRows = pagosData.map((p: any) => ({
+      const pagosRows = Array.from(complementosUnicos.values()).map((p: any) => ({
         fecha: p.fecha_pago || p.fecha_emision || "",
         uuid: p.uuid_complemento || "",
         rfc_emisor: p.rfc_emisor || "",
         razonsocialemisor: p.nombre_emisor || p.rfc_emisor || "",
         rfc_receptor: p.rfc_receptor || "",
         razonsocialreceptor: p.nombre_receptor || p.rfc_receptor || "",
-        total: p.monto,          // monto real del complemento de pago
+        total: p.monto,          // monto real del complemento de pago (sin duplicar)
         tipocomprobante: "P",
         metodopago: "",
         tipopago: p.forma_pago || "",
