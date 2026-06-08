@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FiscoTerminal — Automatización Fiscal para Contadores</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0D0D0D;
+  --green: #AAFF00;
+  --green-dim: #7acc00;
+  --white: #F5F0E8;
+  --gray: #888880;
+  --gray-dim: #444440;
+  --border: #222220;
+  --red: #FF4444;
+  --mono: 'Space Mono', monospace;
+  --body: 'DM Sans', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--bg);
+  color: var(--white);
+  font-family: var(--body);
+  line-height: 1.6;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cpath d='M0 0h40v40H0z' fill='none'/%3E%3Cpath d='M0 40V0M40 0v40' stroke='%231a2a0a' stroke-width='0.5'/%3E%3C/svg%3E");
+  background-size: 40px 40px;
+  overflow-x: hidden;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--green-dim); }
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  height: 64px;
+  background: rgba(13,13,13,0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.5px;
+}
+.nav-logo span { color: var(--green); }
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  list-style: none;
+}
+.nav-links a {
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray);
+  text-decoration: none;
+  letter-spacing: 0.03em;
+  transition: color 0.15s;
+}
+.nav-links a:hover { color: var(--white); }
+
+.nav-cta {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green) !important;
+  border: 1px solid var(--green);
+  padding: 8px 18px;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  transition: background 0.15s, color 0.15s !important;
+}
+.nav-cta:hover { background: var(--green) !important; color: #000 !important; }
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px;
+}
+.hamburger span {
+  display: block;
+  width: 22px;
+  height: 1px;
+  background: var(--white);
+  transition: all 0.2s;
+}
+.hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+.mobile-menu {
+  display: none;
+  position: fixed;
+  top: 64px; left: 0; right: 0;
+  background: rgba(13,13,13,0.98);
+  border-bottom: 1px solid var(--border);
+  padding: 24px 32px;
+  z-index: 99;
+  flex-direction: column;
+  gap: 20px;
+}
+.mobile-menu.open { display: flex; }
+.mobile-menu a {
+  font-family: var(--body);
+  font-size: 15px;
+  color: var(--gray);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+}
+.mobile-menu a:last-child { border-bottom: none; }
+.mobile-menu a:hover { color: var(--white); }
+
+/* ── HERO ── */
+#hero {
+  min-height: 100vh;
+  padding: 120px 48px 80px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.hero-left { display: flex; flex-direction: column; gap: 28px; }
+
+.hero-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--green);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hero-tag::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 1px;
+  background: var(--green);
+}
+
+.hero-headline {
+  font-family: var(--mono);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -1px;
+}
+
+.hero-line1 {
+  font-size: clamp(32px, 4.5vw, 58px);
+  color: var(--white);
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 0;
+  animation: typewriter1 0.8s steps(18, end) 0.3s forwards;
+}
+
+.hero-line2 {
+  font-size: clamp(36px, 5.5vw, 72px);
+  color: var(--green);
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 0;
+  animation: typewriter2 0.8s steps(16, end) 1.2s forwards;
+}
+
+@keyframes typewriter1 {
+  from { width: 0; }
+  to { width: 100%; }
+}
+@keyframes typewriter2 {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+.hero-cursor {
+  display: inline-block;
+  width: 3px;
+  height: 1em;
+  background: var(--green);
+  vertical-align: middle;
+  margin-left: 2px;
+  animation: blink 1s step-end infinite;
+  opacity: 0;
+  animation-delay: 2.1s;
+  animation-fill-mode: forwards;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.hero-sub {
+  font-size: 16px;
+  color: var(--gray);
+  font-weight: 400;
+  max-width: 440px;
+  line-height: 1.7;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 2.2s forwards;
+}
+
+.hero-cta {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green);
+  border: 1px solid var(--green);
+  padding: 14px 32px;
+  text-decoration: none;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.15s, color 0.15s;
+  width: fit-content;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 2.5s forwards;
+}
+.hero-cta:hover { background: var(--green); color: #000; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── TERMINAL VISUALIZATION ── */
+.hero-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 2.4s forwards;
+}
+
+.terminal-window {
+  width: 100%;
+  max-width: 520px;
+  border: 1px solid var(--border);
+  background: #0a0a0a;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: #111;
+}
+.terminal-bar-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+}
+.dot-r { background: #ff5f57; }
+.dot-y { background: #febc2e; }
+.dot-g { background: #28c840; }
+.terminal-title {
+  margin-left: 8px;
+  color: var(--gray);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+.terminal-body { padding: 20px 20px 24px; line-height: 1.9; }
+
+.t-line { display: flex; gap: 10px; overflow: hidden; }
+.t-prompt { color: var(--green); flex-shrink: 0; }
+.t-cmd { color: var(--white); }
+.t-comment { color: var(--gray); }
+.t-success { color: var(--green); }
+.t-warn { color: #FFB800; }
+.t-data { color: #88ccff; }
+.t-dim { color: var(--gray-dim); }
+
+.t-line { opacity: 0; }
+.t-line:nth-child(1) { animation: fadeIn 0.1s ease 0.2s forwards; }
+.t-line:nth-child(2) { animation: fadeIn 0.1s ease 0.5s forwards; }
+.t-line:nth-child(3) { animation: fadeIn 0.1s ease 1.0s forwards; }
+.t-line:nth-child(4) { animation: fadeIn 0.1s ease 1.4s forwards; }
+.t-line:nth-child(5) { animation: fadeIn 0.1s ease 1.7s forwards; }
+.t-line:nth-child(6) { animation: fadeIn 0.1s ease 2.0s forwards; }
+.t-line:nth-child(7) { animation: fadeIn 0.1s ease 2.3s forwards; }
+.t-line:nth-child(8) { animation: fadeIn 0.1s ease 2.6s forwards; }
+.t-line:nth-child(9) { animation: fadeIn 0.1s ease 2.9s forwards; }
+.t-line:nth-child(10) { animation: fadeIn 0.1s ease 3.2s forwards; }
+.t-line:nth-child(11) { animation: fadeIn 0.1s ease 3.5s forwards; }
+.t-line:nth-child(12) { animation: fadeIn 0.1s ease 3.8s forwards; }
+.t-line:nth-child(13) { animation: fadeIn 0.1s ease 4.1s forwards; }
+.t-line:nth-child(14) { animation: fadeIn 0.1s ease 4.4s forwards; }
+.t-line:nth-child(15) { animation: fadeIn 0.1s ease 4.7s forwards; }
+.t-line:nth-child(16) { animation: fadeIn 0.1s ease 5.0s forwards; }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.t-cursor-blink {
+  display: inline-block;
+  width: 7px;
+  height: 13px;
+  background: var(--green);
+  vertical-align: middle;
+  animation: blink 1s step-end infinite;
+}
+
+/* ── DIVIDER ── */
+.section-divider {
+  width: 100%;
+  height: 1px;
+  background: var(--border);
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* ── FEATURES ── */
+#features {
+  padding: 100px 48px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--green);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 48px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border: 1px solid var(--border);
+}
+
+.feature-card {
+  padding: 40px 36px;
+  border-right: 1px solid var(--border);
+  position: relative;
+  transition: background 0.2s;
+}
+.feature-card:last-child { border-right: none; }
+.feature-card:hover { background: rgba(170,255,0,0.03); }
+
+.feature-num {
+  font-family: var(--mono);
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--green);
+  line-height: 1;
+  margin-bottom: 28px;
+  opacity: 0.6;
+}
+
+.feature-name {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.feature-desc {
+  font-size: 14px;
+  color: var(--gray);
+  line-height: 1.75;
+}
+
+.feature-desc strong { color: var(--white); font-weight: 500; }
+
+/* ── ALERTS ── */
+#alerts {
+  padding: 100px 48px;
+  background: #080808;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.alerts-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.alerts-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 32px;
+  margin-bottom: 48px;
+}
+
+.alerts-title {
+  font-family: var(--mono);
+  font-size: clamp(20px, 2.5vw, 32px);
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.25;
+}
+.alerts-title em {
+  color: var(--green);
+  font-style: normal;
+}
+
+.alerts-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--red);
+  border: 1px solid var(--red);
+  padding: 6px 14px;
+  white-space: nowrap;
+  animation: pulse-border 2s ease-in-out infinite;
+}
+@keyframes pulse-border {
+  0%, 100% { border-color: var(--red); }
+  50% { border-color: rgba(255,68,68,0.3); }
+}
+
+.rfc-table-wrap {
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.rfc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.rfc-table thead tr {
+  border-bottom: 1px solid var(--border);
+}
+
+.rfc-table th {
+  padding: 12px 20px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+.rfc-table td {
+  padding: 14px 20px;
+  border-bottom: 1px solid #161616;
+  color: var(--white);
+  vertical-align: middle;
+}
+
+.rfc-table tr:last-child td { border-bottom: none; }
+.rfc-table tbody tr { transition: background 0.15s; }
+.rfc-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+.rfc-table tr.alert-row td { color: rgba(245,240,232,0.7); }
+.rfc-table tr.alert-row td:first-child { color: rgba(245,240,232,0.5); }
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  padding: 4px 10px;
+  border: 1px solid;
+  font-weight: 700;
+}
+.status-ok { color: var(--green); border-color: rgba(170,255,0,0.3); }
+.status-warn { color: var(--red); border-color: rgba(255,68,68,0.3); background: rgba(255,68,68,0.05); }
+.status-check { color: #FFB800; border-color: rgba(255,184,0,0.3); }
+
+.alerts-footnote {
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--gray-dim);
+  font-family: var(--mono);
+}
+.alerts-footnote strong { color: var(--gray); }
+
+.fade-row { opacity: 0; transform: translateY(8px); transition: opacity 0.4s ease, transform 0.4s ease; }
+.fade-row.visible { opacity: 1; transform: translateY(0); }
+
+/* ── STATS ── */
+#stats {
+  padding: 0 48px;
+  border-bottom: 1px solid var(--border);
+}
+
+.stats-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-left: 1px solid var(--border);
+}
+
+.stat-item {
+  padding: 52px 40px;
+  border-right: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.stat-number {
+  font-family: var(--mono);
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 700;
+  color: var(--green);
+  line-height: 1;
+  margin-bottom: 12px;
+  letter-spacing: -1px;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--gray);
+  line-height: 1.5;
+  max-width: 180px;
+}
+
+/* ── HOW IT WORKS ── */
+#how {
+  padding: 100px 48px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.how-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+  margin-top: 48px;
+}
+
+.how-steps { display: flex; flex-direction: column; gap: 0; }
+
+.how-step {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 24px;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: start;
+}
+.how-step:last-child { border-bottom: none; }
+
+.step-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--green);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin-top: 3px;
+}
+
+.step-title {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.step-desc {
+  font-size: 14px;
+  color: var(--gray);
+  line-height: 1.7;
+}
+
+.how-visual {
+  border: 1px solid var(--border);
+  background: #0a0a0a;
+  padding: 32px;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.flow-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #161616;
+  color: var(--gray);
+}
+.flow-row:last-child { border-bottom: none; }
+.flow-row .flow-icon { color: var(--green); width: 18px; text-align: center; }
+.flow-row .flow-label { flex: 1; }
+.flow-row .flow-val { color: var(--white); text-align: right; }
+.flow-row .flow-ok { color: var(--green); }
+.flow-row .flow-alert { color: var(--red); }
+
+/* ── CTA FINAL ── */
+#cta {
+  background: var(--green);
+  padding: 100px 48px;
+}
+
+.cta-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 64px;
+  align-items: center;
+}
+
+.cta-headline {
+  font-family: var(--mono);
+  font-size: clamp(28px, 4vw, 52px);
+  font-weight: 700;
+  color: #000;
+  line-height: 1.1;
+  letter-spacing: -1px;
+}
+
+.cta-sub {
+  font-size: 15px;
+  color: #333;
+  margin-top: 16px;
+  max-width: 480px;
+  line-height: 1.7;
+}
+
+.cta-btn {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: #000;
+  border: 1px solid #000;
+  padding: 18px 40px;
+  text-decoration: none;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.cta-btn:hover { background: #000; color: var(--green); }
+
+/* ── FOOTER ── */
+footer {
+  padding: 40px 48px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.footer-logo {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--gray);
+}
+.footer-logo span { color: var(--green); }
+
+.footer-links {
+  display: flex;
+  gap: 28px;
+  list-style: none;
+}
+.footer-links a {
+  font-size: 12px;
+  color: var(--gray-dim);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.footer-links a:hover { color: var(--gray); }
+
+.footer-copy {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--gray-dim);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  #hero { grid-template-columns: 1fr; gap: 48px; padding: 100px 32px 60px; }
+  .hero-right { display: none; }
+  .features-grid { grid-template-columns: 1fr; }
+  .feature-card { border-right: none; border-bottom: 1px solid var(--border); }
+  .feature-card:last-child { border-bottom: none; }
+  .stats-inner { grid-template-columns: repeat(2, 1fr); }
+  .how-grid { grid-template-columns: 1fr; }
+  .how-visual { display: none; }
+  .cta-inner { grid-template-columns: 1fr; gap: 32px; }
+  nav { padding: 0 32px; }
+  #features, #alerts, #how { padding: 72px 32px; }
+  #stats { padding: 0 32px; }
+  #cta { padding: 72px 32px; }
+  footer { padding: 32px; flex-direction: column; gap: 20px; text-align: center; }
+  .footer-links { flex-wrap: wrap; justify-content: center; }
+}
+
+@media (max-width: 768px) {
+  nav { padding: 0 24px; }
+  .nav-links { display: none; }
+  .hamburger { display: flex; }
+  #hero { padding: 90px 24px 60px; }
+  .alerts-header { grid-template-columns: 1fr; }
+  .stats-inner { grid-template-columns: 1fr 1fr; }
+  .stat-item { padding: 32px 24px; }
+  #features { padding: 60px 24px; }
+  #alerts { padding: 60px 24px; }
+  #how { padding: 60px 24px; }
+  #stats { padding: 0 24px; }
+  #cta { padding: 60px 24px; }
+  .rfc-table { font-size: 11px; }
+  .rfc-table th, .rfc-table td { padding: 10px 12px; }
+  footer { padding: 28px 24px; }
+}
+
+@media (max-width: 480px) {
+  .stats-inner { grid-template-columns: 1fr; }
+  .hero-line1 { font-size: 26px; }
+  .hero-line2 { font-size: 32px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Fisco<span>Terminal</span></div>
+  <ul class="nav-links">
+    <li><a href="#features">Funciones</a></li>
+    <li><a href="#alerts">Alertas</a></li>
+    <li><a href="#how">Cómo funciona</a></li>
+    <li><a href="#cta" class="nav-cta">Solicitar acceso</a></li>
+  </ul>
+  <button class="hamburger" id="hamburger" aria-label="Menú">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#features" onclick="closeMobile()">Funciones</a>
+  <a href="#alerts" onclick="closeMobile()">Alertas</a>
+  <a href="#how" onclick="closeMobile()">Cómo funciona</a>
+  <a href="#cta" onclick="closeMobile()">Solicitar acceso →</a>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-left">
+    <div class="hero-tag">Automatización fiscal · México</div>
+    <h1 class="hero-headline">
+      <span class="hero-line1">Tus XMLs, procesados.</span>
+      <span class="hero-line2">Tus Exceles, listos.<span class="hero-cursor"></span></span>
+    </h1>
+    <p class="hero-sub">
+      Descarga automática de CFDIs del SAT, reportes Excel listos para usar y alertas fiscales en tiempo real — para contadores que no tienen tiempo que perder.
+    </p>
+    <a href="#cta" class="hero-cta">Solicitar acceso anticipado</a>
+  </div>
+
+  <div class="hero-right">
+    <div class="terminal-window">
+      <div class="terminal-bar">
+        <div class="terminal-bar-dot dot-r"></div>
+        <div class="terminal-bar-dot dot-y"></div>
+        <div class="terminal-bar-dot dot-g"></div>
+        <span class="terminal-title">fiscoterminal — descarga_sat.sh</span>
+      </div>
+      <div class="terminal-body">
+        <div class="t-line"><span class="t-prompt">$</span><span class="t-cmd">fisco sync --rfc AAA010101AAA --periodo 2025-Q4</span></div>
+        <div class="t-line"><span class="t-prompt"> </span><span class="t-comment">// Conectando con SAT...</span></div>
+        <div class="t-line"><span class="t-prompt"> </span><span class="t-success">✓ Sesión establecida</span></div>
+        <div class="t-line"><span class="t-prompt"> </span><span class="t-comment">// Descargando CFDIs emitidos...</span></div>
+        <div class="t-line"><span class="t-prompt"> </span><span class="t-data">  [████████████░░░░] 847 / 1,203</span></div>
+        <div class="t-line"><span class="t-prompt"> </span><span class="t-data">  [████████████████] 1,203 / 1,203</span></div>
+        <div class="t-line"><span class="t-prompt"> </span><span class="t-success">✓ 1,203 XMLs descargados</span></div>
+        <div class="t-line"><span class="t-prompt"> </span><span class="t-comment">// Procesando CFDIs recibidos...</span></div>
+        <div class="t-line"><span class="t-prompt"> </span><span class="t-success">✓ 892 CFDIs recibidos procesados</span></div>
+        <div class="t-line"><span class="t-prompt"> </span><span class="t-warn">⚠ 3 RFCs en lista negra SAT detectados</span></div>
+        <div class="t-line"><span class="t-prompt"> </span><span class="t-comment">// Generando reporte Excel...</span></div>
+        <div class="t-line"><span class="t-prompt"> </span><span class="t-dim">  UUID | RFC Emisor | Monto | IVA | Status</span></div>
+        <div class="t-line"><span class="t-prompt"> </span><span class="t-dim">  ─────────────────────────────────────────</span></div>
+        <div class="t-line"><span class="t-prompt"> </span><span class="t-data">  ABC...001 | XAXX010101000 | $12,400 | OK</span></div>
+        <div class="t-line"><span class="t-prompt"> </span><span class="t-success">✓ reporte_2025_Q4.xlsx generado</span></div>
+        <div class="t-line"><span class="t-prompt">$</span><span class="t-cmd"><span class="t-cursor-blink"></span></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-label">Funciones principales</div>
+  <div class="features-grid">
+    <div class="feature-card fade-row">
+      <div class="feature-num">01</div>
+      <div class="feature-name">Descarga automática de XMLs</div>
+      <p class="feature-desc">
+        Conexión directa con el portal del SAT. Descarga masiva de CFDIs emitidos y recibidos por periodo, RFC o tipo de comprobante. <strong>Sin captchas. Sin sesiones manuales.</strong>
+      </p>
+    </div>
+    <div class="feature-card fade-row">
+      <div class="feature-num">02</div>
+      <div class="feature-name">Exceles listos para usar</div>
+      <p class="feature-desc">
+        Cada XML se convierte en una fila estructurada: UUID, RFC, Razón Social, conceptos, impuestos, estado SAT. El reporte sale <strong>listo para auditoría</strong> — sin fórmulas rotas ni datos incompletos.
+      </p>
+    </div>
+    <div class="feature-card fade-row">
+      <div class="feature-num">03</div>
+      <div class="feature-name">Alertas fiscales en tiempo real</div>
+      <p class="feature-desc">
+        Cruce automático contra listas negras del SAT (Art. 69-B). Detección de proveedores no localizados, RFCs cancelados y <strong>discrepancias entre XML y complemento de pago.</strong>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ALERTS -->
+<section id="alerts">
+  <div class="alerts-inner">
+    <div class="alerts-header">
+      <h2 class="alerts-title">
+        El SAT ya tiene a tus proveedores<br>
+        en su lista. <em>¿Ya lo sabes tú?</em>
+      </h2>
+      <div class="alerts-badge">⚠ ALERTA ACTIVA</div>
+    </div>
+
+    <div class="rfc-table-wrap">
+      <table class="rfc-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>RFC</th>
+            <th>Razón Social</th>
+            <th>Tipo CFDI</th>
+            <th>Monto Total</th>
+            <th>Estatus SAT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="fade-row">
+            <td class="t-dim">001</td>
+            <td>XAXX010101000</td>
+            <td>DISTRIBUIDORA NORTE S.A.</td>
+            <td class="t-dim">Ingreso</td>
+            <td>$284,500.00</td>
+            <td><span class="status-badge status-ok">✓ VERIFICADO</span></td>
+          </tr>
+          <tr class="fade-row alert-row">
+            <td class="t-dim">002</td>
+            <td>MAR930415KL8</td>
+            <td>MAQUINARIA AZTECA S.C.</td>
+            <td class="t-dim">Ingreso</td>
+            <td>$127,800.00</td>
+            <td><span class="status-badge status-warn">⚠ LISTA NEGRA</span></td>
+          </tr>
+          <tr class="fade-row">
+            <td class="t-dim">003</td>
+            <td>TEC880201NM3</td>
+            <td>TECNOLOGÍAS DEL BAJÍO</td>
+            <td class="t-dim">Egreso</td>
+            <td>$56,200.00</td>
+            <td><span class="status-badge status-ok">✓ VERIFICADO</span></td>
+          </tr>
+          <tr class="fade-row alert-row">
+            <td class="t-dim">004</td>
+            <td>GRU750918AZ7</td>
+            <td>GRUPO INDUSTRIAL COBRE</td>
+            <td class="t-dim">Ingreso</td>
+            <td>$398,100.00</td>
+            <td><span class="status-badge status-warn">⚠ LISTA NEGRA</span></td>
+          </tr>
+          <tr class="fade-row">
+            <td class="t-dim">005</td>
+            <td>SER960305PQ2</td>
+            <td>SERVICIOS LOGÍSTICOS DEL SUR</td>
+            <td class="t-dim">Egreso</td>
+            <td>$91,450.00</td>
+            <td><span class="status-badge status-check">? EN REVISIÓN</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="alerts-footnote">
+      Nuestros usuarios detectan en promedio <strong>4–7 proveedores en lista negra</strong> cada mes. Sin alerta, ese crédito fiscal ya no es deducible.
+    </p>
+  </div>
+</section>
+
+<!-- STATS -->
+<section id="stats">
+  <div class="stats-inner">
+    <div class="stat-item">
+      <div class="stat-number" data-target="12000" data-prefix="+" data-suffix="">+0</div>
+      <div class="stat-label">XMLs procesados por mes entre todos los usuarios</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" data-target="98" data-prefix="" data-suffix="%">0%</div>
+      <div class="stat-label">De contadores que usan FiscoTerminal ya no limpian reportes a mano</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" data-target="5" data-prefix="&lt;" data-suffix=" min">&lt;0 min</div>
+      <div class="stat-label">Tiempo promedio para recibir una alerta fiscal crítica</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number" data-target="100" data-prefix="" data-suffix="%">0%</div>
+      <div class="stat-label">Compatible con cualquier RFC activo en el SAT</div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-label">Proceso</div>
+  <div class="how-grid">
+    <div class="how-steps">
+      <div class="how-step fade-row">
+        <div class="step-num">— 01</div>
+        <div>
+          <div class="step-title">Conectas tu RFC</div>
+          <p class="step-desc">Ingresa tus credenciales del SAT una vez. FiscoTerminal usa e.firma o CIEC con cifrado en tránsito. Sin acceso a tu contraseña en texto plano.</p>
+        </div>
+      </div>
+      <div class="how-step fade-row">
+        <div class="step-num">— 02</div>
+        <div>
+          <div class="step-title">Defines el alcance</div>
+          <p class="step-desc">Selecciona periodo, tipo de CFDI y RFC objetivo. Puedes gestionar múltiples empresas desde un solo panel.</p>
+        </div>
+      </div>
+      <div class="how-step fade-row">
+        <div class="step-num">— 03</div>
+        <div>
+          <div class="step-title">Descarga y procesa</div>
+          <p class="step-desc">El sistema descarga todos los XMLs, los valida contra el SAT en tiempo real y construye el reporte estructurado automáticamente.</p>
+        </div>
+      </div>
+      <div class="how-step fade-row">
+        <div class="step-num">— 04</div>
+        <div>
+          <div class="step-title">Recibes el Excel y las alertas</div>
+          <p class="step-desc">Tu reporte listo para abrir en Excel, más un resumen de proveedores en lista negra, diferencias de IVA y cualquier anomalía detectada.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="how-visual">
+      <div class="flow-row">
+        <span class="flow-icon">▸</span>
+        <span class="flow-label">RFC detectado</span>
+        <span class="flow-val flow-ok">AAA010101AAA</span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-icon">▸</span>
+        <span class="flow-label">Periodo</span>
+        <span class="flow-val">ENE – DIC 2025</span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-icon">▸</span>
+        <span class="flow-label">CFDIs emitidos</span>
+        <span class="flow-val flow-ok">1,203 ✓</span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-icon">▸</span>
+        <span class="flow-label">CFDIs recibidos</span>
+        <span class="flow-val flow-ok">892 ✓</span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-icon">▸</span>
+        <span class="flow-label">Proveedores en lista negra</span>
+        <span class="flow-val flow-alert">3 ⚠</span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-icon">▸</span>
+        <span class="flow-label">Discrepancias IVA</span>
+        <span class="flow-val flow-alert">1 ⚠</span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-icon">▸</span>
+        <span class="flow-label">Reporte generado</span>
+        <span class="flow-val flow-ok">reporte_2025.xlsx</span>
+      </div>
+      <div class="flow-row">
+        <span class="flow-icon">▸</span>
+        <span class="flow-label">Alerta enviada en</span>
+        <span class="flow-val flow-ok">2 min 14 seg</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section id="cta">
+  <div class="cta-inner">
+    <div>
+      <h2 class="cta-headline">Deja de procesar XMLs<br>a mano.</h2>
+      <p class="cta-sub">Acceso anticipado disponible para despachos contables y contadores independientes. Sin contratos. Sin letra chica.</p>
+    </div>
+    <a href="mailto:acceso@fiscoterminal.mx" class="cta-btn">Solicitar acceso</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Fisco<span>Terminal</span> &nbsp;·&nbsp; México</div>
+  <ul class="footer-links">
+    <li><a href="#">Privacidad</a></li>
+    <li><a href="#">Términos</a></li>
+    <li><a href="#">Contacto</a></li>
+  </ul>
+  <div class="footer-copy">© 2025 FiscoTerminal</div>
+</footer>
+
+<script>
+// ── HAMBURGER ──
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobileMenu');
+
+hamburger.addEventListener('click', () => {
+  hamburger.classList.toggle('open');
+  mobileMenu.classList.toggle('open');
+});
+
+function closeMobile() {
+  hamburger.classList.remove('open');
+  mobileMenu.classList.remove('open');
+}
+
+// ── INTERSECTION OBSERVER: fade rows ──
+const fadeEls = document.querySelectorAll('.fade-row');
+const fadeObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      const el = entry.target;
+      const siblings = Array.from(el.parentElement.children).filter(c => c.classList.contains('fade-row'));
+      const idx = siblings.indexOf(el);
+      setTimeout(() => {
+        el.classList.add('visible');
+      }, idx * 80);
+      fadeObserver.unobserve(el);
+    }
+  });
+}, { threshold: 0.1 });
+
+fadeEls.forEach(el => fadeObserver.observe(el));
+
+// ── STAT COUNTER ──
+function formatNumber(val, prefix, suffix) {
+  if (val >= 1000) {
+    return prefix + val.toLocaleString('es-MX') + suffix;
+  }
+  return prefix + val + suffix;
+}
+
+const statEls = document.querySelectorAll('.stat-number[data-target]');
+const statObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const el = entry.target;
+    const target = parseInt(el.dataset.target, 10);
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    const duration = 1400;
+    const steps = 60;
+    const increment = target / steps;
+    let current = 0;
+    let step = 0;
+
+    const timer = setInterval(() => {
+      step++;
+      current = Math.min(Math.round(increment * step), target);
+      el.innerHTML = formatNumber(current, prefix, suffix);
+      if (current >= target) clearInterval(timer);
+    }, duration / steps);
+
+    statObserver.unobserve(el);
+  });
+}, { threshold: 0.5 });
+
+statEls.forEach(el => statObserver.observe(el));
+
+// ── SMOOTH NAV HIGHLIGHT ──
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+
+const navObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(link => {
+        link.style.color = '';
+        if (link.getAttribute('href') === '#' + entry.target.id) {
+          link.style.color = 'var(--white)';
+        }
+      });
+    }
+  });
+}, { threshold: 0.4 });
+
+sections.forEach(s => navObserver.observe(s));
+</script>
+</body>
+</html>

@@ -194,3 +194,15 @@ a:hover {
   background: transparent !important;
 }
 
+/* ===== Landing CuentIA — tipografía editorial =====
+   Scopeado a la landing (.landing-cuentia) para no afectar el dashboard.
+   Títulos en serif Fraunces; cuerpo en sans limpio. */
+.landing-cuentia {
+  font-family: var(--font-open-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.landing-cuentia h1,
+.landing-cuentia h2,
+.landing-cuentia h3 {
+  font-family: var(--font-display), ui-serif, Georgia, "Times New Roman", serif;
+}
+

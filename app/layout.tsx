@@ -3,8 +3,9 @@ import "./globals.css"
 import { Toaster } from "sonner"
 import { GoogleOAuthProvider } from "@react-oauth/google"
 
-import { Roboto, Open_Sans } from "next/font/google"
+import { Roboto, Open_Sans, Fraunces } from "next/font/google"
 import GlobalToaster from "@/components/GlobalToaster"
+import { SITE } from "./site.config"
 
 const openSans = Open_Sans({
   subsets: ["latin"],
@@ -20,9 +21,52 @@ const roboto = Roboto({
   variable: "--font-roboto",
 })
 
+// Fuente display editorial para los títulos de la landing.
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-display",
+})
+
 export const metadata: Metadata = {
-  title: "CuentIA - Inteligencia fiscal para todos",
-  description: "La capa de inteligencia que tus sistemas fiscales necesitaban.",
+  metadataBase: new URL(SITE.url),
+  title: {
+    default: SITE.title,
+    template: "%s | CuentIA",
+  },
+  description: SITE.descriptionShort,
+  keywords: [...SITE.keywords],
+  applicationName: SITE.name,
+  authors: [{ name: SITE.name, url: SITE.url }],
+  creator: SITE.name,
+  publisher: SITE.name,
+  category: "finance",
+  formatDetection: { telephone: false },
+  openGraph: {
+    type: "website",
+    locale: SITE.locale,
+    url: SITE.url,
+    siteName: SITE.name,
+    title: SITE.title,
+    description: SITE.descriptionShort,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE.title,
+    description: SITE.descriptionShort,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   icons: {
     icon: "/favicon.ico",
   },
@@ -34,7 +78,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${roboto.variable} ${openSans.variable}`}>
+    <html lang="es" className={`${roboto.variable} ${openSans.variable} ${fraunces.variable}`}>
       <body>
         <GlobalToaster/>
 
