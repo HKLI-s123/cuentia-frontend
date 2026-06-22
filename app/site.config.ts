@@ -13,10 +13,10 @@ export const SITE = {
   locale: "es_MX",
   // Propuesta de valor larga — para JSON-LD / Open Graph.
   description:
-    "Descarga gratis tus CFDI (XML) del SAT y conviértelos en Excel ultraespecíficos: IVA desglosado por tasa, DIOT lista, papel de trabajo, conciliación y auditoría. Más completos y más baratos que cualquier alternativa.",
+    "Descarga gratis tus CFDI (XML) del SAT y conviértelos en Excel ultraespecíficos: IVA desglosado por tasa, DIOT lista, papel de trabajo, conciliación sin diferencias con el SAT y auditoría. Más completos y más baratos que cualquier alternativa.",
   // Versión corta (~155 caracteres) — para la meta description.
   descriptionShort:
-    "Descarga gratis tus CFDI (XML) del SAT y conviértelos en Excel listos para declaraciones, DIOT, papel de trabajo y auditoría. Más específicos y más baratos.",
+    "Descarga gratis tus CFDI (XML) del SAT y conviértelos en Excel: IVA por tasa, DIOT lista, conciliación sin diferencias con el SAT y auditoría. Más baratos.",
   // Título base para <title> y Open Graph.
   title: "CuentIA — Descarga XML del SAT y conviértelos a Excel",
   socials: [
@@ -34,6 +34,11 @@ export const SITE = {
     "DIOT lista",
     "papel de trabajo IVA",
     "conciliación fiscal",
+    "conciliación con el SAT",
+    "diferencias con el SAT",
+    "sin diferencias con el SAT",
+    "cuadrar IVA con el SAT",
+    "conciliación de CFDI",
     "declaraciones SAT",
     "auditoría fiscal",
     "contabilidad electrónica",
@@ -69,6 +74,10 @@ export const LANDING_FAQS: LandingFAQ[] = [
   {
     q: "¿Qué diferencia hay con descargar mis CFDI del SAT directamente?",
     a: "El portal del SAT te da XML. CuentIA los procesa, clasifica por tipo, calcula IVA por tasa, detecta cancelados y los convierte en tablas listas para usar. Son horas de trabajo manual condensadas en segundos.",
+  },
+  {
+    q: "¿CuentIA ayuda a evitar diferencias con el SAT?",
+    a: "Sí. Como CuentIA descarga tus CFDI directamente del SAT, tu información parte de la misma fuente que la autoridad. Valida el estatus de cada comprobante (vigente o cancelado), cruza emitidos contra recibidos y deja la base lista para que tu conciliación cuadre al peso —sin las diferencias que generan requerimientos y cartas invitación—.",
   },
   {
     q: "¿CuentIA reemplaza a mi contador?",

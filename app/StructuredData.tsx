@@ -59,6 +59,7 @@ export default function StructuredData() {
           "IVA desglosado por tasa (16%, 8%, 0%, Exento)",
           "DIOT lista para entregar",
           "Papel de trabajo y conciliación",
+          "Conciliación contra el SAT sin diferencias",
           "Reportes de auditoría",
           "Flujo de efectivo",
           "Estado de cada CFDI (Vigente / Cancelado)",

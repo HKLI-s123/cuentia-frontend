@@ -25,6 +25,10 @@ import {
   Bot,
   Share2,
   FileMinus2,
+  AlertTriangle,
+  Equal,
+  Scale,
+  CheckCheck,
   Linkedin,
   Facebook,
   Instagram,
@@ -648,6 +652,7 @@ export default function CuentIALandingPage() {
 
   const nav = useMemo(() => [
     { id: "how", label: "Cómo funciona" },
+    { id: "conciliacion", label: "Conciliación" },
     { id: "reportes", label: "Reportes" },
     { id: "ia", label: "IA" },
     { id: "pricing", label: "Planes" },
@@ -1079,6 +1084,141 @@ export default function CuentIALandingPage() {
         </section>
 
         <Divider dark />
+
+        <section id="conciliacion" className="bg-slate-50 py-16 md:py-24">
+          <div className="mx-auto w-full max-w-6xl px-4">
+            <div className="max-w-3xl">
+              <div className="flex items-center gap-3 text-sm italic font-display text-indigo-600">
+                <span className="h-px w-8 flex-shrink-0 bg-indigo-200" />
+                El dolor de cabeza #1 en contabilidad
+              </div>
+              <h2 className="mt-3 text-2xl md:text-4xl font-bold tracking-tight text-slate-900">
+                Cero diferencias con el SAT.<br />
+                <span className="text-indigo-600">Tus números cuadran a la primera.</span>
+              </h2>
+              <p className="mt-3 text-base md:text-lg text-slate-500 leading-relaxed">
+                La conciliación contra el SAT es donde se va el tiempo —y los nervios—. Una factura cancelada que no viste, un CFDI que el SAT tiene y tú no, un IVA que no empata… y de pronto tu declaración no cuadra. CuentIA toma los datos directo del SAT, así que tu información <span className="text-slate-900 font-semibold">es</span> la del SAT. Sin diferencias que perseguir.
+              </p>
+            </div>
+
+            <div className="mt-10 grid gap-6 md:grid-cols-12 md:items-stretch">
+              <motion.div
+                initial={prefersReducedMotion ? {} : { opacity: 0, y: 14 }}
+                whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.5 }}
+                className="md:col-span-6">
+                <Card className="p-6 h-full flex flex-col">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="rounded-xl bg-red-50 border border-red-100 p-2.5 flex-shrink-0">
+                      <AlertTriangle className="h-5 w-5 text-red-500" />
+                    </div>
+                    <div className="font-bold text-slate-900">De dónde salen las diferencias</div>
+                  </div>
+                  <ul className="grid gap-3">
+                    {[
+                      "Una factura que se canceló después de que ya declaraste.",
+                      "CFDIs que el SAT tiene registrados y que nunca llegaste a descargar.",
+                      "Tu DIOT no empata con lo que tus proveedores reportaron.",
+                      "El IVA acreditable no coincide con tus comprobantes recibidos.",
+                      "Lo precargado en la declaración no cuadra con tu contabilidad.",
+                    ].map((c) => (
+                      <li key={c} className="flex items-start gap-3">
+                        <span className="mt-[7px] h-1.5 w-1.5 rounded-full bg-red-400 flex-shrink-0" />
+                        <span className="text-sm text-slate-600 leading-relaxed">{c}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-5 rounded-xl border border-red-100 bg-red-50/60 px-4 py-3 text-sm text-red-700 leading-relaxed">
+                    Cada diferencia sin explicar es un requerimiento, una carta invitación o una multa esperando.
+                  </div>
+                </Card>
+              </motion.div>
+
+              <motion.div
+                initial={prefersReducedMotion ? {} : { opacity: 0, y: 14 }}
+                whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.5, delay: 0.06 }}
+                className="md:col-span-6">
+                <Card className="p-6 h-full flex flex-col">
+                  <div className="flex items-center justify-between gap-2 mb-4">
+                    <div className="text-xs font-bold uppercase tracking-wider text-indigo-600">Conciliación contra el SAT</div>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
+                      <ShieldCheck className="h-3 w-3" /> Validado con el SAT
+                    </span>
+                  </div>
+                  <div className="font-mono text-xs divide-y divide-slate-100">
+                    {[
+                      { label: "CFDIs en el SAT", val: "2,095", match: false },
+                      { label: "CFDIs en CuentIA", val: "2,095", match: true },
+                      { label: "IVA trasladado · SAT", val: "$334,520", match: false },
+                      { label: "IVA trasladado · CuentIA", val: "$334,520", match: true },
+                      { label: "Cancelados detectados", val: "12", match: true },
+                    ].map((row) => (
+                      <div key={row.label} className="flex items-center justify-between gap-3 py-2.5">
+                        <span className="text-slate-500">▸ {row.label}</span>
+                        <span className="flex items-center gap-1.5 font-semibold text-slate-700">
+                          {row.val}
+                          {row.match && <Check className="h-3.5 w-3.5 text-emerald-500" />}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                    <div>
+                      <div className="text-[10px] font-semibold uppercase tracking-wide text-emerald-600">Diferencia total</div>
+                      <div className="font-mono text-2xl font-bold text-emerald-700 tabular-nums">$0.00</div>
+                    </div>
+                    <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2">
+                      <Equal className="h-5 w-5 text-emerald-600" />
+                      <span className="text-sm font-bold text-emerald-700">0 diferencias</span>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-center text-[11px] text-slate-400">Datos simulados · La conciliación real usa tus propios CFDI</p>
+                </Card>
+              </motion.div>
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              {[
+                {
+                  icon: <ShieldCheck className="h-5 w-5 text-indigo-600" />,
+                  title: "Una sola fuente: el SAT",
+                  desc: "CuentIA descarga directo del SAT. No capturas nada a mano, así que no hay forma de que tus cifras se separen de las oficiales.",
+                },
+                {
+                  icon: <CheckCheck className="h-5 w-5 text-indigo-600" />,
+                  title: "Estatus validado al instante",
+                  desc: "Cada CFDI se verifica como vigente o cancelado. Los cancelados aparecen marcados antes de que te alcancen en la declaración.",
+                },
+                {
+                  icon: <Scale className="h-5 w-5 text-indigo-600" />,
+                  title: "Cruce automático",
+                  desc: "Emitidos contra recibidos, PUE contra PPD, complementos contra facturas. El cruce que hacías a mano, ya hecho y cuadrado.",
+                },
+              ].map((g, idx) => (
+                <motion.div key={g.title}
+                  initial={prefersReducedMotion ? {} : { opacity: 0, y: 14 }}
+                  whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.45, delay: idx * 0.05 }}>
+                  <Card className="p-6 h-full flex gap-4">
+                    <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-2.5 h-fit flex-shrink-0">
+                      {g.icon}
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-900 text-sm">{g.title}</div>
+                      <div className="mt-1.5 text-sm text-slate-500 leading-relaxed">{g.desc}</div>
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <Divider />
 
         <section id="estructura" className="py-16 md:py-24">
           <div className="mx-auto w-full max-w-6xl px-4">
