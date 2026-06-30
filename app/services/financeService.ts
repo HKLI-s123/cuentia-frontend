@@ -268,7 +268,7 @@ export const getFacturas = async (params: { rfc?: string; startDate?: string; en
 
 
 export const getFacturasConConceptos = async (params: { rfc?: string; startDate?: string; endDate?: string }) => {
-  const url = new URL(`${API_URL}/cfdis/conceptos`);
+  const url = new URL(`${API_URL}/cfdis/facturas-con-conceptos`);
 
   if (params.rfc) url.searchParams.append("rfc", params.rfc);
   if (params.startDate) url.searchParams.append("fechaInicio", params.startDate);
