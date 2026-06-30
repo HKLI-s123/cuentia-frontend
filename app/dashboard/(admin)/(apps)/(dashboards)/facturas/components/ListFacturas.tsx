@@ -6,7 +6,7 @@ import { saveAs } from "file-saver";
 import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle, Col, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Table, Modal, Form } from 'react-bootstrap'
 import { TbCircleFilled, TbDotsVertical, TbFileExport, TbArrowDown, TbArrowUp } from 'react-icons/tb'
 import CardPagination from '@/components/cards/CardPagination'
-import { getFacturas, getPagos } from "../../../../../../services/financeService"  // 🔹 nuevo servicio
+import { getFacturas, getFacturasConConceptos, getPagos } from "../../../../../../services/financeService"  // 🔹 nuevo servicio
 import { analizarFacturaIA } from "../../../../../../services/iaService" // 👈 nuevo servicio IA
 import { TbBrain } from "react-icons/tb";
 import { Factura } from "../../../../../../types/factura";
@@ -27,8 +27,9 @@ const ListFacturas = () => {
   const [fechaFin, setFechaFin] = useState("")
   const [searchTerm, setSearchTerm] = useState("");
   const [showExportModal, setShowExportModal] = useState(false);
-  const [tipoExport, setTipoExport] = useState<"TODO" | "PUE" | "PPD">("TODO");
+  const [tipoExport, setTipoExport] = useState<"TODO" | "PUE" | "PPD" | "CONCEPTOS">("TODO");
   const [loadingFlujo, setLoadingFlujo] = useState(false);
+  const [loadingConceptos, setLoadingConceptos] = useState(false);
   const [tipoCuenta, setTipoCuenta] = useState<"individual" | "empresarial" | "invitado" | "empleado" | null>(null);
   const [clientes, setClientes] = useState<{ rfc: string; nombre: string }[]>([]);
   const [searchCliente, setSearchCliente] = useState("");
@@ -481,6 +482,325 @@ const ListFacturas = () => {
   };
   
   
+  const exportConceptosFacturas = async () => {
+    if (!selectedRFC || !fechaInicio || !fechaFin) return;
+    setLoadingConceptos(true);
+
+    // 🎨 Paleta de marca Cuentia
+    const TEAL = "FF1AB394";         // primary
+    const TEAL_LIGHT = "FF7BD3BF";   // header secundario
+    const TEAL_BG = "FFE4F6F1";      // fondo zebra
+    const INDIGO = "FF6B5EAE";       // acentos
+    const INDIGO_LIGHT = "FFB3ACD6"; // sub-encabezados
+    const DARK = "FF2E2E3A";         // texto/total final
+    const WHITE = "FFFFFFFF";
+
+    try {
+      const facturasConConceptos = await getFacturasConConceptos({
+        rfc: selectedRFC,
+        startDate: fechaInicio,
+        endDate: fechaFin,
+      });
+
+      if (!Array.isArray(facturasConConceptos) || facturasConConceptos.length === 0) {
+        toast.info("No hay conceptos en el periodo seleccionado.");
+        return;
+      }
+
+      const nombreCliente = (() => {
+        const c = clientes.find((x) => x.rfc === selectedRFC);
+        return c?.nombre || selectedRFC;
+      })();
+
+      const toNum = (v: any) => parseFloat(String(v ?? 0)) || 0;
+      const fmtFecha = (v: any) => {
+        const s = String(v || "").substring(0, 10);
+        return s.includes("-") ? s.split("-").reverse().join("/") : s;
+      };
+
+      const wb = new ExcelJS.Workbook();
+      wb.creator = "CuentIA";
+      wb.created = new Date();
+
+      // ============================================================
+      // HOJA 1 — Facturas con sus conceptos
+      // ============================================================
+      const ws1 = wb.addWorksheet("Facturas y Conceptos");
+
+      const HEADERS_1 = [
+        "Fecha", "UUID", "Movimiento", "RFC Emisor", "Razón Social Emisor",
+        "RFC Receptor", "Razón Social Receptor", "Moneda", "Total Factura",
+        "Clave ProdServ", "No. Identificación", "Descripción Concepto",
+        "Cantidad", "Unidad", "Valor Unitario", "Importe", "Descuento",
+      ];
+
+      // Título principal
+      ws1.mergeCells(1, 1, 1, HEADERS_1.length);
+      const t1 = ws1.getCell(1, 1);
+      t1.value = `Conceptos por Factura — ${nombreCliente} (${selectedRFC}) | ${fmtFecha(fechaInicio)} al ${fmtFecha(fechaFin)}`;
+      t1.font = { bold: true, size: 14, color: { argb: WHITE } };
+      t1.fill = { type: "pattern", pattern: "solid", fgColor: { argb: TEAL } };
+      t1.alignment = { horizontal: "center", vertical: "middle" };
+      ws1.getRow(1).height = 26;
+
+      // Encabezados
+      const h1 = ws1.addRow(HEADERS_1);
+      h1.eachCell({ includeEmpty: true }, (cell, col) => {
+        if (col > HEADERS_1.length) return;
+        cell.font = { bold: true, color: { argb: WHITE } };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: INDIGO } };
+        cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+        cell.border = {
+          top: { style: "thin" }, left: { style: "thin" },
+          bottom: { style: "thin" }, right: { style: "thin" },
+        };
+      });
+      h1.height = 28;
+
+      // Datos: una factura → varias filas de concepto
+      facturasConConceptos.forEach((f: any, idx: number) => {
+        const conceptos: any[] = Array.isArray(f.conceptos) ? f.conceptos : [];
+        const baseFactura = [
+          fmtFecha(f.fecha || f.fecha_emision),
+          f.uuid || "",
+          f.movimiento || (f.rfc_emisor === selectedRFC ? "Ingreso" : "Egreso"),
+          f.rfc_emisor || "",
+          f.razonsocialemisor || "",
+          f.rfc_receptor || "",
+          f.razonsocialreceptor || "",
+          f.moneda || "MXN",
+          toNum(f.total),
+        ];
+
+        const zebra = idx % 2 === 0;
+
+        if (conceptos.length === 0) {
+          const row = ws1.addRow([...baseFactura, "", "", "(Sin conceptos)", "", "", "", "", ""]);
+          row.eachCell({ includeEmpty: true }, (cell, col) => {
+            if (col > HEADERS_1.length) return;
+            cell.border = {
+              top: { style: "thin" }, left: { style: "thin" },
+              bottom: { style: "thin" }, right: { style: "thin" },
+            };
+            if (zebra) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: TEAL_BG } };
+            if (typeof cell.value === "number") cell.numFmt = "$#,##0.00";
+          });
+          return;
+        }
+
+        conceptos.forEach((c: any, ci: number) => {
+          // En la primera fila del bloque mostramos los datos de la factura;
+          // en las siguientes dejamos las columnas de factura en blanco para no repetir.
+          const filaFactura = ci === 0 ? baseFactura : ["", "", "", "", "", "", "", "", ""];
+          const row = ws1.addRow([
+            ...filaFactura,
+            c.clave_prod_serv || c.claveprodserv || "",
+            c.no_identificacion || c.noidentificacion || "",
+            c.descripcion || "",
+            toNum(c.cantidad),
+            c.unidad || c.clave_unidad || c.claveunidad || "",
+            toNum(c.valor_unitario ?? c.valorunitario),
+            toNum(c.importe),
+            toNum(c.descuento),
+          ]);
+          row.eachCell({ includeEmpty: true }, (cell, col) => {
+            if (col > HEADERS_1.length) return;
+            cell.border = {
+              top: { style: "thin" }, left: { style: "thin" },
+              bottom: { style: "thin" }, right: { style: "thin" },
+            };
+            cell.alignment = { vertical: "middle", wrapText: col === 12 };
+            if (zebra) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: TEAL_BG } };
+            if (typeof cell.value === "number") cell.numFmt = "$#,##0.00";
+          });
+        });
+      });
+
+      // Total general (suma de importes)
+      const totalImporte = facturasConConceptos.reduce((acc: number, f: any) => {
+        const cs: any[] = Array.isArray(f.conceptos) ? f.conceptos : [];
+        return acc + cs.reduce((a, c) => a + toNum(c.importe), 0);
+      }, 0);
+
+      const totRow = ws1.addRow([
+        "", "", "", "", "", "", "", "", "", "", "", "TOTAL IMPORTE CONCEPTOS",
+        "", "", "", totalImporte, "",
+      ]);
+      totRow.eachCell({ includeEmpty: true }, (cell, col) => {
+        if (col > HEADERS_1.length) return;
+        cell.font = { bold: true, color: { argb: WHITE } };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: DARK } };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.border = {
+          top: { style: "medium" }, left: { style: "thin" },
+          bottom: { style: "medium" }, right: { style: "thin" },
+        };
+        if (typeof cell.value === "number") cell.numFmt = "$#,##0.00";
+      });
+
+      ws1.columns = [
+        { width: 12 }, { width: 38 }, { width: 12 }, { width: 16 }, { width: 28 },
+        { width: 16 }, { width: 28 }, { width: 10 }, { width: 14 },
+        { width: 16 }, { width: 18 }, { width: 38 }, { width: 10 },
+        { width: 12 }, { width: 14 }, { width: 14 }, { width: 12 },
+      ];
+      ws1.views = [{ state: "frozen", ySplit: 2 }];
+
+      // ============================================================
+      // HOJA 2 — Conceptos agrupados con sus facturas
+      // ============================================================
+      const ws2 = wb.addWorksheet("Conceptos agrupados");
+
+      // Agrupamos por descripción (clave secundaria: clave_prod_serv)
+      type ConceptoGrupo = {
+        descripcion: string;
+        clave_prod_serv: string;
+        cantidadTotal: number;
+        importeTotal: number;
+        facturas: {
+          fecha: string; uuid: string; movimiento: string;
+          rfc_emisor: string; razonsocialemisor: string;
+          rfc_receptor: string; razonsocialreceptor: string;
+          cantidad: number; valor_unitario: number; importe: number;
+        }[];
+      };
+
+      const grupos = new Map<string, ConceptoGrupo>();
+
+      facturasConConceptos.forEach((f: any) => {
+        const conceptos: any[] = Array.isArray(f.conceptos) ? f.conceptos : [];
+        conceptos.forEach((c: any) => {
+          const desc = (c.descripcion || "(Sin descripción)").trim();
+          const clave = c.clave_prod_serv || c.claveprodserv || "";
+          const key = `${desc}__${clave}`;
+          if (!grupos.has(key)) {
+            grupos.set(key, {
+              descripcion: desc,
+              clave_prod_serv: clave,
+              cantidadTotal: 0,
+              importeTotal: 0,
+              facturas: [],
+            });
+          }
+          const g = grupos.get(key)!;
+          const cantidad = toNum(c.cantidad);
+          const importe = toNum(c.importe);
+          g.cantidadTotal += cantidad;
+          g.importeTotal += importe;
+          g.facturas.push({
+            fecha: fmtFecha(f.fecha || f.fecha_emision),
+            uuid: f.uuid || "",
+            movimiento: f.movimiento || (f.rfc_emisor === selectedRFC ? "Ingreso" : "Egreso"),
+            rfc_emisor: f.rfc_emisor || "",
+            razonsocialemisor: f.razonsocialemisor || "",
+            rfc_receptor: f.rfc_receptor || "",
+            razonsocialreceptor: f.razonsocialreceptor || "",
+            cantidad,
+            valor_unitario: toNum(c.valor_unitario ?? c.valorunitario),
+            importe,
+          });
+        });
+      });
+
+      const HEADERS_2 = [
+        "Fecha", "UUID", "Movimiento", "RFC Emisor", "Razón Social Emisor",
+        "RFC Receptor", "Razón Social Receptor", "Cantidad", "Valor Unitario", "Importe",
+      ];
+
+      // Título principal hoja 2
+      ws2.mergeCells(1, 1, 1, HEADERS_2.length);
+      const t2 = ws2.getCell(1, 1);
+      t2.value = `Conceptos agrupados — ${nombreCliente} (${selectedRFC}) | ${fmtFecha(fechaInicio)} al ${fmtFecha(fechaFin)}`;
+      t2.font = { bold: true, size: 14, color: { argb: WHITE } };
+      t2.fill = { type: "pattern", pattern: "solid", fgColor: { argb: INDIGO } };
+      t2.alignment = { horizontal: "center", vertical: "middle" };
+      ws2.getRow(1).height = 26;
+
+      // Ordenamos los grupos por importe descendente (los más relevantes primero)
+      const gruposOrdenados = Array.from(grupos.values()).sort((a, b) => b.importeTotal - a.importeTotal);
+
+      gruposOrdenados.forEach((g) => {
+        ws2.addRow([]);
+        // Cabecera del grupo
+        const startRow = ws2.lastRow!.number + 1;
+        ws2.mergeCells(startRow, 1, startRow, HEADERS_2.length);
+        const gCell = ws2.getCell(startRow, 1);
+        gCell.value = `${g.descripcion}${g.clave_prod_serv ? `  ·  Clave: ${g.clave_prod_serv}` : ""}  ·  Facturas: ${g.facturas.length}  ·  Cant. total: ${g.cantidadTotal.toLocaleString("es-MX")}  ·  Importe: $${g.importeTotal.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        gCell.font = { bold: true, color: { argb: WHITE } };
+        gCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: TEAL } };
+        gCell.alignment = { horizontal: "left", vertical: "middle", indent: 1 };
+        ws2.getRow(startRow).height = 22;
+
+        // Encabezados de columnas para este grupo
+        const hRow = ws2.addRow(HEADERS_2);
+        hRow.eachCell({ includeEmpty: true }, (cell, col) => {
+          if (col > HEADERS_2.length) return;
+          cell.font = { bold: true, color: { argb: WHITE } };
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: INDIGO_LIGHT } };
+          cell.alignment = { horizontal: "center", vertical: "middle" };
+          cell.border = {
+            top: { style: "thin" }, left: { style: "thin" },
+            bottom: { style: "thin" }, right: { style: "thin" },
+          };
+        });
+
+        // Filas de facturas del grupo
+        g.facturas.forEach((fac, fi) => {
+          const row = ws2.addRow([
+            fac.fecha, fac.uuid, fac.movimiento,
+            fac.rfc_emisor, fac.razonsocialemisor,
+            fac.rfc_receptor, fac.razonsocialreceptor,
+            fac.cantidad, fac.valor_unitario, fac.importe,
+          ]);
+          const zebra = fi % 2 === 0;
+          row.eachCell({ includeEmpty: true }, (cell, col) => {
+            if (col > HEADERS_2.length) return;
+            cell.border = {
+              top: { style: "thin" }, left: { style: "thin" },
+              bottom: { style: "thin" }, right: { style: "thin" },
+            };
+            if (zebra) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: TEAL_BG } };
+            if (typeof cell.value === "number") cell.numFmt = "$#,##0.00";
+          });
+        });
+
+        // Total por grupo
+        const subRow = ws2.addRow([
+          "", "", "", "", "", "", "TOTAL", g.cantidadTotal, "", g.importeTotal,
+        ]);
+        subRow.eachCell({ includeEmpty: true }, (cell, col) => {
+          if (col > HEADERS_2.length) return;
+          cell.font = { bold: true, color: { argb: WHITE } };
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: DARK } };
+          cell.alignment = { horizontal: "center", vertical: "middle" };
+          cell.border = {
+            top: { style: "medium" }, left: { style: "thin" },
+            bottom: { style: "medium" }, right: { style: "thin" },
+          };
+          if (typeof cell.value === "number") cell.numFmt = "$#,##0.00";
+        });
+      });
+
+      ws2.columns = [
+        { width: 12 }, { width: 38 }, { width: 12 }, { width: 16 }, { width: 28 },
+        { width: 16 }, { width: 28 }, { width: 12 }, { width: 14 }, { width: 14 },
+      ];
+      ws2.views = [{ state: "frozen", ySplit: 1 }];
+
+      const buffer = await wb.xlsx.writeBuffer();
+      saveAs(
+        new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
+        `Conceptos_${selectedRFC}_${fechaInicio}_${fechaFin}.xlsx`
+      );
+    } catch (err) {
+      console.error(err);
+      toast.error("No se pudo generar el reporte de conceptos.");
+    } finally {
+      setLoadingConceptos(false);
+    }
+  };
+
+
   const exportToExcel = async (facturasFiltradas?: Factura[]) => {
       const data = facturasFiltradas && facturasFiltradas.length > 0 ? facturasFiltradas : facturas;
       if (data.length === 0) return;
@@ -1260,7 +1580,19 @@ const ListFacturas = () => {
             >
               Todas las facturas
             </Button>
+            <Button
+              variant={tipoExport === "CONCEPTOS" ? "info" : "outline-info"}
+              onClick={() => setTipoExport("CONCEPTOS")}
+            >
+              Conceptos de facturas
+            </Button>
           </div>
+          {tipoExport === "CONCEPTOS" && (
+            <p className="text-muted small mt-3 mb-0">
+              Genera un Excel con cada factura del periodo y sus conceptos relacionados,
+              y una segunda hoja con los conceptos agrupados.
+            </p>
+          )}
         </Modal.Body>
         <Modal.Footer className="justify-content-between">
           <Button variant="secondary" onClick={() => setShowExportModal(false)}>
@@ -1268,12 +1600,17 @@ const ListFacturas = () => {
           </Button>
           <Button
             variant="primary"
+            disabled={loadingConceptos}
             onClick={() => {
-              handleExport(tipoExport);
+              if (tipoExport === "CONCEPTOS") {
+                exportConceptosFacturas();
+              } else {
+                handleExport(tipoExport);
+              }
               setShowExportModal(false);
             }}
           >
-            Exportar
+            {loadingConceptos && tipoExport === "CONCEPTOS" ? "Generando..." : "Exportar"}
           </Button>
         </Modal.Footer>
       </Modal>

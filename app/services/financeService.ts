@@ -267,6 +267,23 @@ export const getFacturas = async (params: { rfc?: string; startDate?: string; en
 };
 
 
+export const getFacturasConConceptos = async (params: { rfc?: string; startDate?: string; endDate?: string }) => {
+  const url = new URL(`${API_URL}/cfdis/conceptos`);
+
+  if (params.rfc) url.searchParams.append("rfc", params.rfc);
+  if (params.startDate) url.searchParams.append("fechaInicio", params.startDate);
+  if (params.endDate) url.searchParams.append("fechaFin", params.endDate);
+
+  const res = await apiFetch(url.toString(), { method: "GET" });
+
+  if (!res?.ok) {
+    throw new Error(`Error al obtener facturas con conceptos: ${res?.statusText}`);
+  }
+
+  return res.json();
+};
+
+
 export const getPagos = async (params: { rfc?: string; startDate?: string; endDate?: string }) => {
   const url = new URL(`${API_URL}/cfdis/pagos`);
 
