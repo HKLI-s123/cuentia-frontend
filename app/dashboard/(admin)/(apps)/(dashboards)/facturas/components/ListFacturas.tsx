@@ -502,6 +502,9 @@ const ListFacturas = () => {
         endDate: fechaFin,
       });
 
+      console.log("[exportConceptos] respuesta backend:", facturasConConceptos);
+      console.log("[exportConceptos] params enviados:", { rfc: selectedRFC, startDate: fechaInicio, endDate: fechaFin });
+
       if (!Array.isArray(facturasConConceptos) || facturasConConceptos.length === 0) {
         toast.info("No hay conceptos en el periodo seleccionado.");
         return;
@@ -529,7 +532,7 @@ const ListFacturas = () => {
 
       const HEADERS_1 = [
         "Fecha", "UUID", "Movimiento", "RFC Emisor", "Razón Social Emisor",
-        "RFC Receptor", "Razón Social Receptor", "Moneda", "Total Factura",
+        "RFC Receptor", "Razón Social Receptor", "Moneda", "Método Pago", "Forma Pago", "Total Factura",
         "Clave ProdServ", "No. Identificación", "Descripción Concepto",
         "Cantidad", "Unidad", "Valor Unitario", "Importe", "Descuento",
       ];
@@ -569,6 +572,8 @@ const ListFacturas = () => {
           f.rfc_receptor || "",
           f.razonsocialreceptor || "",
           f.moneda || "MXN",
+          f.metodopago || "",
+          f.tipopago || "",
           toNum(f.total),
         ];
 
@@ -591,7 +596,7 @@ const ListFacturas = () => {
         conceptos.forEach((c: any, ci: number) => {
           // En la primera fila del bloque mostramos los datos de la factura;
           // en las siguientes dejamos las columnas de factura en blanco para no repetir.
-          const filaFactura = ci === 0 ? baseFactura : ["", "", "", "", "", "", "", "", ""];
+          const filaFactura = ci === 0 ? baseFactura : ["", "", "", "", "", "", "", "", "", "", ""];
           const row = ws1.addRow([
             ...filaFactura,
             c.clave_prod_serv || c.claveprodserv || "",
@@ -609,7 +614,7 @@ const ListFacturas = () => {
               top: { style: "thin" }, left: { style: "thin" },
               bottom: { style: "thin" }, right: { style: "thin" },
             };
-            cell.alignment = { vertical: "middle", wrapText: col === 12 };
+            cell.alignment = { vertical: "middle", wrapText: col === 14 };
             if (zebra) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: TEAL_BG } };
             if (typeof cell.value === "number") cell.numFmt = "$#,##0.00";
           });
@@ -623,7 +628,7 @@ const ListFacturas = () => {
       }, 0);
 
       const totRow = ws1.addRow([
-        "", "", "", "", "", "", "", "", "", "", "", "TOTAL IMPORTE CONCEPTOS",
+        "", "", "", "", "", "", "", "", "", "", "", "", "", "TOTAL IMPORTE CONCEPTOS",
         "", "", "", totalImporte, "",
       ]);
       totRow.eachCell({ includeEmpty: true }, (cell, col) => {
@@ -640,7 +645,7 @@ const ListFacturas = () => {
 
       ws1.columns = [
         { width: 12 }, { width: 38 }, { width: 12 }, { width: 16 }, { width: 28 },
-        { width: 16 }, { width: 28 }, { width: 10 }, { width: 14 },
+        { width: 16 }, { width: 28 }, { width: 10 }, { width: 12 }, { width: 12 }, { width: 14 },
         { width: 16 }, { width: 18 }, { width: 38 }, { width: 10 },
         { width: 12 }, { width: 14 }, { width: 14 }, { width: 12 },
       ];
@@ -661,6 +666,7 @@ const ListFacturas = () => {
           fecha: string; uuid: string; movimiento: string;
           rfc_emisor: string; razonsocialemisor: string;
           rfc_receptor: string; razonsocialreceptor: string;
+          metodopago: string; tipopago: string;
           cantidad: number; valor_unitario: number; importe: number;
         }[];
       };
@@ -695,6 +701,8 @@ const ListFacturas = () => {
             razonsocialemisor: f.razonsocialemisor || "",
             rfc_receptor: f.rfc_receptor || "",
             razonsocialreceptor: f.razonsocialreceptor || "",
+            metodopago: f.metodopago || "",
+            tipopago: f.tipopago || "",
             cantidad,
             valor_unitario: toNum(c.valor_unitario ?? c.valorunitario),
             importe,
@@ -704,7 +712,8 @@ const ListFacturas = () => {
 
       const HEADERS_2 = [
         "Fecha", "UUID", "Movimiento", "RFC Emisor", "Razón Social Emisor",
-        "RFC Receptor", "Razón Social Receptor", "Cantidad", "Valor Unitario", "Importe",
+        "RFC Receptor", "Razón Social Receptor", "Método Pago", "Forma Pago",
+        "Cantidad", "Valor Unitario", "Importe",
       ];
 
       // Título principal hoja 2
@@ -750,6 +759,7 @@ const ListFacturas = () => {
             fac.fecha, fac.uuid, fac.movimiento,
             fac.rfc_emisor, fac.razonsocialemisor,
             fac.rfc_receptor, fac.razonsocialreceptor,
+            fac.metodopago, fac.tipopago,
             fac.cantidad, fac.valor_unitario, fac.importe,
           ]);
           const zebra = fi % 2 === 0;
@@ -766,7 +776,7 @@ const ListFacturas = () => {
 
         // Total por grupo
         const subRow = ws2.addRow([
-          "", "", "", "", "", "", "TOTAL", g.cantidadTotal, "", g.importeTotal,
+          "", "", "", "", "", "", "TOTAL", "", "", g.cantidadTotal, "", g.importeTotal,
         ]);
         subRow.eachCell({ includeEmpty: true }, (cell, col) => {
           if (col > HEADERS_2.length) return;
@@ -783,7 +793,8 @@ const ListFacturas = () => {
 
       ws2.columns = [
         { width: 12 }, { width: 38 }, { width: 12 }, { width: 16 }, { width: 28 },
-        { width: 16 }, { width: 28 }, { width: 12 }, { width: 14 }, { width: 14 },
+        { width: 16 }, { width: 28 }, { width: 12 }, { width: 12 },
+        { width: 12 }, { width: 14 }, { width: 14 },
       ];
       ws2.views = [{ state: "frozen", ySplit: 1 }];
 
