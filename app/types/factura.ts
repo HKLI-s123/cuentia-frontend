@@ -8,6 +8,8 @@ export type Factura = {
   };
   rfc_emisor: string;
   rfc_receptor: string;
+  razonsocialemisor?: string;
+  razonsocialreceptor?: string;
   total: number;
   status: string;
   fecha_emision: string;

@@ -6,12 +6,13 @@ import { saveAs } from "file-saver";
 import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle, Col, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Table, Modal, Form } from 'react-bootstrap'
 import { TbCircleFilled, TbDotsVertical, TbFileExport, TbArrowDown, TbArrowUp } from 'react-icons/tb'
 import CardPagination from '@/components/cards/CardPagination'
-import { getFacturas, getFacturasConConceptos, getPagos } from "../../../../../../services/financeService"  // 🔹 nuevo servicio
+import { getFacturas, getFacturasConConceptos, getPagos, getNotasCredito } from "../../../../../../services/financeService"  // 🔹 nuevo servicio
 import { analizarFacturaIA } from "../../../../../../services/iaService" // 👈 nuevo servicio IA
 import { TbBrain } from "react-icons/tb";
 import { Factura } from "../../../../../../types/factura";
 import { getSessionInfo } from "@/app/services/authService";
 import FacturaIAModal from "../components/FacturaIAModal";
+import FacturaPreviewModal from "../components/FacturaPreviewModal";
 import { toast } from "sonner";
 import { activateGuest, validateGuestKey } from "@/app/services/chatService";
 import { useOnboardingRedirect } from "@/hooks/useUserSessionGuard";
@@ -41,6 +42,12 @@ const ListFacturas = () => {
   const [selectedFacturaIA, setSelectedFacturaIA] = useState<Factura | null>(null);
   const [iaAnalysis, setIaAnalysis] = useState<string>("");
   const [loadingIA, setLoadingIA] = useState(false);
+
+  // 🔎 Preview individual de factura (estilo comprobante)
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [selectedFacturaPreview, setSelectedFacturaPreview] = useState<Factura | null>(null);
+  const [pagosRel, setPagosRel] = useState<any[]>([]);
+  const [notasRel, setNotasRel] = useState<any[]>([]);
 
   const [sortConfig, setSortConfig] = useState<{ key: keyof Factura, direction: "asc" | "desc" } | null>(null)
 
@@ -202,17 +209,22 @@ const ListFacturas = () => {
         },
         rfc_emisor: f.rfc_emisor,
         rfc_receptor: f.rfc_receptor,
+        razonsocialemisor: f.razonsocialemisor,
+        razonsocialreceptor: f.razonsocialreceptor,
         subtotal: f.subtotal,
         total: Number(f.total),
         clasificacion: f.clasificacion,
         status: f.status,
         fecha_emision: fechaFiscal,
+        folio: f.folio,
         movimiento,
         tipocomprobante: f.tipocomprobante,
         totalretenidos: f.totalretenidos,
         iva8: f.iva8,
         iva16: f.iva16,
         totaltraslado: f.totaltraslado,
+        totaltrasladado: f.totaltrasladado ?? f.totaltraslado,
+        descuento: f.descuento,
         retencionisr: f.retencionisr,
         retencioniva: f.retencioniva,
         regimenfiscal: f.regimenfiscal,
@@ -236,6 +248,51 @@ const ListFacturas = () => {
     if (!selectedRFC || !fechaInicio || !fechaFin) return;
     fetchFacturas()
   }, [selectedRFC, fechaInicio, fechaFin])
+
+  // 🔹 Complementos de pago y notas de crédito del periodo (para el preview individual)
+  const fetchRelacionados = async () => {
+    if (!selectedRFC || !fechaInicio || !fechaFin) return;
+    try {
+      const [pagosData, notasData] = await Promise.all([
+        getPagos({ rfc: selectedRFC, startDate: fechaInicio, endDate: fechaFin }),
+        getNotasCredito({ rfc: selectedRFC, startDate: fechaInicio, endDate: fechaFin }),
+      ]);
+      setPagosRel(Array.isArray(pagosData) ? pagosData : []);
+      setNotasRel(Array.isArray(notasData) ? notasData : []);
+    } catch (error) {
+      console.error("Error al cargar complementos/notas relacionadas:", error);
+      setPagosRel([]);
+      setNotasRel([]);
+    }
+  };
+
+  useEffect(() => {
+    if (!selectedRFC || !fechaInicio || !fechaFin) return;
+    fetchRelacionados();
+  }, [selectedRFC, fechaInicio, fechaFin]);
+
+  // Abre el preview de una factura, filtrando sus complementos y notas por UUID
+  const handleOpenPreview = (factura: Factura) => {
+    setSelectedFacturaPreview(factura);
+    setShowPreviewModal(true);
+  };
+
+  const pagosDeFactura = (factura: Factura | null) =>
+    !factura
+      ? []
+      : pagosRel.filter(
+          (p) =>
+            (p.uuid_factura || p.uuid_factura_rel || p.uuid_factura_relacion) ===
+            factura.uuid
+        );
+
+  const notasDeFactura = (factura: Factura | null) =>
+    !factura
+      ? []
+      : notasRel.filter(
+          (n) =>
+            (n.uuid_factura_relacionada || n.uuid_factura_relacion) === factura.uuid
+        );
 
   // 🔹 función de ordenamiento
   const sortedFacturas = [...facturas].sort((a, b) => {
@@ -1486,6 +1543,9 @@ const ListFacturas = () => {
                     <th onClick={() => requestSort("fecha_emision")} style={{ cursor: "pointer" }}>
                       Fecha {renderSortIcon("fecha_emision")}
                     </th>
+                    <th className="text-end">IVA 8</th>
+                    <th className="text-end">IVA 16</th>
+                    <th className="text-end">ISR</th>
                     <th>Estatus</th>
                     <th></th>
                   </tr>
@@ -1496,18 +1556,26 @@ const ListFacturas = () => {
                     if (!isVisible) return null; // si está oculto, no renderiza
                 
                     return (
-                      <tr key={factura.id}>
+                      <tr
+                        key={factura.id}
+                        onClick={() => handleOpenPreview(factura)}
+                        style={{ cursor: "pointer" }}
+                        title="Ver comprobante"
+                      >
                         {(tipoCuenta === "empresarial" || tipoCuenta === "empleado") && <td>{factura.cliente?.nombre}</td>}
                         <td>{factura?.rfc_emisor}</td>
                         <td>{factura?.rfc_receptor}</td>
                         <td>{factura.movimiento}</td>
                         <td><strong>${factura.total.toLocaleString()}</strong></td>
                         <td>{factura.fecha_emision.split("-").reverse().join("/")}</td>
+                        <td className="text-end">${(Number(factura.iva8) || 0).toLocaleString()}</td>
+                        <td className="text-end">${(Number(factura.iva16) || 0).toLocaleString()}</td>
+                        <td className="text-end">${(Number(factura.retencionisr) || 0).toLocaleString()}</td>
                         <td>
                           <TbCircleFilled className={`fs-xs text-${factura.status === "Vigente" ? "success" : factura.status === "Pendiente" ? "warning" : "danger"} me-1`} />
                           {factura.status}
                         </td>
-                        <td style={{ width: 30 }}>
+                        <td style={{ width: 30 }} onClick={(e) => e.stopPropagation()}>
                           <Dropdown>
                             <DropdownToggle as="a" href="#" className="dropdown-toggle text-muted drop-arrow-none card-drop p-0">
                               <TbDotsVertical className="fs-lg" />
@@ -1682,6 +1750,13 @@ const ListFacturas = () => {
         loading={loadingIA}
         iaAnalysis={iaAnalysis}
         onClose={() => setShowIAModal(false)}
+      />
+      <FacturaPreviewModal
+        show={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        factura={selectedFacturaPreview}
+        pagos={pagosDeFactura(selectedFacturaPreview)}
+        notas={notasDeFactura(selectedFacturaPreview)}
       />
     </Col>
   )
