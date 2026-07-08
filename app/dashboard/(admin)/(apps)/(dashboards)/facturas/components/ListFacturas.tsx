@@ -250,18 +250,24 @@ const ListFacturas = () => {
   }, [selectedRFC, fechaInicio, fechaFin])
 
   // 🔹 Complementos de pago y notas de crédito del periodo (para el preview individual)
+  // Se obtienen por separado para que el fallo de un endpoint no vacíe al otro.
   const fetchRelacionados = async () => {
     if (!selectedRFC || !fechaInicio || !fechaFin) return;
+    const params = { rfc: selectedRFC, startDate: fechaInicio, endDate: fechaFin };
+
     try {
-      const [pagosData, notasData] = await Promise.all([
-        getPagos({ rfc: selectedRFC, startDate: fechaInicio, endDate: fechaFin }),
-        getNotasCredito({ rfc: selectedRFC, startDate: fechaInicio, endDate: fechaFin }),
-      ]);
+      const pagosData = await getPagos(params);
       setPagosRel(Array.isArray(pagosData) ? pagosData : []);
+    } catch (error) {
+      console.error("Error al cargar complementos de pago relacionados:", error);
+      setPagosRel([]);
+    }
+
+    try {
+      const notasData = await getNotasCredito(params);
       setNotasRel(Array.isArray(notasData) ? notasData : []);
     } catch (error) {
-      console.error("Error al cargar complementos/notas relacionadas:", error);
-      setPagosRel([]);
+      console.error("Error al cargar notas de crédito relacionadas:", error);
       setNotasRel([]);
     }
   };
@@ -277,22 +283,27 @@ const ListFacturas = () => {
     setShowPreviewModal(true);
   };
 
-  const pagosDeFactura = (factura: Factura | null) =>
-    !factura
-      ? []
-      : pagosRel.filter(
-          (p) =>
-            (p.uuid_factura || p.uuid_factura_rel || p.uuid_factura_relacion) ===
-            factura.uuid
-        );
+  // Normaliza UUIDs para comparar (los UUID del SAT pueden variar en mayúsculas/espacios entre tablas)
+  const normUuid = (v: any) => String(v ?? "").trim().toUpperCase();
 
-  const notasDeFactura = (factura: Factura | null) =>
-    !factura
-      ? []
-      : notasRel.filter(
-          (n) =>
-            (n.uuid_factura_relacionada || n.uuid_factura_relacion) === factura.uuid
-        );
+  const pagosDeFactura = (factura: Factura | null) => {
+    if (!factura) return [];
+    const target = normUuid(factura.uuid);
+    return pagosRel.filter(
+      (p) =>
+        normUuid(p.uuid_factura || p.uuid_factura_rel || p.uuid_factura_relacion) ===
+        target
+    );
+  };
+
+  const notasDeFactura = (factura: Factura | null) => {
+    if (!factura) return [];
+    const target = normUuid(factura.uuid);
+    return notasRel.filter(
+      (n) =>
+        normUuid(n.uuid_factura_relacionada || n.uuid_factura_relacion) === target
+    );
+  };
 
   // 🔹 función de ordenamiento
   const sortedFacturas = [...facturas].sort((a, b) => {
@@ -1545,7 +1556,6 @@ const ListFacturas = () => {
                     </th>
                     <th className="text-end">IVA 8</th>
                     <th className="text-end">IVA 16</th>
-                    <th className="text-end">ISR</th>
                     <th>Estatus</th>
                     <th></th>
                   </tr>
@@ -1570,7 +1580,6 @@ const ListFacturas = () => {
                         <td>{factura.fecha_emision.split("-").reverse().join("/")}</td>
                         <td className="text-end">${(Number(factura.iva8) || 0).toLocaleString()}</td>
                         <td className="text-end">${(Number(factura.iva16) || 0).toLocaleString()}</td>
-                        <td className="text-end">${(Number(factura.retencionisr) || 0).toLocaleString()}</td>
                         <td>
                           <TbCircleFilled className={`fs-xs text-${factura.status === "Vigente" ? "success" : factura.status === "Pendiente" ? "warning" : "danger"} me-1`} />
                           {factura.status}

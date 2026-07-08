@@ -48,6 +48,13 @@ const FacturaPreviewModal: React.FC<FacturaPreviewModalProps> = ({
 
   if (!factura) return null;
 
+  // Nómina (N) y complementos de pago (P) no tienen complementos de pago
+  // ni notas de crédito asociadas.
+  const aplicaRelacionados =
+    factura.tipocomprobante !== "N" &&
+    factura.tipocomprobante !== "P" &&
+    factura.movimiento !== "Nomina";
+
   const movimientoColor =
     factura.movimiento === "Ingreso"
       ? "success"
@@ -242,6 +249,8 @@ const FacturaPreviewModal: React.FC<FacturaPreviewModalProps> = ({
           </div>
 
           {/* ───── Complementos de pago (colapsable) ───── */}
+          {aplicaRelacionados && (
+          <>
           <SeccionColapsable
             icon={<TbCash />}
             titulo="Complementos de pago relacionados"
@@ -330,6 +339,8 @@ const FacturaPreviewModal: React.FC<FacturaPreviewModalProps> = ({
               ))
             )}
           </SeccionColapsable>
+          </>
+          )}
         </div>
       </Modal.Body>
 
