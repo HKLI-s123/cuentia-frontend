@@ -305,6 +305,10 @@ const ListFacturas = () => {
     );
   };
 
+  // 🔴 Temporal: marca las facturas que tienen complementos o notas relacionadas
+  const tieneRelacionados = (factura: Factura) =>
+    pagosDeFactura(factura).length > 0 || notasDeFactura(factura).length > 0;
+
   // 🔹 función de ordenamiento
   const sortedFacturas = [...facturas].sort((a, b) => {
     if (!sortConfig) return 0;
@@ -1569,8 +1573,21 @@ const ListFacturas = () => {
                       <tr
                         key={factura.id}
                         onClick={() => handleOpenPreview(factura)}
-                        style={{ cursor: "pointer" }}
-                        title="Ver comprobante"
+                        style={{
+                          cursor: "pointer",
+                          ...(tieneRelacionados(factura)
+                            ? {
+                                textDecoration: "underline",
+                                textDecorationColor: "red",
+                                textDecorationThickness: "2px",
+                              }
+                            : {}),
+                        }}
+                        title={
+                          tieneRelacionados(factura)
+                            ? "Tiene complementos o notas relacionadas · Ver comprobante"
+                            : "Ver comprobante"
+                        }
                       >
                         {(tipoCuenta === "empresarial" || tipoCuenta === "empleado") && <td>{factura.cliente?.nombre}</td>}
                         <td>{factura?.rfc_emisor}</td>
