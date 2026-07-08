@@ -535,6 +535,9 @@ const ListFacturas = () => {
         "RFC Receptor", "Razón Social Receptor", "Moneda", "Método Pago", "Forma Pago", "Total Factura",
         "Clave ProdServ", "No. Identificación", "Descripción Concepto",
         "Cantidad", "Unidad", "Valor Unitario", "Importe", "Descuento",
+        "Objeto Imp", "Base IVA 16", "IVA 16", "Base IVA 8", "IVA 8",
+        "Base Exento", "IEPS Tras.", "Total Trasladado",
+        "Ret. IVA", "Ret. ISR", "Ret. IEPS", "Total Retenido",
       ];
 
       // Título principal
@@ -580,7 +583,10 @@ const ListFacturas = () => {
         const zebra = idx % 2 === 0;
 
         if (conceptos.length === 0) {
-          const row = ws1.addRow([...baseFactura, "", "", "(Sin conceptos)", "", "", "", "", ""]);
+          const sinRow = [...baseFactura];
+          while (sinRow.length < HEADERS_1.length) sinRow.push("");
+          sinRow[13] = "(Sin conceptos)"; // columna "Descripción Concepto"
+          const row = ws1.addRow(sinRow);
           row.eachCell({ includeEmpty: true }, (cell, col) => {
             if (col > HEADERS_1.length) return;
             cell.border = {
@@ -607,6 +613,14 @@ const ListFacturas = () => {
             toNum(c.valor_unitario ?? c.valorunitario),
             toNum(c.importe),
             toNum(c.descuento),
+            c.objeto_imp || "",
+            toNum(c.base_iva16), toNum(c.iva16),
+            toNum(c.base_iva8), toNum(c.iva8),
+            toNum(c.base_exento),
+            toNum(c.ieps_trasladado),
+            toNum(c.total_trasladado),
+            toNum(c.retencion_iva), toNum(c.retencion_isr), toNum(c.retencion_ieps),
+            toNum(c.total_retenido),
           ]);
           row.eachCell({ includeEmpty: true }, (cell, col) => {
             if (col > HEADERS_1.length) return;
@@ -621,15 +635,24 @@ const ListFacturas = () => {
         });
       });
 
-      // Total general (suma de importes)
-      const totalImporte = facturasConConceptos.reduce((acc: number, f: any) => {
-        const cs: any[] = Array.isArray(f.conceptos) ? f.conceptos : [];
-        return acc + cs.reduce((a, c) => a + toNum(c.importe), 0);
-      }, 0);
+      // Total general (suma de importes + impuestos por concepto en el periodo)
+      const sumConcepto = (field: string) =>
+        facturasConConceptos.reduce((acc: number, f: any) => {
+          const cs: any[] = Array.isArray(f.conceptos) ? f.conceptos : [];
+          return acc + cs.reduce((a, c) => a + toNum(c[field]), 0);
+        }, 0);
+
+      const totalImporte = sumConcepto("importe");
 
       const totRow = ws1.addRow([
-        "", "", "", "", "", "", "", "", "", "", "", "", "", "TOTAL IMPORTE CONCEPTOS",
+        "", "", "", "", "", "", "", "", "", "", "", "", "", "TOTALES",
         "", "", "", totalImporte, "",
+        "", sumConcepto("base_iva16"), sumConcepto("iva16"),
+        sumConcepto("base_iva8"), sumConcepto("iva8"),
+        sumConcepto("base_exento"), sumConcepto("ieps_trasladado"),
+        sumConcepto("total_trasladado"),
+        sumConcepto("retencion_iva"), sumConcepto("retencion_isr"), sumConcepto("retencion_ieps"),
+        sumConcepto("total_retenido"),
       ]);
       totRow.eachCell({ includeEmpty: true }, (cell, col) => {
         if (col > HEADERS_1.length) return;
@@ -648,6 +671,9 @@ const ListFacturas = () => {
         { width: 16 }, { width: 28 }, { width: 10 }, { width: 12 }, { width: 12 }, { width: 14 },
         { width: 16 }, { width: 18 }, { width: 38 }, { width: 10 },
         { width: 12 }, { width: 14 }, { width: 14 }, { width: 12 },
+        { width: 10 }, { width: 13 }, { width: 12 }, { width: 13 }, { width: 12 },
+        { width: 13 }, { width: 13 }, { width: 15 },
+        { width: 12 }, { width: 12 }, { width: 12 }, { width: 14 },
       ];
       ws1.views = [{ state: "frozen", ySplit: 2 }];
 
@@ -662,12 +688,16 @@ const ListFacturas = () => {
         clave_prod_serv: string;
         cantidadTotal: number;
         importeTotal: number;
+        iva16Total: number; iva8Total: number; iepsTotal: number; trasladadoTotal: number;
+        retIvaTotal: number; retIsrTotal: number; retIepsTotal: number; retenidoTotal: number;
         facturas: {
           fecha: string; uuid: string; movimiento: string;
           rfc_emisor: string; razonsocialemisor: string;
           rfc_receptor: string; razonsocialreceptor: string;
           metodopago: string; tipopago: string;
           cantidad: number; valor_unitario: number; importe: number;
+          iva16: number; iva8: number; ieps_trasladado: number; total_trasladado: number;
+          retencion_iva: number; retencion_isr: number; retencion_ieps: number; total_retenido: number;
         }[];
       };
 
@@ -685,14 +715,26 @@ const ListFacturas = () => {
               clave_prod_serv: clave,
               cantidadTotal: 0,
               importeTotal: 0,
+              iva16Total: 0, iva8Total: 0, iepsTotal: 0, trasladadoTotal: 0,
+              retIvaTotal: 0, retIsrTotal: 0, retIepsTotal: 0, retenidoTotal: 0,
               facturas: [],
             });
           }
           const g = grupos.get(key)!;
           const cantidad = toNum(c.cantidad);
           const importe = toNum(c.importe);
+          const iva16 = toNum(c.iva16);
+          const iva8 = toNum(c.iva8);
+          const ieps = toNum(c.ieps_trasladado);
+          const trasladado = toNum(c.total_trasladado);
+          const retIva = toNum(c.retencion_iva);
+          const retIsr = toNum(c.retencion_isr);
+          const retIeps = toNum(c.retencion_ieps);
+          const retenido = toNum(c.total_retenido);
           g.cantidadTotal += cantidad;
           g.importeTotal += importe;
+          g.iva16Total += iva16; g.iva8Total += iva8; g.iepsTotal += ieps; g.trasladadoTotal += trasladado;
+          g.retIvaTotal += retIva; g.retIsrTotal += retIsr; g.retIepsTotal += retIeps; g.retenidoTotal += retenido;
           g.facturas.push({
             fecha: fmtFecha(f.fecha || f.fecha_emision),
             uuid: f.uuid || "",
@@ -706,6 +748,8 @@ const ListFacturas = () => {
             cantidad,
             valor_unitario: toNum(c.valor_unitario ?? c.valorunitario),
             importe,
+            iva16, iva8, ieps_trasladado: ieps, total_trasladado: trasladado,
+            retencion_iva: retIva, retencion_isr: retIsr, retencion_ieps: retIeps, total_retenido: retenido,
           });
         });
       });
@@ -714,6 +758,8 @@ const ListFacturas = () => {
         "Fecha", "UUID", "Movimiento", "RFC Emisor", "Razón Social Emisor",
         "RFC Receptor", "Razón Social Receptor", "Método Pago", "Forma Pago",
         "Cantidad", "Valor Unitario", "Importe",
+        "IVA 16", "IVA 8", "IEPS Tras.", "Total Trasladado",
+        "Ret. IVA", "Ret. ISR", "Ret. IEPS", "Total Retenido",
       ];
 
       // Título principal hoja 2
@@ -761,6 +807,8 @@ const ListFacturas = () => {
             fac.rfc_receptor, fac.razonsocialreceptor,
             fac.metodopago, fac.tipopago,
             fac.cantidad, fac.valor_unitario, fac.importe,
+            fac.iva16, fac.iva8, fac.ieps_trasladado, fac.total_trasladado,
+            fac.retencion_iva, fac.retencion_isr, fac.retencion_ieps, fac.total_retenido,
           ]);
           const zebra = fi % 2 === 0;
           row.eachCell({ includeEmpty: true }, (cell, col) => {
@@ -777,6 +825,8 @@ const ListFacturas = () => {
         // Total por grupo
         const subRow = ws2.addRow([
           "", "", "", "", "", "", "TOTAL", "", "", g.cantidadTotal, "", g.importeTotal,
+          g.iva16Total, g.iva8Total, g.iepsTotal, g.trasladadoTotal,
+          g.retIvaTotal, g.retIsrTotal, g.retIepsTotal, g.retenidoTotal,
         ]);
         subRow.eachCell({ includeEmpty: true }, (cell, col) => {
           if (col > HEADERS_2.length) return;
@@ -795,6 +845,8 @@ const ListFacturas = () => {
         { width: 12 }, { width: 38 }, { width: 12 }, { width: 16 }, { width: 28 },
         { width: 16 }, { width: 28 }, { width: 12 }, { width: 12 },
         { width: 12 }, { width: 14 }, { width: 14 },
+        { width: 12 }, { width: 12 }, { width: 13 }, { width: 15 },
+        { width: 12 }, { width: 12 }, { width: 12 }, { width: 14 },
       ];
       ws2.views = [{ state: "frozen", ySplit: 1 }];
 
