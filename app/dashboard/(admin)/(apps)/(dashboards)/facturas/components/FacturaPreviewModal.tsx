@@ -11,6 +11,7 @@ import {
   TbReceiptTax,
   TbCash,
   TbFileMinus,
+  TbListDetails,
 } from "react-icons/tb";
 import { Factura } from "../../../../../../types/factura";
 
@@ -18,9 +19,18 @@ interface FacturaPreviewModalProps {
   show: boolean;
   onClose: () => void;
   factura: Factura | null;
+  conceptos: any[];
   pagos: any[];
   notas: any[];
 }
+
+// Lee un campo de concepto tolerando distintas convenciones de nombre
+const cf = (c: any, ...keys: string[]) => {
+  for (const k of keys) {
+    if (c[k] !== undefined && c[k] !== null && c[k] !== "") return c[k];
+  }
+  return undefined;
+};
 
 // 🎨 Paleta de marca Cuentia
 const TEAL = "#1AB394";
@@ -40,9 +50,11 @@ const FacturaPreviewModal: React.FC<FacturaPreviewModalProps> = ({
   show,
   onClose,
   factura,
+  conceptos,
   pagos,
   notas,
 }) => {
+  const [openConceptos, setOpenConceptos] = useState(true);
   const [openPagos, setOpenPagos] = useState(true);
   const [openNotas, setOpenNotas] = useState(true);
 
@@ -214,6 +226,66 @@ const FacturaPreviewModal: React.FC<FacturaPreviewModalProps> = ({
               } />
             </div>
           </div>
+
+          {/* ───── Conceptos (desglose, colapsable con scroll) ───── */}
+          <SeccionColapsable
+            icon={<TbListDetails />}
+            titulo="Conceptos"
+            count={conceptos.length}
+            open={openConceptos}
+            onToggle={() => setOpenConceptos((o) => !o)}
+            color={INDIGO}
+          >
+            {conceptos.length === 0 ? (
+              <div className="text-muted small px-1 py-2">
+                No hay conceptos disponibles para esta factura.
+              </div>
+            ) : (
+              <div style={{ maxHeight: "360px", overflowY: "auto" }} className="pe-1">
+                {conceptos.map((c, i) => (
+                  <div
+                    key={i}
+                    className="rounded-3 p-2 mb-2"
+                    style={{ background: "#f7f8fc", border: "1px solid #e6e8ef" }}
+                  >
+                    <div className="d-flex justify-content-between align-items-start gap-2 mb-1">
+                      <span className="fw-semibold" style={{ fontSize: "0.82rem", color: DARK }}>
+                        {i + 1}. {cf(c, "descripcion") || "—"}
+                      </span>
+                      <span className="fw-bold text-nowrap" style={{ color: TEAL }}>
+                        {money(cf(c, "importe"))}
+                      </span>
+                    </div>
+                    {(cf(c, "clave_prod_serv", "claveprodserv") ||
+                      cf(c, "no_identificacion", "noidentificacion")) && (
+                      <div className="text-muted" style={{ fontSize: "0.68rem" }}>
+                        {cf(c, "clave_prod_serv", "claveprodserv") &&
+                          `Clave: ${cf(c, "clave_prod_serv", "claveprodserv")}`}
+                        {cf(c, "no_identificacion", "noidentificacion") &&
+                          ` · No. Ident.: ${cf(c, "no_identificacion", "noidentificacion")}`}
+                      </div>
+                    )}
+                    <div className="row g-1 mt-1" style={{ fontSize: "0.78rem" }}>
+                      <MiniDato label="Cantidad" value={cf(c, "cantidad") ?? "—"} />
+                      <MiniDato
+                        label="Unidad"
+                        value={cf(c, "unidad", "clave_unidad", "claveunidad") ?? "—"}
+                      />
+                      <MiniDato
+                        label="Valor unitario"
+                        value={money(cf(c, "valor_unitario", "valorunitario"))}
+                      />
+                      <MiniDato label="Descuento" value={money(cf(c, "descuento"))} />
+                      <MiniDato label="IVA 16%" value={money(cf(c, "iva16"))} />
+                      <MiniDato label="IVA 8%" value={money(cf(c, "iva8"))} />
+                      <MiniDato label="IEPS tras." value={money(cf(c, "ieps_trasladado"))} />
+                      <MiniDato label="Ret. ISR" value={money(cf(c, "retencion_isr"))} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SeccionColapsable>
 
           {/* Impuestos y retenciones */}
           <div

@@ -48,6 +48,7 @@ const ListFacturas = () => {
   const [selectedFacturaPreview, setSelectedFacturaPreview] = useState<Factura | null>(null);
   const [pagosRel, setPagosRel] = useState<any[]>([]);
   const [notasRel, setNotasRel] = useState<any[]>([]);
+  const [conceptosMap, setConceptosMap] = useState<Record<string, any[]>>({});
 
   const [sortConfig, setSortConfig] = useState<{ key: keyof Factura, direction: "asc" | "desc" } | null>(null)
 
@@ -270,6 +271,19 @@ const ListFacturas = () => {
       console.error("Error al cargar notas de crédito relacionadas:", error);
       setNotasRel([]);
     }
+
+    try {
+      const conConceptos = await getFacturasConConceptos(params);
+      const map: Record<string, any[]> = {};
+      (Array.isArray(conConceptos) ? conConceptos : []).forEach((f: any) => {
+        const key = String(f.uuid ?? "").trim().toUpperCase();
+        if (key) map[key] = Array.isArray(f.conceptos) ? f.conceptos : [];
+      });
+      setConceptosMap(map);
+    } catch (error) {
+      console.error("Error al cargar conceptos de facturas:", error);
+      setConceptosMap({});
+    }
   };
 
   useEffect(() => {
@@ -286,24 +300,44 @@ const ListFacturas = () => {
   // Normaliza UUIDs para comparar (los UUID del SAT pueden variar en mayúsculas/espacios entre tablas)
   const normUuid = (v: any) => String(v ?? "").trim().toUpperCase();
 
+  // Deduplica una lista por una clave (p. ej. uuid_complemento).
+  // pagos_cfdi está a nivel DoctoRelacionado, así que un mismo complemento
+  // puede venir en varias filas y hay que quedarse con una.
+  const dedupeBy = <T,>(rows: T[], key: (r: T) => string) => {
+    const seen = new Set<string>();
+    return rows.filter((r) => {
+      const k = key(r);
+      if (!k || seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  };
+
   const pagosDeFactura = (factura: Factura | null) => {
     if (!factura) return [];
     const target = normUuid(factura.uuid);
-    return pagosRel.filter(
+    const relacionados = pagosRel.filter(
       (p) =>
         normUuid(p.uuid_factura || p.uuid_factura_rel || p.uuid_factura_relacion) ===
         target
+    );
+    return dedupeBy(relacionados, (p) =>
+      normUuid(p.uuid_complemento || p.uuid)
     );
   };
 
   const notasDeFactura = (factura: Factura | null) => {
     if (!factura) return [];
     const target = normUuid(factura.uuid);
-    return notasRel.filter(
+    const relacionadas = notasRel.filter(
       (n) =>
         normUuid(n.uuid_factura_relacionada || n.uuid_factura_relacion) === target
     );
+    return dedupeBy(relacionadas, (n) => normUuid(n.uuid));
   };
+
+  const conceptosDeFactura = (factura: Factura | null) =>
+    !factura ? [] : conceptosMap[normUuid(factura.uuid)] ?? [];
 
   // 🔴 Temporal: marca las facturas que tienen complementos o notas relacionadas
   const tieneRelacionados = (factura: Factura) =>
@@ -1781,6 +1815,7 @@ const ListFacturas = () => {
         show={showPreviewModal}
         onClose={() => setShowPreviewModal(false)}
         factura={selectedFacturaPreview}
+        conceptos={conceptosDeFactura(selectedFacturaPreview)}
         pagos={pagosDeFactura(selectedFacturaPreview)}
         notas={notasDeFactura(selectedFacturaPreview)}
       />
