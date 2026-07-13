@@ -1504,11 +1504,12 @@ export default function CuentIALandingPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {([
               {
-                name: "Individual",
+                name: "Inicial",
                 forWho: "Freelancers y personas físicas",
                 monthly: "$199", annual: "$159",
                 highlight: null, popular: false,
                 features: [
+                  "RFCs ilimitados",
                   "Motor CFDI (emitidos y recibidos)",
                   "Dashboard fiscal",
                   "IA contable (límite diario)",

@@ -22,7 +22,7 @@ type TipoCuenta = "invitado" | "individual" | "empresarial";
 
 const PLANS = [
   {
-    name: "Individual",
+    name: "Inicial",
     code: "cuentia_plan_individual",
     monthlyPriceId: "price_1TZHlBKg1JUMkNoEhUi663pN",
     annualPriceId: "price_1TZHlsKg1JUMkNoEEuQfmvG8",
@@ -31,6 +31,7 @@ const PLANS = [
     tag: "Ideal para freelancers",
     popular: false,
     features: [
+      "RFCs ilimitados",
       "Hasta 10,000 XMLs/facturas al mes",
       "Motor CFDI",
       "Dashboard",
@@ -370,8 +371,8 @@ export default function PricingPage() {
 
   if (!sessionLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
-        <span className="animate-pulse text-slate-400">
+      <div className="min-h-screen flex items-center justify-center bg-white text-slate-900">
+        <span className="animate-pulse text-slate-500">
           Cargando planes…
         </span>
       </div>
@@ -386,11 +387,19 @@ export default function PricingPage() {
         plan={selectedPlan}
         priceId={selectedPriceId}
     />
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-50">
-      {/* Glow de fondo */}
-      <div className="pointer-events-none fixed inset-0">
-        <div className="absolute -top-40 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-indigo-500/20 blur-3xl" />
-        <div className="absolute bottom-0 right-10 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
+    <div className="landing-cuentia min-h-screen overflow-x-clip bg-white text-slate-900">
+      {/* Retícula fina tipo papel contable — coherente con la landing */}
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(27,27,52,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(27,27,52,0.05) 1px, transparent 1px)",
+            backgroundSize: "34px 34px",
+            maskImage: "radial-gradient(ellipse 75% 55% at 50% -5%, #000 35%, transparent 100%)",
+            WebkitMaskImage: "radial-gradient(ellipse 75% 55% at 50% -5%, #000 35%, transparent 100%)",
+          }}
+        />
       </div>
 
       <div className="relative max-w-6xl mx-auto px-6 py-16">
@@ -401,16 +410,16 @@ export default function PricingPage() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <p className="inline-flex items-center gap-2 rounded-full border border-indigo-500/40 bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-200 mb-4">
+          <p className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 mb-4">
             CuentIA Billing
           </p>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900">
             Planes y precios para{" "}
-            <span className="bg-gradient-to-r from-indigo-300 to-cyan-300 bg-clip-text text-transparent">
+            <span className="text-indigo-600">
               automatizar tu contabilidad
             </span>
           </h1>
-          <p className="mt-4 text-slate-300 max-w-2xl mx-auto">
+          <p className="mt-4 text-slate-500 max-w-2xl mx-auto leading-relaxed">
             Elige el plan que se adapta a tu operación. Actualiza o agrega bots
             cuando tu negocio crezca.
           </p>
@@ -424,17 +433,17 @@ export default function PricingPage() {
           className="flex justify-center mb-12"
         >
           <LayoutGroup>
-            <div className="flex items-center gap-1 bg-slate-900/70 border border-slate-700/70 rounded-full px-1 py-1 shadow-lg shadow-black/40">
+            <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
               {(["monthly", "annual"] as const).map((cycle) => (
                 <button
                   key={cycle}
                   onClick={() => setBillingCycle(cycle)}
-                  className="relative px-5 py-1.5 text-sm font-medium rounded-full"
+                  className="relative px-5 py-2 text-sm font-medium rounded-lg"
                 >
                   {billingCycle === cycle && (
                     <motion.span
                       layoutId="pill"
-                      className="absolute inset-0 rounded-full bg-indigo-500 shadow-[0_0_0_1px_rgba(255,255,255,0.1)]"
+                      className="absolute inset-0 rounded-lg bg-white shadow-sm"
                       transition={{
                         type: "spring",
                         stiffness: 500,
@@ -443,13 +452,18 @@ export default function PricingPage() {
                     />
                   )}
                   <span
-                    className={`relative z-10 ${
+                    className={`relative z-10 inline-flex items-center gap-2 ${
                       billingCycle === cycle
-                        ? "text-white"
-                        : "text-slate-300/80"
+                        ? "text-slate-900"
+                        : "text-slate-500 hover:text-slate-700"
                     }`}
                   >
-                    {cycle === "monthly" ? "Mensual" : "Anual -20%"}
+                    {cycle === "monthly" ? "Mensual" : "Anual"}
+                    {cycle === "annual" && (
+                      <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                        -20%
+                      </span>
+                    )}
                   </span>
                 </button>
               ))}
@@ -497,16 +511,16 @@ export default function PricingPage() {
                 }}
                 whileHover={{ y: -4, scale: 1.01 }}
                 transition={{ type: "spring", stiffness: 260, damping: 25 }}
-                className={`relative rounded-2xl border bg-slate-900/60 backdrop-blur-xl p-6 shadow-xl shadow-black/40 ${
+                className={`relative rounded-2xl border bg-white p-6 shadow-sm ${
                   isPopular
-                    ? "border-indigo-500/80 ring-2 ring-indigo-400/40 md:-mt-4"
-                    : "border-slate-700/80"
+                    ? "border-indigo-300 ring-1 ring-indigo-200 shadow-lg shadow-indigo-100/60 md:-mt-4"
+                    : "border-slate-200"
                 }`}
               >
                 {/* Badge "Más popular" */}
                 {isPopular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <div className="rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400 px-3 py-1 text-xs font-semibold text-white shadow-lg shadow-indigo-500/40">
+                    <div className="rounded-full bg-indigo-600 px-3 py-1 text-xs font-semibold text-white shadow-sm">
                       Más popular
                     </div>
                   </div>
@@ -515,62 +529,62 @@ export default function PricingPage() {
                 {/* Encabezado */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between gap-2">
-                    <h2 className="text-xl font-semibold text-white">
+                    <h2 className="text-xl font-bold text-slate-900">
                       {plan.name}
                     </h2>
-                    <span className="text-xs px-2 py-1 rounded-full bg-slate-800/80 text-slate-200 border border-slate-700/80">
+                    <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                       {plan.tag}
                     </span>
                   </div>
 
                   <div className="mt-3">
-                    <div className="text-2xl font-bold text-indigo-100">
+                    <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
                       {priceText}
                     </div>
-                    <div className="text-xs text-slate-400 mt-1">
+                    <div className="text-xs text-slate-500 mt-1">
                       {billingCycle === "monthly"
                         ? "Facturación mensual"
                         : "Cobro anual adelantado"}
                     </div>
-                    <div className="text-xs text-slate-500 mt-0.5">Precios incluyen IVA e impuestos</div>
+                    <div className="text-xs text-slate-400 mt-0.5">Precios incluyen IVA e impuestos</div>
                   </div>
                     {isCurrentPlan && planStatus === "active" && (
-                      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-400/60 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
-                        <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                        <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                         Plan actualmente contratado
                       </div>
                     )}
 
                     {isCurrentPlan && planStatus === "past_due" && (
-                      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-yellow-400/60 bg-yellow-500/10 px-3 py-1 text-xs font-semibold text-yellow-200">
-                        <span className="inline-block h-2 w-2 rounded-full bg-yellow-400 animate-pulse" />
+                      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                        <span className="inline-block h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
                         Pago pendiente · Actualiza tu método de pago
                       </div>
                     )}
                     
                     {isCurrentPlan && planStatus === "expired" && (
-                      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-red-400/60 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-200">
-                        <span className="inline-block h-2 w-2 rounded-full bg-red-400 animate-pulse" />
+                      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
+                        <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
                         Plan caducado · Renueva para continuar
                       </div>
                     )}
                     
                     {isCurrentPlan && planStatus === "canceled" && (
-                      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-orange-400/60 bg-orange-500/10 px-3 py-1 text-xs font-semibold text-orange-200">
-                        <span className="inline-block h-2 w-2 rounded-full bg-orange-400 animate-pulse" />
+                      <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
+                        <span className="inline-block h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
                         Plan cancelado · contratalo nuevamente
                       </div>
                     )}
                 </div>
 
                 {/* Features */}
-                <ul className="mt-4 space-y-2 text-sm text-slate-200/90">
+                <ul className="mt-4 space-y-2 text-sm text-slate-600">
                   {plan.features.map((f, idx) => (
                     <li
                       key={idx}
-                      className="flex items-start gap-2 hover:text-indigo-100 transition-colors"
+                      className="flex items-start gap-2 hover:text-slate-900 transition-colors"
                     >
-                      <Check className="mt-[2px] h-4 w-4 text-indigo-400 flex-shrink-0" />
+                      <Check className="mt-[2px] h-4 w-4 text-emerald-600 flex-shrink-0" />
                       <span>{f}</span>
                     </li>
                   ))}
@@ -581,12 +595,12 @@ export default function PricingPage() {
                   whileTap={{ scale: 0.97 }}
                   onClick={() => handleSubscribe(priceId, plan.code)}
                   disabled={isCurrentPlan && planStatus === "active"} 
-                  className={`mt-6 w-full py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-black/40 transition-colors ${
+                  className={`mt-6 w-full py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors ${
                     isCurrentPlan && planStatus === "active"
-                      ? "bg-slate-700 text-slate-300 cursor-not-allowed"
+                      ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
                       : isPopular
-                      ? "bg-gradient-to-r from-indigo-500 to-cyan-400 text-slate-950 hover:from-indigo-400 hover:to-cyan-300"
-                      : "bg-slate-800 text-slate-50 hover:bg-slate-700"
+                      ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                      : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
                   }`}
                 >
                 {loading === priceId
@@ -632,65 +646,65 @@ export default function PricingPage() {
               const isCurrentPlan = planCode === plan.code;
 
               return (
-                <div className="relative overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/70 backdrop-blur-xl p-6 md:p-8 shadow-2xl shadow-black/50">
-                  <div className="absolute right-0 top-0 h-32 w-32 bg-indigo-500/20 blur-2xl" />
+                <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm">
+                  <div className="absolute right-0 top-0 h-32 w-32 bg-indigo-100/60 blur-2xl" />
                   <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                     <div>
-                      <h2 className="text-2xl font-semibold text-white flex items-center gap-2">
+                      <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                         {plan.name}
-                        <span className="text-xs px-2 py-1 rounded-full bg-slate-800/90 text-slate-200 border border-slate-700/80">
+                        <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                           Alto volumen
                         </span>
                       </h2>
-                      <p className="mt-2 text-slate-300 max-w-xl">
+                      <p className="mt-2 text-slate-500 max-w-xl leading-relaxed">
                         Diseñado para despachos contables que administran
                         cientos de RFCs, múltiples colaboradores y requieren
                         control total por cliente y automatización avanzada.
                       </p>
-                      <div className="mt-4 text-2xl font-bold text-indigo-100">
+                      <div className="mt-4 text-2xl font-bold text-slate-900 font-mono tabular-nums">
                         {priceText}
                       </div>
-                      <div className="text-xs text-slate-400 mt-1">
+                      <div className="text-xs text-slate-500 mt-1">
                         {billingCycle === "monthly"
                           ? "Facturación mensual"
                           : "Cobro anual adelantado"}
                       </div>
-                      <div className="text-xs text-slate-500 mt-0.5">Precios incluyen IVA e impuestos</div>
+                      <div className="text-xs text-slate-400 mt-0.5">Precios incluyen IVA e impuestos</div>
                         {isCurrentPlan && planStatus === "active" && (
-                          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-400/60 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
-                            <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                            <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                             Plan actualmente contratado
                           </div>
                         )}
                         {isCurrentPlan && planStatus === "past_due" && (
-                          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-yellow-400/60 bg-yellow-500/10 px-3 py-1 text-xs font-semibold text-yellow-200">
-                            <span className="inline-block h-2 w-2 rounded-full bg-yellow-400 animate-pulse" />
+                          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                            <span className="inline-block h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
                             Pago pendiente · Actualiza tu método de pago
                           </div>
                         )}                        
                         {isCurrentPlan && planStatus === "expired" && (
-                          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-red-400/60 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-200">
-                            <span className="inline-block h-2 w-2 rounded-full bg-red-400 animate-pulse" />
+                          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
+                            <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
                             Plan caducado · Renueva para continuar
                           </div>
                         )}
                         
                         {isCurrentPlan && planStatus === "canceled" && (
-                          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-orange-400/60 bg-orange-500/10 px-3 py-1 text-xs font-semibold text-orange-200">
-                            <span className="inline-block h-2 w-2 rounded-full bg-orange-400 animate-pulse" />
+                          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
+                            <span className="inline-block h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
                             Plan cancelado · Puedes contratarlo nuevamente
                           </div>
                         )}
                     </div>
 
                     <div className="md:w-72">
-                      <ul className="space-y-2 text-sm text-slate-200/90">
+                      <ul className="space-y-2 text-sm text-slate-600">
                         {plan.features.map((f, idx) => (
                           <li
                             key={idx}
-                            className="flex items-start gap-2 hover:text-indigo-100 transition-colors"
+                            className="flex items-start gap-2 hover:text-slate-900 transition-colors"
                           >
-                            <Check className="mt-[2px] h-4 w-4 text-indigo-400 flex-shrink-0" />
+                            <Check className="mt-[2px] h-4 w-4 text-emerald-600 flex-shrink-0" />
                             <span>{f}</span>
                           </li>
                         ))}
@@ -700,10 +714,10 @@ export default function PricingPage() {
                         whileTap={{ scale: 0.97 }}
                         onClick={() => handleSubscribe(priceId, plan.code)}
                         disabled={isCurrentPlan && planStatus === "active"} 
-                        className={`mt-6 w-full py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-black/40 transition-colors ${
+                        className={`mt-6 w-full py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-colors ${
                           isCurrentPlan && planStatus === "active"
-                            ? "bg-slate-700 text-slate-300 cursor-not-allowed"
-                            : "bg-gradient-to-r from-indigo-500 to-cyan-400 text-slate-950 hover:from-indigo-400 hover:to-cyan-300"
+                            ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+                            : "bg-indigo-600 text-white hover:bg-indigo-700"
                         }`}
                       >
                         {loading === priceId
@@ -732,40 +746,40 @@ export default function PricingPage() {
         <motion.div
           whileHover={{ y: -3, scale: 1.01 }}
           transition={{ type: "spring", stiffness: 260, damping: 22 }}
-          className="rounded-2xl border border-purple-500/40 bg-purple-900/30 backdrop-blur-xl p-8 shadow-xl shadow-black/40 mt-10 mb-16"
+          className="rounded-2xl border border-purple-200 bg-purple-50 p-8 shadow-sm mt-10 mb-16"
         >
-          <h2 className="text-3xl font-bold text-purple-100 mb-2">
+          <h2 className="text-3xl font-bold text-purple-900 mb-2">
             Plan Personalizado
           </h2>
-          <p className="text-purple-200 mb-4 max-w-xl">
+          <p className="text-purple-700 mb-4 max-w-xl leading-relaxed">
             Ideal para empresas que requieren mayor capacidad de procesamiento que la ofrecida en nuestros planes estándar.
             Ajustamos el volumen de XMLs/facturas mensuales, procesos operativos y necesidades de integración,
             brindando una solución a la medida.
           </p>
         
-          <ul className="space-y-2 text-purple-100/90 text-sm mb-6">
+          <ul className="space-y-2 text-purple-800 text-sm mb-6">
             <li className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-purple-300" /> Volumen de XMLs/facturas personalizado
+              <Check className="h-4 w-4 text-purple-500" /> Volumen de XMLs/facturas personalizado
             </li>
             <li className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-purple-300" /> Usuarios y roles avanzados
+              <Check className="h-4 w-4 text-purple-500" /> Usuarios y roles avanzados
             </li>
             <li className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-purple-300" /> Bots personalizados
+              <Check className="h-4 w-4 text-purple-500" /> Bots personalizados
             </li>
             <li className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-purple-300" /> IA contable ampliada
+              <Check className="h-4 w-4 text-purple-500" /> IA contable ampliada
             </li>
             <li className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-purple-300" /> Integraciones API
+              <Check className="h-4 w-4 text-purple-500" /> Integraciones API
             </li>
           </ul>
         
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => window.location.href = "/plans/custom"}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-400 
-            text-slate-900 font-semibold text-sm shadow-lg shadow-black/40 hover:opacity-90 
+            className="w-full py-3 rounded-xl bg-purple-600
+            text-white font-semibold text-sm shadow-sm hover:bg-purple-700
             transition"
           >
             Solicitar cotización
@@ -780,38 +794,38 @@ export default function PricingPage() {
             transition={{ type: "spring", stiffness: 260, damping: 25 }}
             className="mb-20"
           >
-            <div className="relative rounded-2xl border border-indigo-500/70 bg-slate-900/70 backdrop-blur-xl p-6 md:p-8 shadow-2xl shadow-black/50">
-              
+            <div className="relative rounded-2xl border border-indigo-200 bg-white p-6 md:p-8 shadow-sm">
+
               {/* Badge */}
               <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                <div className="rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400 px-3 py-1 text-xs font-semibold text-white shadow-lg shadow-indigo-500/40">
+                <div className="rounded-full bg-indigo-600 px-3 py-1 text-xs font-semibold text-white shadow-sm">
                   Ideal para invitados
                 </div>
               </div>
-        
+
               {/* Header */}
               <div className="text-center mb-6">
-                <h2 className="text-2xl md:text-3xl font-bold text-white">
+                <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
                   CuentIA Start Bots
                 </h2>
-                <p className="text-slate-300 mt-2 max-w-xl mx-auto">
+                <p className="text-slate-500 mt-2 max-w-xl mx-auto leading-relaxed">
                   Empieza a registrar gastos e ingresos desde WhatsApp, reduce tiempo en facturacion y
                   captura de datos.
                 </p>
               </div>
         
               {/* Features */}
-              <ul className="max-w-md mx-auto space-y-3 text-sm text-slate-200/90 mb-8">
+              <ul className="max-w-md mx-auto space-y-3 text-sm text-slate-600 mb-8">
                 <li className="flex items-start gap-2">
-                  <Check className="mt-[2px] h-4 w-4 text-indigo-400 flex-shrink-0" />
+                  <Check className="mt-[2px] h-4 w-4 text-emerald-600 flex-shrink-0" />
                   <span>Bot de Gastos (OCR automático)</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="mt-[2px] h-4 w-4 text-indigo-400 flex-shrink-0" />
+                  <Check className="mt-[2px] h-4 w-4 text-emerald-600 flex-shrink-0" />
                   <span>Bot de Comprobantes (ingresos y transferencias)</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="mt-[2px] h-4 w-4 text-indigo-400 flex-shrink-0" />
+                  <Check className="mt-[2px] h-4 w-4 text-emerald-600 flex-shrink-0" />
                   <span>No requiere plan contable</span>
                 </li>
               </ul>
@@ -830,11 +844,11 @@ export default function PricingPage() {
                       setShowModal(true);
                     }}
                     className={`w-full py-3 rounded-xl font-semibold text-sm transition
-                      shadow-lg shadow-black/40
+                      shadow-sm
                       ${
                         hasStartBotsPack || hasIndividualBots
-                          ? "bg-slate-700 text-slate-300 cursor-not-allowed"
-                          : "bg-gradient-to-r from-emerald-400 to-lime-300 text-slate-900 hover:opacity-90"
+                          ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+                          : "bg-emerald-600 text-white hover:bg-emerald-700"
                       }
                     `}
                   >
@@ -844,17 +858,17 @@ export default function PricingPage() {
                   </motion.button>
               </div>
               {hasStartBotsPack && (
-                <p className="mt-4 text-sm text-emerald-400 text-center">
+                <p className="mt-4 text-sm text-emerald-600 text-center">
                   Ya tienes activo el paquete de 2 bots.
                 </p>
               )}
               {/* Footer note */}
               {hasIndividualBots && (
-                <p className="mt-4 text-sm text-yellow-400 text-center">
+                <p className="mt-4 text-sm text-amber-600 text-center">
                   Debes cancelar tus bots individuales antes de contratar el paquete completo.
                 </p>
               )}
-              <p className="text-xs text-slate-400 mt-6 text-center">
+              <p className="text-xs text-slate-500 mt-6 text-center">
                 Podrás cancelar este paquete en cualquier momento.
               </p>
             </div>
@@ -869,10 +883,10 @@ export default function PricingPage() {
           transition={{ duration: 0.4 }}
           className="mt-24 scroll-mt-24"
         >
-          <h2 className="text-2xl md:text-3xl font-bold mb-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4">
             Bots de WhatsApp
           </h2>
-          <p className="text-slate-300 mb-6 max-w-2xl">
+          <p className="text-slate-500 mb-6 max-w-2xl leading-relaxed">
             Puedes contratar bots aunque aún no tengas RFC. Ideales para
             empezar a ordenar tus gastos e ingresos desde el día uno.
           </p>
@@ -888,19 +902,19 @@ export default function PricingPage() {
                 key={bot.priceId}
                 whileHover={{ y: -3, scale: 1.01 }}
                 transition={{ type: "spring", stiffness: 260, damping: 22 }}
-                className="rounded-2xl border border-slate-700/80 bg-slate-900/70 backdrop-blur-xl p-6 shadow-xl shadow-black/40"
+                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
               >
-                <h3 className="text-xl font-semibold text-white">
+                <h3 className="text-xl font-bold text-slate-900">
                   {bot.name}
                 </h3>
-          
-                <p className="text-indigo-200 font-bold mt-1">
+
+                <p className="text-indigo-600 font-bold mt-1">
                   {bot.priceText}
                 </p>
-          
-                <p className="text-slate-300 mt-2">
+
+                <p className="text-slate-500 mt-2 leading-relaxed">
                   {bot.description}
-                </p>       
+                </p>
                  <motion.button
                    whileTap={
                      !active && canBuyBot && !blockedByPack ? { scale: 0.97 } : undefined
@@ -913,15 +927,15 @@ export default function PricingPage() {
                    }}
                    className={`
                      mt-4 w-full py-2.5 rounded-xl font-semibold text-sm transition-all
-                     shadow-lg shadow-black/40
+                     shadow-sm
                      ${
                        active
-                         ? "bg-slate-700 text-slate-300 cursor-not-allowed"
+                         ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
                          : blockedByPack
-                         ? "bg-slate-700 text-slate-300 cursor-not-allowed"
+                         ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
                          : canBuyBot
-                         ? "bg-emerald-500 hover:bg-emerald-400 text-slate-900 cursor-pointer"
-                         : "bg-gray-400 text-gray-700 cursor-not-allowed opacity-60"
+                         ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                         : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
                      }
                    `}
                  >
@@ -936,27 +950,27 @@ export default function PricingPage() {
                      : "Requiere plan activo"}
                  </motion.button>
                 {active && (
-                  <p className="text-xs text-emerald-400 mt-2">
+                  <p className="text-xs text-emerald-600 mt-2">
                     Este bot ya está activo en tu suscripción.
                   </p>
                 )}
-          
+
                 {!canBuyBot && !active && billingMode !== "manual" && !isPublic &&(
-                  <p className="text-xs text-yellow-400 mt-2">
+                  <p className="text-xs text-amber-600 mt-2">
                     Los bots requieren un plan activo en cuentas empresariales o individuales.
                   </p>
                 )}
                 {hasStartBotsPack && !active && (
-                  <p className="text-xs text-yellow-400 mt-2">
+                  <p className="text-xs text-amber-600 mt-2">
                     Para contratar bots individuales debes cancelar el paquete primero.
                   </p>
                 )}
                 {billingMode === 'manual' && (
-                  <p className="text-xs text-yellow-400 mt-2">
+                  <p className="text-xs text-amber-600 mt-2">
                     Los bots requieren un plan con pago automático (tarjeta).{" "}
                     <a
                       href="/configuracion/billing"
-                      className="underline font-medium text-yellow-300 hover:text-yellow-200 transition"
+                      className="underline font-medium text-amber-700 hover:text-amber-800 transition"
                     >
                       Cambia tu método de pago
                     </a>
