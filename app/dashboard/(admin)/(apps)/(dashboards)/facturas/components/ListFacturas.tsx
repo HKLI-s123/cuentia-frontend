@@ -11,6 +11,7 @@ import { analizarFacturaIA } from "../../../../../../services/iaService" // 👈
 import { TbBrain } from "react-icons/tb";
 import { Factura } from "../../../../../../types/factura";
 import { getSessionInfo } from "@/app/services/authService";
+import { resolveSelectedRFC, setStoredRFC } from "@/app/services/selectedRfcStore";
 import FacturaIAModal from "../components/FacturaIAModal";
 import FacturaPreviewModal from "../components/FacturaPreviewModal";
 import { toast } from "sonner";
@@ -104,31 +105,33 @@ const ListFacturas = () => {
   
       setTipoCuenta(session.tipoCuenta);
       setClientes(session.clientes);
-  
+
+      // RFC por defecto según el tipo de cuenta
+      let defaultRFC = "";
+
       if (session.tipoCuenta === "individual" && session.clientes.length > 0) {
-        setSelectedRFC(session.clientes[0].rfc);
+        defaultRFC = session.clientes[0].rfc;
         setInvitePanelVisible(false);
       }
-  
+
       if (session.tipoCuenta === "invitado") {
         if (session.guestRfc) {
-          setSelectedRFC(session.guestRfc);
+          defaultRFC = session.guestRfc;
           setInvitePanelVisible(false);
         } else {
           setInvitePanelVisible(true);
         }
       }
-  
+
       if (session.tipoCuenta === "empresarial" || session.tipoCuenta === "empleado") {
-        if (session.propioRFC) {
-          // ✔ Empresa con onboarding completo → usar su propio RFC como base
-          setSelectedRFC(session.propioRFC);
-        } else {
-          // ❗ Empresa sin onboarding → dejarlo vacío y activar onboarding en redirect hook
-          setSelectedRFC("");
-        }
+        // ✔ Empresa con onboarding completo → su propio RFC como base
+        // ❗ Empresa sin onboarding → vacío (onboarding se activa en redirect hook)
+        defaultRFC = session.propioRFC || "";
         setInvitePanelVisible(false);
       }
+
+      // 🔁 Mantener el cliente seleccionado entre secciones (CFDIs, Notas, Pagos, DIOT)
+      setSelectedRFC(resolveSelectedRFC(session, defaultRFC));
     }, [session]);
   
 
@@ -451,8 +454,18 @@ const ListFacturas = () => {
         return;
       }
 
-      const ingresos = flujoData.filter((f: any) => f.rfc_emisor === selectedRFC);
-      const egresos  = flujoData.filter((f: any) => f.rfc_emisor !== selectedRFC);
+      // Clasificación ingreso/egreso.
+      // ⚠️ Excepción nómina (tipo N): una factura de nómina EMITIDA por el RFC
+      // seleccionado es un EGRESO (está pagando nómina), y si la RECIBE es un INGRESO.
+      // Es la lógica inversa al resto de comprobantes.
+      const esIngreso = (f: any) => {
+        const emitidaPorMi = f.rfc_emisor === selectedRFC;
+        const esNomina = (f.tipocomprobante || "").toUpperCase() === "N";
+        return esNomina ? !emitidaPorMi : emitidaPorMi;
+      };
+
+      const ingresos = flujoData.filter((f: any) => esIngreso(f));
+      const egresos  = flujoData.filter((f: any) => !esIngreso(f));
 
       const wb = new ExcelJS.Workbook();
       wb.creator = "CuentIA";
@@ -1452,7 +1465,8 @@ const ListFacturas = () => {
               // Recargar sesión
               const refreshed = await getSessionInfo();
               setSelectedRFC(refreshed.guestRfc || result.rfc);
-  
+              setStoredRFC(refreshed.guestRfc || result.rfc);
+
               setInvitePanelVisible(false);
             } catch (err) {
               toast.error("Error activando acceso invitado");
@@ -1714,6 +1728,7 @@ const ListFacturas = () => {
                      size="sm"
                      onClick={() => {
                        setSelectedRFC(cliente.rfc);
+                       setStoredRFC(cliente.rfc);
                        setShowModal(false);
                      }}
                    >

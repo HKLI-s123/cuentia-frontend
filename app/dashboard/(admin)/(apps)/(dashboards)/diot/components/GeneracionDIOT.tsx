@@ -19,6 +19,7 @@ import { generarDiot } from "../../../../../../services/financeService";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { getSessionInfo } from "@/app/services/authService";
+import { resolveSelectedRFC, setStoredRFC } from "@/app/services/selectedRfcStore";
 import { toast } from "sonner";
 import { activateGuest, validateGuestKey } from "@/app/services/chatService";
 import { useOnboardingRedirect } from "@/hooks/useUserSessionGuard";
@@ -85,14 +86,17 @@ const GenerateDIOT = () => {
     setTipoCuenta(session.tipoCuenta);
     setClientes(session.clientes);
 
+    // RFC por defecto según el tipo de cuenta
+    let defaultRFC = "";
+
     if (session.tipoCuenta === "individual" && session.clientes.length > 0) {
-      setSelectedRFC(session.clientes[0].rfc);
+      defaultRFC = session.clientes[0].rfc;
       setInvitePanelVisible(false);
     }
 
     if (session.tipoCuenta === "invitado") {
       if (session.guestRfc) {
-        setSelectedRFC(session.guestRfc);
+        defaultRFC = session.guestRfc;
         setInvitePanelVisible(false);
       } else {
         setInvitePanelVisible(true);
@@ -100,16 +104,14 @@ const GenerateDIOT = () => {
     }
 
     if (session.tipoCuenta === "empresarial" || session.tipoCuenta === "empleado") {
-      if (session.propioRFC) {
-        // ✔ Empresa con onboarding completo → usar su propio RFC como base
-        setSelectedRFC(session.propioRFC);
-      } else {
-        // ❗ Empresa sin onboarding → dejarlo vacío y activar onboarding en redirect hook
-        setSelectedRFC("");
-      }
+      // ✔ Empresa con onboarding completo → su propio RFC como base
+      // ❗ Empresa sin onboarding → vacío (onboarding se activa en redirect hook)
+      defaultRFC = session.propioRFC || "";
       setInvitePanelVisible(false);
-      return;
     }
+
+    // 🔁 Mantener el cliente seleccionado entre secciones (CFDIs, Notas, Pagos, DIOT)
+    setSelectedRFC(resolveSelectedRFC(session, defaultRFC));
   }, [session]);
 
   // ------------------------------
@@ -299,6 +301,7 @@ const GenerateDIOT = () => {
               // Recargar sesión
               const refreshed = await getSessionInfo();
               setSelectedRFC(refreshed.guestRfc || result.rfc);
+              setStoredRFC(refreshed.guestRfc || result.rfc);
   
               setInvitePanelVisible(false);
             } catch (err) {
@@ -521,6 +524,7 @@ const GenerateDIOT = () => {
                      size="sm"
                      onClick={() => {
                        setSelectedRFC(cliente.rfc);
+                       setStoredRFC(cliente.rfc);
                        setShowModal(false);
                      }}
                    >
