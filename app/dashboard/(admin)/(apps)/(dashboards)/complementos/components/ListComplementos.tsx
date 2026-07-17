@@ -461,8 +461,14 @@ const ListPagos = () => {
   
     // Crear hojas por mes
     for (const [mes, pagosMes] of Object.entries(pagosPorMes)) {
-      // Ordenar por UUID de factura
-      pagosMes.sort((a, b) => (a.uuid_factura || "").localeCompare(b.uuid_factura || ""));
+      // Ordenar agrupando por UUID de complemento: las facturas relacionadas a un
+      // mismo complemento de pago quedan juntas y, dentro del grupo, ordenadas por
+      // su UUID de factura.
+      pagosMes.sort((a, b) => {
+        const compComplemento = (a.uuid_complemento || "").localeCompare(b.uuid_complemento || "");
+        if (compComplemento !== 0) return compComplemento;
+        return (a.uuid_factura || "").localeCompare(b.uuid_factura || "");
+      });
   
       const ws = wb.addWorksheet(safeSheetName(mes));
   
