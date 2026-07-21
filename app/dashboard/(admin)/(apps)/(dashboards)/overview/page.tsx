@@ -12,6 +12,7 @@ import FinanceTrends from "./components/FinanceTrends";
 import ExpensesByProvider from "./components/ExpensesByProvider";
 import MainRevenue from "./components/MainRevenue";
 import FiltersBar from "./components/FiltersBar";
+import FiscalDocsQuickDownload from "./components/FiscalDocsQuickDownload";
 import { withSessionGuard } from "@/app/providers/withSessionGuard";
 import { getSessionInfo } from "@/app/services/authService";
 import { activateGuest, validateGuestKey } from "@/app/services/chatService";
@@ -234,6 +235,11 @@ const Page = () => {
           setSelectedRfc={setSelectedRfc}
           rfcList={clientes}
         />
+      )}
+
+      {/* 🧾 Atajo de descarga de documentos fiscales del RFC seleccionado */}
+      {tipoCuenta !== "invitado" && (
+        <FiscalDocsQuickDownload rfc={selectedRfc} />
       )}
 
       <FinanceStats rfc={selectedRfc} />

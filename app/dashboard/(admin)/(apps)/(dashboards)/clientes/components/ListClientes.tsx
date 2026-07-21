@@ -9,6 +9,7 @@ import {
   Table,
   Button,
   Form,
+  Badge,
 } from "react-bootstrap";
 import {
   TbEdit,
@@ -25,6 +26,15 @@ import {
   updateCliente,
   deleteCliente,
 } from "../../../../../../services/clientsService";
+import {
+  FISCAL_DOCS_ENABLED,
+  FISCAL_DOCS_PRICE_MXN,
+  isFiscalDocsFree,
+  toggleFiscalDocs,
+  toggleFiscalDocsAll,
+  downloadCsf,
+  downloadOpinion,
+} from "@/app/services/fiscalDocsService";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -41,6 +51,7 @@ type ClienteDto = {
   fiel?: string | null;
   key_path?: string | null;
   cer_path?: string | null;
+  fiscalDocsEnabled?: boolean;
 };
 
 type Cliente = ClienteDto & {
@@ -90,6 +101,9 @@ export const ClientesLista = () => {
   useOnboardingRedirect(session);
 
   const isConsulta = session?.role === "consulta";
+
+  // Cuentas nuevas pagan el add-on; las registradas antes del lanzamiento lo tienen gratis.
+  const fiscalDocsFree = isFiscalDocsFree(session?.created_at);
 
   
   // 🔹 Cargar clientes al montar componente
@@ -175,6 +189,96 @@ const handleSave = async (data: ClienteFormData) => {
   }
 };
 
+  // 🔹 Documentos fiscales (CSF / Opinión)
+  const applyToggleFiscalDocs = async (cliente: Cliente, next: boolean) => {
+    // Optimista
+    setClientes((prev) =>
+      prev.map((c) =>
+        c.id === cliente.id ? { ...c, fiscalDocsEnabled: next } : c
+      )
+    );
+    try {
+      await toggleFiscalDocs(cliente.rfc, next);
+      toast.success(
+        next
+          ? "Descarga de documentos fiscales activada"
+          : "Descarga de documentos fiscales desactivada"
+      );
+    } catch (error) {
+      console.error(error);
+      // Revertir
+      setClientes((prev) =>
+        prev.map((c) =>
+          c.id === cliente.id ? { ...c, fiscalDocsEnabled: !next } : c
+        )
+      );
+      toast.error("No se pudo actualizar la descarga de documentos fiscales");
+    }
+  };
+
+  const handleToggleFiscalDocs = (cliente: Cliente) => {
+    const next = !cliente.fiscalDocsEnabled;
+
+    // Al ACTIVAR en cuentas nuevas → confirmar el cobro para no sorprender.
+    if (next && !fiscalDocsFree) {
+      toast.warning("Activar Documentos Fiscales tiene costo", {
+        description: `Se agregará $${FISCAL_DOCS_PRICE_MXN} MXN/mes por el RFC ${cliente.rfc} a tu suscripción (prorrateado).`,
+        action: {
+          label: "Activar",
+          onClick: () => applyToggleFiscalDocs(cliente, next),
+        },
+      });
+      return;
+    }
+
+    applyToggleFiscalDocs(cliente, next);
+  };
+
+  const applyToggleAllFiscalDocs = async (enabled: boolean) => {
+    try {
+      await toggleFiscalDocsAll(enabled);
+      setClientes((prev) =>
+        prev.map((c) => ({ ...c, fiscalDocsEnabled: enabled }))
+      );
+      toast.success(
+        enabled
+          ? "Descarga activada para todos los RFCs"
+          : "Descarga desactivada para todos los RFCs"
+      );
+    } catch (error) {
+      console.error(error);
+      toast.error("No se pudo actualizar la descarga para todos los RFCs");
+    }
+  };
+
+  const handleToggleAllFiscalDocs = (enabled: boolean) => {
+    // Al ACTIVAR para todos en cuentas nuevas → confirmar el cobro.
+    if (enabled && !fiscalDocsFree) {
+      toast.warning("Activar para todos tiene costo", {
+        description: `Se agregará $${FISCAL_DOCS_PRICE_MXN} MXN/mes por cada RFC a tu suscripción (prorrateado).`,
+        action: {
+          label: "Activar todos",
+          onClick: () => applyToggleAllFiscalDocs(true),
+        },
+      });
+      return;
+    }
+
+    applyToggleAllFiscalDocs(enabled);
+  };
+
+  const handleDownloadFiscalDoc = async (
+    rfc: string,
+    kind: "csf" | "opinion"
+  ) => {
+    try {
+      if (kind === "csf") await downloadCsf(rfc);
+      else await downloadOpinion(rfc);
+    } catch (error: any) {
+      toast.error(error?.message || "No se pudo descargar el documento");
+    }
+  };
+
  // 🔹 Filtrado por búsqueda
   const filteredClientes = clientes.filter(cliente =>
     cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -240,23 +344,59 @@ const handleSave = async (data: ClienteFormData) => {
             <TbFileTypePdf className="me-1" /> PDF
           </Button>
           {!isConsulta && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setShowModal(true)}
-            >
-              <TbUserPlus className="me-1" /> Registrar Cliente
-            </Button>
+            <>
+              <Button
+                variant="outline-primary"
+                size="sm"
+                disabled={!FISCAL_DOCS_ENABLED}
+                onClick={() => handleToggleAllFiscalDocs(true)}
+                title="Activar descarga de documentos fiscales para todos los RFCs"
+              >
+                Docs: activar todos
+                {!FISCAL_DOCS_ENABLED && (
+                  <Badge bg="secondary" className="ms-1">
+                    Próximamente
+                  </Badge>
+                )}
+              </Button>
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                disabled={!FISCAL_DOCS_ENABLED}
+                onClick={() => handleToggleAllFiscalDocs(false)}
+                title="Desactivar descarga de documentos fiscales para todos los RFCs"
+              >
+                Docs: desactivar todos
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setShowModal(true)}
+              >
+                <TbUserPlus className="me-1" /> Registrar Cliente
+              </Button>
+            </>
           )}
         </div>
       </CardHeader>
       <CardBody>
+        {!isConsulta && !fiscalDocsFree && (
+          <div
+            className="small mb-3 px-3 py-2 rounded-3"
+            style={{ backgroundColor: "rgba(99,102,241,0.08)", color: "#4f46e5" }}
+          >
+            💡 Activar <strong>Documentos Fiscales</strong> (CSF y Opinión)
+            tiene un costo de <strong>${FISCAL_DOCS_PRICE_MXN} MXN/mes por RFC</strong>,
+            que se agrega a tu suscripción de forma prorrateada.
+          </div>
+        )}
         <Table striped bordered hover responsive>
           <thead>
             <tr>
               <th>Nombre</th>
               <th>RFC</th>
               <th>CFDIs ({currentYear})</th>
+              <th className="text-center">Documentos fiscales</th>
               <th style={{ width: "120px" }} className="text-center">
                 Acciones
               </th>
@@ -265,7 +405,7 @@ const handleSave = async (data: ClienteFormData) => {
           <tbody>
             {displayedClientes.length === 0 ? (
               <tr>
-                <td colSpan={4} className="text-center text-muted">
+                <td colSpan={5} className="text-center text-muted">
                   No hay clientes registrados
                 </td>
               </tr>
@@ -275,6 +415,58 @@ const handleSave = async (data: ClienteFormData) => {
                   <td>{cliente.nombre}</td>
                   <td>{cliente.rfc}</td>
                   <td>{cliente.cfdis}</td>
+                  <td className="text-center">
+                    {isConsulta ? (
+                      <span className="text-muted text-sm">—</span>
+                    ) : (
+                      <div className="d-flex flex-column align-items-center gap-1">
+                        <Form.Check
+                          type="switch"
+                          id={`fdocs-${cliente.id}`}
+                          checked={!!cliente.fiscalDocsEnabled}
+                          disabled={!FISCAL_DOCS_ENABLED}
+                          onChange={() => handleToggleFiscalDocs(cliente)}
+                          label={
+                            !FISCAL_DOCS_ENABLED ? (
+                              <Badge bg="secondary">Próximamente</Badge>
+                            ) : cliente.fiscalDocsEnabled ? (
+                              "Activa"
+                            ) : (
+                              "Inactiva"
+                            )
+                          }
+                        />
+                        <div className="d-flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline-secondary"
+                            disabled={
+                              !FISCAL_DOCS_ENABLED || !cliente.fiscalDocsEnabled
+                            }
+                            onClick={() =>
+                              handleDownloadFiscalDoc(cliente.rfc, "csf")
+                            }
+                            title="Descargar Constancia de Situación Fiscal"
+                          >
+                            <TbFileTypePdf /> CSF
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline-secondary"
+                            disabled={
+                              !FISCAL_DOCS_ENABLED || !cliente.fiscalDocsEnabled
+                            }
+                            onClick={() =>
+                              handleDownloadFiscalDoc(cliente.rfc, "opinion")
+                            }
+                            title="Descargar Opinión de Cumplimiento"
+                          >
+                            <TbFileTypePdf /> Opinión
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </td>
                   <td className="text-center">
                       {/* ⬇️ 3) si es consulta, no mostramos botones y ponemos texto */}
                       {isConsulta ? (
