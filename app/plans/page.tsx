@@ -43,10 +43,10 @@ const PLANS = [
   {
     name: "Profesional",
     code: "cuentia_plan_profesional",
-    monthlyPriceId: "price_1TZHmrKg1JUMkNoEeHnuCKOt",
-    annualPriceId: "price_1TZHnVKg1JUMkNoEh7DSh5K5",
-    monthlyText: "$349 MXN/mes",
-    annualText: "$279 MXN/mes (facturado anualmente)",
+    monthlyPriceId: "price_1TvrVpKg1JUMkNoEMneDly6e", // 🔧 REEMPLAZA por el nuevo price ID mensual ($199)
+    annualPriceId: "price_1TvrWqKg1JUMkNoE0zYPcLeo",  // 🔧 REEMPLAZA por el nuevo price ID anual
+    monthlyText: "$199 MXN/mes",
+    annualText: "$159 MXN/mes (facturado anualmente)", // 🔧 AJUSTA el número al nuevo anual
     tag: "Mejor balance",
     popular: true,
     features: [

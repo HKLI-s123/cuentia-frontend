@@ -123,7 +123,7 @@ export const menuItems: MenuItemType[] = [
         ]
     },
     {key: 'otros', label: 'Otros', isTitle: true},
-    {key: 'novedades', label: 'Novedades', icon: TbSparkles, url: '/novedades', isSpecial: true}
+    {key: 'suscripcion', label: 'Suscripción', icon: TbSparkles, url: '/plans', isSpecial: true}
 ]
 
 export const horizontalMenuItems: MenuItemType[] = [
