@@ -16,14 +16,27 @@ export const sendChatMessage = async ({
       body: JSON.stringify({ message, rfc, semanas }),
     });
 
-    if (!response?.ok) throw new Error("Error en la respuesta del servidor");
+    // apiFetch puede devolver undefined si la sesión expiró y se redirige al login
+    if (!response) {
+      return { reply: "Tu sesión expiró. Vuelve a iniciar sesión.", raw: null };
+    }
 
-    const data = await response.json();
-    
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      // El backend (NestJS) manda { message, error }. message puede ser string o string[]
+      const rawMsg = data?.message ?? data?.error;
+      const backendMsg = Array.isArray(rawMsg) ? rawMsg.join(" ") : rawMsg;
+      return {
+        reply: `⚠️ ${backendMsg || "No se pudo procesar tu solicitud."}`,
+        raw: null,
+      };
+    }
+
     return data; // <--- NO solo reply
   } catch (error) {
     console.error("❌ Error en sendChatMessage:", error);
-    return { reply: "Hubo un error al procesar tu solicitud, verifica el limite de mensajes de tu cuenta.", raw: null };
+    return { reply: "Hubo un error de conexión. Intenta de nuevo.", raw: null };
   }
 };
 
