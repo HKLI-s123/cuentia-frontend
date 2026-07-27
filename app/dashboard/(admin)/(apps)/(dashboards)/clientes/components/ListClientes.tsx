@@ -29,7 +29,7 @@ import {
 import {
   FISCAL_DOCS_ENABLED,
   FISCAL_DOCS_PRICE_MXN,
-  isFiscalDocsFree,
+  fiscalDocsWillCharge,
   toggleFiscalDocs,
   toggleFiscalDocsAll,
   downloadCsf,
@@ -102,8 +102,15 @@ export const ClientesLista = () => {
 
   const isConsulta = session?.role === "consulta";
 
-  // Cuentas nuevas pagan el add-on; las registradas antes del lanzamiento lo tienen gratis.
-  const fiscalDocsFree = isFiscalDocsFree(session?.created_at);
+  // El backend decide si activar cobraría (grandfathering + plan de pago activo).
+  // Solo entonces mostramos el aviso/confirmación de $49/RFC.
+  const [willCharge, setWillCharge] = useState(false);
+
+  useEffect(() => {
+    fiscalDocsWillCharge()
+      .then(setWillCharge)
+      .catch(() => setWillCharge(false));
+  }, []);
 
   
   // 🔹 Cargar clientes al montar componente
@@ -219,8 +226,8 @@ const handleSave = async (data: ClienteFormData) => {
   const handleToggleFiscalDocs = (cliente: Cliente) => {
     const next = !cliente.fiscalDocsEnabled;
 
-    // Al ACTIVAR en cuentas nuevas → confirmar el cobro para no sorprender.
-    if (next && !fiscalDocsFree) {
+    // Al ACTIVAR y solo si cobraría → confirmar para no sorprender.
+    if (next && willCharge) {
       toast.warning("Activar Documentos Fiscales tiene costo", {
         description: `Se agregará $${FISCAL_DOCS_PRICE_MXN} MXN/mes por el RFC ${cliente.rfc} a tu suscripción (prorrateado).`,
         action: {
@@ -252,8 +259,8 @@ const handleSave = async (data: ClienteFormData) => {
   };
 
   const handleToggleAllFiscalDocs = (enabled: boolean) => {
-    // Al ACTIVAR para todos en cuentas nuevas → confirmar el cobro.
-    if (enabled && !fiscalDocsFree) {
+    // Al ACTIVAR para todos y solo si cobraría → confirmar.
+    if (enabled && willCharge) {
       toast.warning("Activar para todos tiene costo", {
         description: `Se agregará $${FISCAL_DOCS_PRICE_MXN} MXN/mes por cada RFC a tu suscripción (prorrateado).`,
         action: {
@@ -380,7 +387,7 @@ const handleSave = async (data: ClienteFormData) => {
         </div>
       </CardHeader>
       <CardBody>
-        {!isConsulta && !fiscalDocsFree && (
+        {!isConsulta && willCharge && (
           <div
             className="small mb-3 px-3 py-2 rounded-3"
             style={{ backgroundColor: "rgba(99,102,241,0.08)", color: "#4f46e5" }}

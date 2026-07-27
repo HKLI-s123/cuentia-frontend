@@ -24,6 +24,21 @@ export function isFiscalDocsFree(createdAt?: string | null): boolean {
   return new Date(createdAt) < launch;
 }
 
+/**
+ * ¿Activar documentos fiscales cobraría a este usuario? Lo decide el backend
+ * (grandfathering + suscripción de pago activa). La UI solo muestra el aviso si es true.
+ */
+export async function fiscalDocsWillCharge(): Promise<boolean> {
+  try {
+    const res = await apiFetch(`${API_URL}/clientes/fiscal-docs/billing-status`);
+    if (!res?.ok) return false;
+    const data = await res.json();
+    return !!data?.willCharge;
+  } catch {
+    return false;
+  }
+}
+
 /** Activa/desactiva la descarga de documentos fiscales para un RFC. */
 export async function toggleFiscalDocs(rfc: string, enabled: boolean) {
   const res = await apiFetch(`${API_URL}/clientes/${rfc}/fiscal-docs`, {
