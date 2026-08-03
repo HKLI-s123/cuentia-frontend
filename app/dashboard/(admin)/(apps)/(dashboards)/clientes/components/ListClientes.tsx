@@ -52,6 +52,8 @@ type ClienteDto = {
   key_path?: string | null;
   cer_path?: string | null;
   fiscalDocsEnabled?: boolean;
+  opinionSentido?: "positiva" | "negativa" | "no_disponible" | null;
+  opinionDate?: string | null;
 };
 
 type Cliente = ClienteDto & {
@@ -164,6 +166,11 @@ const handleSave = async (data: ClienteFormData) => {
     if (data.key_path instanceof File) fd.append("key_path", data.key_path);
     if (data.cer_path instanceof File) fd.append("cer_path", data.cer_path);
 
+    // Solo al registrar: la descarga de XMLs se decide en el alta.
+    // La edición se maneja con el toggle de sincronización por cliente.
+    if (!editCliente) {
+      fd.append("descargarXmls", String(data.descargarXmls ?? true));
+    }
 
     let savedCliente: ClienteDto; // <- tipo explícito
 
@@ -404,6 +411,7 @@ const handleSave = async (data: ClienteFormData) => {
               <th>RFC</th>
               <th>CFDIs ({currentYear})</th>
               <th className="text-center">Documentos fiscales</th>
+              <th className="text-center">Opinión de Cumplimiento</th>
               <th style={{ width: "120px" }} className="text-center">
                 Acciones
               </th>
@@ -412,7 +420,7 @@ const handleSave = async (data: ClienteFormData) => {
           <tbody>
             {displayedClientes.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center text-muted">
+                <td colSpan={6} className="text-center text-muted">
                   No hay clientes registrados
                 </td>
               </tr>
@@ -472,6 +480,19 @@ const handleSave = async (data: ClienteFormData) => {
                           </Button>
                         </div>
                       </div>
+                    )}
+                  </td>
+                  <td className="text-center">
+                    {cliente.opinionSentido === "positiva" ? (
+                      <Badge bg="success" title={cliente.opinionDate ? `Actualizada: ${cliente.opinionDate}` : undefined}>
+                        Positiva
+                      </Badge>
+                    ) : cliente.opinionSentido === "negativa" ? (
+                      <Badge bg="danger" title={cliente.opinionDate ? `Actualizada: ${cliente.opinionDate}` : undefined}>
+                        Negativa
+                      </Badge>
+                    ) : (
+                      <Badge bg="secondary">N/D</Badge>
                     )}
                   </td>
                   <td className="text-center">

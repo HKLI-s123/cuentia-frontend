@@ -14,15 +14,19 @@ export type ClienteFormData = {
   fiel: string;
   key_path?: File | null;
   cer_path?: File | null;
+  descargarXmls?: boolean;
 };
 
 export const ClienteModal = ({ show, onHide, onSave, initialData }: ClienteFormProps) => {
+  const isEditing = !!initialData;
+
   const [formData, setFormData] = useState<ClienteFormData>({
     nombre: "",
     rfc: "",
     fiel: "",
     key_path: undefined,
     cer_path: undefined,
+    descargarXmls: true, // activa por defecto
   });
 
   // 🔹 Sincroniza formData cuando initialData cambia
@@ -34,6 +38,17 @@ export const ClienteModal = ({ show, onHide, onSave, initialData }: ClienteFormP
         fiel: initialData.fiel || "",
         key_path: undefined,
         cer_path: undefined,
+        descargarXmls: initialData.descargarXmls ?? true,
+      });
+    } else {
+      // Alta nueva: reiniciamos con la descarga de XMLs activa por defecto.
+      setFormData({
+        nombre: "",
+        rfc: "",
+        fiel: "",
+        key_path: undefined,
+        cer_path: undefined,
+        descargarXmls: true,
       });
     }
   }, [initialData]);
@@ -115,6 +130,26 @@ export const ClienteModal = ({ show, onHide, onSave, initialData }: ClienteFormP
             )}
             <Form.Control type="file" name="cer_path" onChange={handleChange} />
           </Form.Group>
+
+          {/* Descarga de XMLs/CFDIs — solo al registrar */}
+          {!isEditing && (
+            <Form.Group className="mb-3 p-3 rounded border bg-light">
+              <Form.Check
+                type="checkbox"
+                id="descargarXmls"
+                name="descargarXmls"
+                label="Descargar XMLs (facturas) para este cliente"
+                checked={formData.descargarXmls ?? true}
+                onChange={(e) =>
+                  setFormData({ ...formData, descargarXmls: e.target.checked })
+                }
+              />
+              <Form.Text className="text-muted d-block mt-1">
+                Activo por defecto. Si lo desactivas, no se descargarán XMLs de este
+                cliente. Puedes cambiarlo después desde la lista de clientes.
+              </Form.Text>
+            </Form.Group>
+          )}
 
           <div className="d-flex justify-content-end gap-2">
             <Button variant="secondary" onClick={onHide}>

@@ -126,6 +126,11 @@ export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
     "monthly"
   );
+  // Perfil elegido por visitantes sin sesión, para segmentar los planes
+  // (Persona física vs Empresa) y evitar mostrar precios iguales lado a lado.
+  const [audience, setAudience] = useState<"individual" | "empresarial">(
+    "individual"
+  );
   const [showModal, setShowModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [selectedPriceId, setSelectedPriceId] = useState<string | null>(null);
@@ -344,27 +349,35 @@ export default function PricingPage() {
   const renderDespachoAsGridCard = tipoCuenta === "empresarial";
   
   const visiblePlans = (() => {
-    if (isPublic) return PLANS;
+    // Sin sesión: el visitante elige su perfil y solo ve los planes de ese
+    // tipo de cuenta, igual que un usuario logueado.
+    if (isPublic) {
+      const allowed = allowedPlanCodesByAccount[audience];
+      return PLANS.filter(p => allowed.includes(p.code));
+    }
 
     if (!canSeePlans[tipoCuenta]) return [];
-  
+
     const allowed = allowedPlanCodesByAccount[tipoCuenta];
     return PLANS.filter(p => allowed.includes(p.code));
   })();
 
-  const isSinglePlan =
-    !isPublic &&
-    tipoCuenta === "individual" &&
-    visiblePlans.length === 1;
+  // Planes que realmente se renderizan en el grid superior (Despacho se
+  // muestra aparte como tarjeta destacada salvo para cuentas empresariales).
+  const gridPlans = visiblePlans.filter(p =>
+    renderDespachoAsGridCard ? true : p.code !== "cuentia_plan_despacho"
+  );
 
+  const isSinglePlan = gridPlans.length === 1;
 
-  const canSeeCustomPlan =
-  isPublic || tipoCuenta === "empresarial";
+  const canSeeCustomPlan = isPublic
+    ? audience === "empresarial"
+    : tipoCuenta === "empresarial";
 
   const planGridCols =
-  visiblePlans.length === 1
+  gridPlans.length === 1
     ? "md:grid-cols-1"
-    : visiblePlans.length === 2
+    : gridPlans.length === 2
     ? "md:grid-cols-2"
     : "md:grid-cols-3";
 
@@ -471,6 +484,58 @@ export default function PricingPage() {
           </LayoutGroup>
         </motion.div>
 
+        {/* Toggle Persona física / Empresa — solo para visitantes sin sesión.
+            Evita mostrar Inicial y Profesional (mismo precio) lado a lado. */}
+        {isPublic && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
+            className="flex flex-col items-center mb-12 -mt-4"
+          >
+            <p className="text-xs font-medium text-slate-500 mb-3">
+              ¿Para quién es tu cuenta?
+            </p>
+            <LayoutGroup>
+              <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
+                {(
+                  [
+                    { key: "individual", label: "Persona física" },
+                    { key: "empresarial", label: "Empresa" },
+                  ] as const
+                ).map((opt) => (
+                  <button
+                    key={opt.key}
+                    onClick={() => setAudience(opt.key)}
+                    className="relative px-5 py-2 text-sm font-medium rounded-lg"
+                  >
+                    {audience === opt.key && (
+                      <motion.span
+                        layoutId="audience-pill"
+                        className="absolute inset-0 rounded-lg bg-white shadow-sm"
+                        transition={{
+                          type: "spring",
+                          stiffness: 500,
+                          damping: 30,
+                        }}
+                      />
+                    )}
+                    <span
+                      className={`relative z-10 ${
+                        audience === opt.key
+                          ? "text-slate-900"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      {opt.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </LayoutGroup>
+          </motion.div>
+        )}
+
         {/* PLANES */}
         <motion.div
           initial="hidden"
@@ -483,12 +548,7 @@ export default function PricingPage() {
             isSinglePlan ? "max-w-md mx-auto" : ""
           }`}        
         >
-         {visiblePlans
-            .filter(p =>
-              renderDespachoAsGridCard
-                ? true
-                : p.code !== "cuentia_plan_despacho"
-            )          .map((plan) => {
+         {gridPlans.map((plan) => {
             const priceText =
               billingCycle === "monthly"
                 ? plan.monthlyText
