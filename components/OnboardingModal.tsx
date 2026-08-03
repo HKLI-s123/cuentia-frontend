@@ -8,6 +8,7 @@ import {
   FileSpreadsheet,
   Users,
   Settings,
+  ShieldCheck,
   CheckCircle2,
   ChevronRight,
   ChevronLeft,
@@ -78,6 +79,13 @@ const STEPS_EMPRESARIAL: Step[] = [
     description:
       "En Facturas consulta el detalle de cada cliente: facturas de ingreso y egreso, complementos de pago y notas de crédito. Exporta todo en Excel con un clic.",
     action: { label: "Ver facturas", href: "/dashboard/facturas" },
+  },
+  {
+    icon: <ShieldCheck className="h-8 w-8 text-indigo-400" />,
+    title: "Constancia de Situación Fiscal y Opinión de Cumplimiento",
+    description:
+      "Desde Clientes puedes activar o desactivar, por cada RFC, la descarga automática de la Constancia de Situación Fiscal (CSF) y la Opinión de Cumplimiento. En la tabla verás el estado de cada Opinión y te la marcamos en rojo cuando resulta negativa, para que actúes a tiempo.",
+    action: { label: "Ir a Clientes", href: "/dashboard/clientes" },
   },
   {
     icon: <Settings className="h-8 w-8 text-indigo-400" />,
