@@ -36,7 +36,8 @@ import {
   downloadOpinion,
 } from "@/app/services/fiscalDocsService";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import autoTable from "jspdf-autotable";
@@ -305,17 +306,118 @@ const handleSave = async (data: ClienteFormData) => {
   
   const displayedClientes = filteredClientes.slice(startIndex, endIndex);
 
-  const exportExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(
-      clientes.map(c => ({
-        Nombre: c.nombre,
-        RFC: c.rfc,
-        [`CFDIs (${currentYear})`]: c.cfdis,
-      }))
+  // Etiqueta legible del sentido de la Opinión de Cumplimiento.
+  const sentidoLabel = (s?: string | null) =>
+    s === "positiva" ? "Positiva" : s === "negativa" ? "Negativa" : "No disponible";
+
+  const exportExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = "CuentIA";
+    workbook.created = new Date();
+
+    const ws = workbook.addWorksheet("Clientes", {
+      // Congela título (fila 1) + encabezado (fila 2).
+      views: [{ state: "frozen", ySplit: 2 }],
+    });
+
+    const columns = [
+      { header: "Nombre", width: 34 },
+      { header: "RFC", width: 18 },
+      { header: `CFDIs (${currentYear})`, width: 14 },
+      { header: "Documentos fiscales", width: 20 },
+      { header: "Opinión de Cumplimiento", width: 24 },
+      { header: "Actualización opinión", width: 20 },
+    ];
+
+    const thinBorder: Partial<ExcelJS.Borders> = {
+      top: { style: "thin", color: { argb: "FFE5E7EB" } },
+      left: { style: "thin", color: { argb: "FFE5E7EB" } },
+      bottom: { style: "thin", color: { argb: "FFE5E7EB" } },
+      right: { style: "thin", color: { argb: "FFE5E7EB" } },
+    };
+
+    // Anchos de columna.
+    columns.forEach((col, i) => {
+      ws.getColumn(i + 1).width = col.width;
+    });
+
+    // Fila 1: título (celda combinada).
+    const lastCol = ws.getColumn(columns.length).letter;
+    ws.mergeCells(`A1:${lastCol}1`);
+    const titleCell = ws.getCell("A1");
+    titleCell.value = `Lista de Clientes — ${currentYear}`;
+    titleCell.font = { size: 14, bold: true, color: { argb: "FF4F46E5" } };
+    titleCell.alignment = { vertical: "middle", horizontal: "left" };
+    ws.getRow(1).height = 26;
+
+    // Fila 2: encabezado con fondo índigo.
+    const headerRow = ws.getRow(2);
+    columns.forEach((col, i) => {
+      const cell = headerRow.getCell(i + 1);
+      cell.value = col.header;
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF4F46E5" },
+      };
+      cell.alignment = { vertical: "middle", horizontal: "center" };
+      cell.border = thinBorder;
+    });
+    headerRow.height = 20;
+
+    // Filas de datos.
+    clientes.forEach((c) => {
+      const row = ws.addRow([
+        c.nombre,
+        c.rfc,
+        c.cfdis,
+        c.fiscalDocsEnabled ? "Activa" : "Inactiva",
+        sentidoLabel(c.opinionSentido),
+        c.opinionDate ?? "—",
+      ]);
+
+      row.eachCell((cell) => {
+        cell.border = thinBorder;
+        cell.alignment = { vertical: "middle" };
+      });
+      // Centrar columnas de estado/numéricas.
+      [3, 4, 5, 6].forEach((n) => {
+        row.getCell(n).alignment = { vertical: "middle", horizontal: "center" };
+      });
+
+      // Coloreado condicional de la Opinión.
+      const opCell = row.getCell(5);
+      if (c.opinionSentido === "positiva") {
+        opCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD1FAE5" } };
+        opCell.font = { bold: true, color: { argb: "FF065F46" } };
+      } else if (c.opinionSentido === "negativa") {
+        opCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEE2E2" } };
+        opCell.font = { bold: true, color: { argb: "FF991B1B" } };
+      } else {
+        opCell.font = { color: { argb: "FF6B7280" } };
+      }
+
+      // Documentos fiscales: verde si activa, gris si no.
+      const docCell = row.getCell(4);
+      docCell.font = c.fiscalDocsEnabled
+        ? { bold: true, color: { argb: "FF065F46" } }
+        : { color: { argb: "FF6B7280" } };
+    });
+
+    // Autofiltro sobre el encabezado.
+    ws.autoFilter = {
+      from: { row: 2, column: 1 },
+      to: { row: 2, column: columns.length },
+    };
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(
+      new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }),
+      `Clientes_${currentYear}.xlsx`,
     );
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Clientes");
-    XLSX.writeFile(wb, `Clientes_${currentYear}.xlsx`);
   };
     
   const exportPDF = () => {
