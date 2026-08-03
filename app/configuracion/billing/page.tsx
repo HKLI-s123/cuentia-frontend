@@ -374,9 +374,13 @@ export default function FacturacionPage() {
 
       {/* 2️⃣ DATOS FISCALES */}
       <div className="p-5 rounded-xl border mb-8">
-        <h2 className="text-lg font-semibold mb-4 text-gray-800">
+        <h2 className="text-lg font-semibold mb-1 text-gray-800">
           Datos Fiscales
         </h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Solo <strong>RFC</strong>, <strong>Razón Social</strong>, <strong>Régimen Fiscal</strong>,{" "}
+          <strong>Uso de CFDI</strong> y <strong>Código Postal</strong> son obligatorios. El resto es opcional.
+        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
@@ -400,16 +404,16 @@ export default function FacturacionPage() {
             <span className="bg-gray-100 px-3 py-3 text-gray-600 font-medium">+52</span>
             <input
               className="flex-1 p-3 outline-none"
-              placeholder="Teléfono de contacto"
+              placeholder="Teléfono de contacto (opcional)"
               value={form.telefono}
               onChange={(e) => updateField("telefono", e.target.value.replace(/\D/g, ""))}
             />
           </div>
 
-          <input className="border p-3 rounded-lg" placeholder="Calle"
+          <input className="border p-3 rounded-lg" placeholder="Calle (opcional)"
             value={form.calle} onChange={(e) => updateField("calle", e.target.value)} />
 
-          <input className="border p-3 rounded-lg" placeholder="Número"
+          <input className="border p-3 rounded-lg" placeholder="Número (opcional)"
             value={form.numero} onChange={(e) => updateField("numero", e.target.value)} />
 
           <input className="border p-3 rounded-lg" placeholder="Código Postal"
@@ -420,7 +424,7 @@ export default function FacturacionPage() {
             value={form.estado}
             onChange={(e) => updateField("estado", e.target.value)}
           >
-            <option value="">Selecciona un estado</option>
+            <option value="">Estado (opcional)</option>
           
             {estados.map((estado) => (
               <option key={estado} value={estado}>
@@ -429,7 +433,7 @@ export default function FacturacionPage() {
             ))}
           </select>
 
-          <input className="border p-3 rounded-lg" placeholder="Municipio"
+          <input className="border p-3 rounded-lg" placeholder="Ciudad / Municipio (opcional)"
             value={form.municipio} onChange={(e) => updateField("municipio", e.target.value)} />
 
         </div>
