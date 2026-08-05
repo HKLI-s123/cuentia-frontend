@@ -1,13 +1,14 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useSession } from "@/hooks/useSession";
 import Spinner from "@/components/Spinner";
+import TrialExpiredScreen from "@/components/TrialExpiredScreen";
 
 export function withSessionGuard(Component: any) {
   return function GuardedPage(props: any) {
     const { user, loading } = useSession();
-    const router = useRouter();
+    const pathname = usePathname();
 
     // Mientras consulta /auth/me → mostrar loading
     if (loading) {
@@ -22,6 +23,12 @@ export function withSessionGuard(Component: any) {
     if (!user) {
       window.location.href="/login";
       return null;
+    }
+
+    // Prueba gratuita terminada → solo se permite /plans. Cualquier otra
+    // sección protegida muestra la pantalla de "prueba terminada".
+    if (user.accessBlocked && !pathname?.startsWith("/plans")) {
+      return <TrialExpiredScreen />;
     }
 
     // Autenticado → mostrar página

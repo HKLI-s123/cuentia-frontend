@@ -5,4 +5,5 @@ export interface SessionUser {
   verified: boolean;
   tipo_cuenta: string;
   status: string;
+  accessBlocked?: boolean;
 }
