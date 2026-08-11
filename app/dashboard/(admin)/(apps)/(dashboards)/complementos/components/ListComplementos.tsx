@@ -420,16 +420,23 @@ const ListPagos = () => {
     return Number.isFinite(n) ? n : 0;
   };
 
-  // Limpia cadenas para el Excel: normaliza saltos de línea a \n y elimina
-  // caracteres de control ilegales (el \r y otros disparan la reparación de
-  // sharedStrings.xml en Excel).
+  // Limpia cadenas para el Excel:
+  //  - normaliza saltos de línea a \n y elimina caracteres de control ilegales
+  //    (el \r y otros disparan la reparación de sharedStrings.xml en Excel);
+  //  - recorta a 32 767 caracteres, el máximo por celda de Excel (superarlo
+  //    también dispara la reparación de sharedStrings.xml).
+  const EXCEL_MAX_CELL = 32767;
   const cleanCell = (v: any): any => {
     if (typeof v !== "string") return v;
-    return v
+    let s = v
       .replace(/\r\n/g, "\n")
       .replace(/\r/g, "\n")
       // eslint-disable-next-line no-control-regex
       .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
+    if (s.length > EXCEL_MAX_CELL) {
+      s = s.slice(0, EXCEL_MAX_CELL - 12) + "… [truncado]";
+    }
+    return s;
   };
 
   const buildSheet1Cols = (conceptosMap: Map<string, string>): ColDefS1[] => [
