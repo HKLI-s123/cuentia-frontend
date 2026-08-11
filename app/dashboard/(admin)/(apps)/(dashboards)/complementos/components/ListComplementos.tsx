@@ -152,24 +152,28 @@ const ListPagos = () => {
 
   const excelDate = (value?: string) => {
     if (!value) return "";
-  
-    // ISO
-    if (value.includes("T")) {
-      return new Date(value);
+
+    let d: Date | null = null;
+
+    if (typeof value !== "string") {
+      d = new Date(value as any);
+    } else if (value.includes("T")) {
+      // ISO (con o sin hora)
+      d = new Date(value);
+    } else if (value.includes("/")) {
+      // DD/MM/YYYY (ignora hora si viniera)
+      const [dd, mm, yy] = value.split(" ")[0].split("/");
+      d = new Date(`${yy}-${mm}-${dd}T00:00:00`);
+    } else if (value.includes("-")) {
+      // "YYYY-MM-DD" o "YYYY-MM-DD HH:MM:SS" (datetime de MySQL)
+      const iso = value.includes(" ") ? value.replace(" ", "T") : `${value}T00:00:00`;
+      d = new Date(iso);
+    } else {
+      return value;
     }
-  
-    // YYYY-MM-DD
-    if (value.includes("-")) {
-      return new Date(value + "T00:00:00");
-    }
-  
-    // DD/MM/YYYY
-    if (value.includes("/")) {
-      const [d, m, y] = value.split("/");
-      return new Date(`${y}-${m}-${d}T00:00:00`);
-    }
-  
-    return value;
+
+    // 🔒 Nunca devolver una fecha inválida: rompería el Excel (celda con NaN)
+    return d && !isNaN(d.getTime()) ? d : "";
   };
 
 
@@ -410,6 +414,12 @@ const ListPagos = () => {
   type ColDefS1 = { key: string; header: string; isDate?: boolean; get: (f: any) => any };
   type ColDefRP = { key: string; header: string; isDate?: boolean; get: (p: Pago, esPrimera: boolean) => any };
 
+  // Convierte a número seguro: nunca devuelve NaN/Infinity (rompería el Excel)
+  const num = (v: any): number => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+
   const buildSheet1Cols = (conceptosMap: Map<string, string>): ColDefS1[] => [
     { key: "xml", header: "XML", get: (f) => (f.uuid ? `${f.uuid}.xml` : "") },
     { key: "rfc_emisor", header: "Rfc Emisor", get: (f) => f.rfc_emisor ?? "" },
@@ -422,24 +432,24 @@ const ListPagos = () => {
     { key: "serie", header: "Serie", get: () => "" },
     { key: "folio", header: "Folio", get: (f) => f.folio ?? "" },
     { key: "fecha", header: "Fecha", isDate: true, get: (f) => excelDate(f.fecha) },
-    { key: "subtotal", header: "Sub Total", get: (f) => Number(f.subtotal ?? 0) },
-    { key: "descuento", header: "Descuento", get: (f) => Number(f.descuento ?? 0) },
-    { key: "total_imp_trasladado", header: "Total impuesto Trasladado", get: (f) => Number(f.totaltraslado ?? 0) },
-    { key: "nombre_impuesto_tras", header: "Nombre Impuesto", get: (f) => (Number(f.totaltraslado ?? 0) > 0 ? "002 - IVA" : "") },
-    { key: "total_imp_retenido", header: "Total impuesto Retenido", get: (f) => Number(f.totalretenidos ?? 0) },
+    { key: "subtotal", header: "Sub Total", get: (f) => num(f.subtotal) },
+    { key: "descuento", header: "Descuento", get: (f) => num(f.descuento) },
+    { key: "total_imp_trasladado", header: "Total impuesto Trasladado", get: (f) => num(f.totaltraslado) },
+    { key: "nombre_impuesto_tras", header: "Nombre Impuesto", get: (f) => (num(f.totaltraslado) > 0 ? "002 - IVA" : "") },
+    { key: "total_imp_retenido", header: "Total impuesto Retenido", get: (f) => num(f.totalretenidos) },
     { key: "nombre_impuesto_ret", header: "Nombre Impuesto", get: () => "" },
-    { key: "total", header: "Total", get: (f) => Number(f.total ?? 0) },
+    { key: "total", header: "Total", get: (f) => num(f.total) },
     { key: "uuid", header: "UUID", get: (f) => f.uuid ?? "" },
     { key: "metodo_pago", header: "Método de Pago", get: (f) => f.metodopago ?? "" },
     { key: "forma_pago", header: "Forma de Pago", get: (f) => f.tipopago ?? "" },
     { key: "moneda", header: "Moneda", get: (f) => f.moneda ?? "" },
-    { key: "tipo_cambio", header: "Tipo de Cambio", get: (f) => f.tipocambio ?? "" },
+    { key: "tipo_cambio", header: "Tipo de Cambio", get: (f) => (f.tipocambio != null && f.tipocambio !== "" ? num(f.tipocambio) : "") },
     { key: "version", header: "Versión", get: () => "" },
     { key: "uso_cfdi", header: "Uso CFDI", get: (f) => f.usocfdi ?? "" },
     { key: "regimen_fiscal_receptor", header: "Régimen Fiscal", get: (f) => f.regimenfiscalreceptor ?? "" },
     { key: "conceptos", header: "Conceptos", get: (f) => conceptosMap.get(f.uuid) ?? "" },
-    { key: "traslado_iva16", header: "Traslado IVA 16 %", get: (f) => Number(f.iva16 ?? 0) },
-    { key: "retencion_iva", header: "Retención IVA", get: (f) => Number(f.retencioniva ?? 0) },
+    { key: "traslado_iva16", header: "Traslado IVA 16 %", get: (f) => num(f.iva16) },
+    { key: "retencion_iva", header: "Retención IVA", get: (f) => num(f.retencioniva) },
   ];
 
   const buildPagoCols = (): ColDefRP[] => [
@@ -455,20 +465,16 @@ const ListPagos = () => {
     { key: "folio_comp", header: "Folio", get: () => "" },
     { key: "fecha_emision", header: "Fecha emisión", isDate: true, get: (p, fp) => (fp ? excelDate(p.fecha_emision) : "") },
     { key: "uuid", header: "UUID", get: (p, fp) => (fp ? (p.uuid_complemento ?? "") : "") },
-    { key: "estado", header: "Estado", get: () => "" },
-    { key: "estatus", header: "Estatus", get: () => "" },
-    { key: "validacion_efos", header: "Validación EFOS", get: () => "" },
-    { key: "fecha_validacion", header: "Fecha validación", get: () => "" },
-    { key: "monto_total", header: "Monto total", get: (p, fp) => (fp ? Number(p.monto ?? 0) : "") },
+    { key: "monto_total", header: "Monto total", get: (p, fp) => (fp ? num(p.monto) : "") },
     { key: "moneda", header: "Moneda", get: (p, fp) => (fp ? (p.moneda_pago ?? "") : "") },
     { key: "forma_pago", header: "FormaDePago", get: (p, fp) => (fp ? (p.forma_pago ?? "") : "") },
     { key: "fecha_pago", header: "FechaPago", isDate: true, get: (p, fp) => (fp ? excelDate(p.fecha_pago) : "") },
     { key: "serie_dr", header: "Serie", get: (p) => p.serie ?? "" },
     { key: "folio_dr", header: "Folio", get: (p) => p.folio ?? "" },
-    { key: "saldo_insoluto", header: "SaldoInsoluto", get: (p) => Number(p.imp_saldo_insoluto ?? 0) },
-    { key: "imp_pagado", header: "ImpPagado", get: (p) => Number(p.imp_pagado ?? 0) },
-    { key: "imp_saldo_ant", header: "ImpSaldoAnt", get: (p) => Number(p.imp_saldo_ant ?? 0) },
-    { key: "parcialidad", header: "Parcialidad", get: (p) => Number(p.num_parcialidad ?? 0) },
+    { key: "saldo_insoluto", header: "SaldoInsoluto", get: (p) => num(p.imp_saldo_insoluto) },
+    { key: "imp_pagado", header: "ImpPagado", get: (p) => num(p.imp_pagado) },
+    { key: "imp_saldo_ant", header: "ImpSaldoAnt", get: (p) => num(p.imp_saldo_ant) },
+    { key: "parcialidad", header: "Parcialidad", get: (p) => num(p.num_parcialidad) },
     { key: "metodo_pago_dr", header: "MetodoDePagoDR", get: (p) => p.metodo_pago_dr ?? "" },
     { key: "moneda_dr", header: "MonedaDR", get: (p) => p.moneda_dr ?? "" },
     { key: "id_documento", header: "idDocumento", get: (p) => p.uuid_factura ?? "" },
