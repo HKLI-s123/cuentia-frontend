@@ -27,7 +27,7 @@ import {
   TbArrowUp,
 } from "react-icons/tb";
 import CardPagination from "@/components/cards/CardPagination";
-import { getPagos } from "../../../../../../services/financeService"; // asegúrate de exportarlo
+import { getPagos, getFacturas } from "../../../../../../services/financeService"; // asegúrate de exportarlo
 import { getSessionInfo } from "@/app/services/authService";
 import { resolveSelectedRFC, setStoredRFC } from "@/app/services/selectedRfcStore";
 import { toast } from "sonner";
@@ -396,10 +396,299 @@ const ListPagos = () => {
   // helper safe number
   const safeNum = (v: any) => (typeof v === "number" ? v : parseFloat(`${v || 0}`) || 0);
 
+  // ------------------------------------------------------------------
+  // Reporte especial "Emitidos" (solo usuario id 93 / edel.velazquez)
+  // Replica el layout del archivo Emitidos-<RFC>-<periodo>.xls:
+  //   Hoja "Sheet1"        -> CFDIs emitidos (ingresos/egresos/pagos)
+  //   Hoja "RecibosDePago" -> complementos de pago con documentos relacionados
+  // Se conserva el estilo de la app (título + encabezados con color) y los
+  // totales al final de RecibosDePago. Las columnas que el backend no expone
+  // (LugarExp, Serie/Folio del complemento, Versión, Conceptos, Relacionados,
+  // Tipo Relación) se dejan en blanco.
+  // ------------------------------------------------------------------
+  const isEmitidosUser = (): boolean => {
+    const email = (session?.email || "").toLowerCase();
+    return session?.userId === 93 || email === "edel.velazquez@gmail.com";
+  };
+
+  const exportToExcelEmitidos = async () => {
+    const getNombreClientePorRfc = (rfc: string | undefined) => {
+      if (!rfc) return "Cliente desconocido";
+      const cliente = clientes.find((c) => c.rfc === rfc);
+      return cliente?.nombre || "Cliente desconocido";
+    };
+
+    const MI_RFC = selectedRFC;
+    const nombreCliente = getNombreClientePorRfc(selectedRFC);
+
+    // Traer los CFDIs emitidos para la hoja "Sheet1"
+    let facturas: any[] = [];
+    try {
+      facturas = await getFacturas({
+        rfc: selectedRFC,
+        startDate: fechaInicio || undefined,
+        endDate: fechaFin || undefined,
+      });
+    } catch (err) {
+      console.error("Error al cargar facturas para reporte Emitidos:", err);
+      toast.error("No se pudieron cargar los CFDIs emitidos.");
+      return;
+    }
+
+    if ((!facturas || facturas.length === 0) && pagos.length === 0) {
+      toast.warning("No hay datos para exportar en este periodo.");
+      return;
+    }
+
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "CuentIA";
+    wb.created = new Date();
+
+    const colLetter = (n: number) => {
+      let s = "";
+      while (n > 0) {
+        const m = (n - 1) % 26;
+        s = String.fromCharCode(65 + m) + s;
+        n = Math.floor((n - 1) / 26);
+      }
+      return s;
+    };
+
+    // Estilo compartido de título + encabezados
+    const applyHeader = (ws: ExcelJS.Worksheet, headers: string[], titulo: string) => {
+      const lastCol = colLetter(headers.length);
+      ws.mergeCells(`A1:${lastCol}1`);
+      const titleCell = ws.getCell("A1");
+      titleCell.value = titulo;
+      titleCell.font = { bold: true, size: 16, color: { argb: "FFFFFFFF" } };
+      titleCell.alignment = { horizontal: "center" };
+      titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF004080" } };
+
+      const headerRow = ws.addRow(headers);
+      headerRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF5F9EA0" } };
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+    };
+
+    const styleDataRow = (row: ExcelJS.Row, index: number) => {
+      row.eachCell((cell) => {
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: index % 2 === 0 ? "FFFFFFFF" : "FFF7F7F7" },
+        };
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+        if (typeof cell.value === "number") cell.numFmt = "$#,##0.00";
+      });
+    };
+
+    // ============================================================
+    // HOJA 1: "Sheet1" -> CFDIs emitidos
+    // ============================================================
+    {
+      const ws = wb.addWorksheet("Sheet1");
+      const headers = [
+        "XML", "Rfc Emisor", "Nombre Emisor", "LugarExp", "Régimen Fiscal", "Rfc Receptor",
+        "Nombre Receptor", "Tipo", "Serie", "Folio", "Fecha", "Sub Total", "Descuento",
+        "Total impuesto Trasladado", "Nombre Impuesto", "Total impuesto Retenido", "Nombre Impuesto",
+        "Total", "UUID", "Método de Pago", "Forma de Pago", "Moneda", "Tipo de Cambio", "Versión",
+        "Uso CFDI", "Régimen Fiscal", "Estado", "Estatus", "Validación EFOS", "Fecha Consulta",
+        "Conceptos", "Relacionados", "Tipo Relación", "Traslado IVA 16 %", "Retención IVA",
+      ];
+      applyHeader(ws, headers, `CFDIs Emitidos - Cliente ${nombreCliente}`);
+
+      facturas.forEach((f, i) => {
+        const traslado = Number(f.totaltraslado ?? 0);
+        const retenido = Number(f.totalretenidos ?? 0);
+        const tipo =
+          (f.tipocomprobante || "").toUpperCase() === "P"
+            ? "Pago"
+            : (f.movimiento || "").toString().toLowerCase();
+
+        const row = ws.addRow([
+          f.uuid ? `${f.uuid}.xml` : "",           // XML
+          f.rfc_emisor ?? "",                        // Rfc Emisor
+          f.razonsocialemisor ?? "",                 // Nombre Emisor
+          "",                                        // LugarExp (no expuesto)
+          f.regimenfiscal ?? "",                     // Régimen Fiscal
+          f.rfc_receptor ?? "",                      // Rfc Receptor
+          f.razonsocialreceptor ?? "",               // Nombre Receptor
+          tipo,                                      // Tipo
+          "",                                        // Serie (no expuesto)
+          f.folio ?? "",                             // Folio
+          excelDate(f.fecha),                        // Fecha
+          Number(f.subtotal ?? 0),                   // Sub Total
+          Number(f.descuento ?? 0),                  // Descuento
+          traslado,                                  // Total impuesto Trasladado
+          traslado > 0 ? "002 - IVA" : "",           // Nombre Impuesto
+          retenido,                                  // Total impuesto Retenido
+          "",                                        // Nombre Impuesto (retención)
+          Number(f.total ?? 0),                      // Total
+          f.uuid ?? "",                              // UUID
+          f.metodopago ?? "",                        // Método de Pago
+          f.tipopago ?? "",                          // Forma de Pago
+          f.moneda ?? "",                            // Moneda
+          f.tipocambio ?? "",                        // Tipo de Cambio
+          "",                                        // Versión (no expuesto)
+          f.usocfdi ?? "",                           // Uso CFDI
+          f.regimenfiscalreceptor ?? "",             // Régimen Fiscal (receptor)
+          "",                                        // Estado
+          "",                                        // Estatus
+          "",                                        // Validación EFOS
+          "",                                        // Fecha Consulta
+          "",                                        // Conceptos (no expuesto)
+          "",                                        // Relacionados
+          "",                                        // Tipo Relación
+          Number(f.iva16 ?? 0),                      // Traslado IVA 16 %
+          Number(f.retencioniva ?? 0),               // Retención IVA
+        ]);
+
+        row.getCell(11).numFmt = "dd/mm/yyyy"; // Fecha
+        styleDataRow(row, i);
+      });
+
+      ws.columns.forEach((col) => (col.width = 18));
+    }
+
+    // ============================================================
+    // HOJA 2: "RecibosDePago" -> complementos de pago
+    // ============================================================
+    {
+      const ws = wb.addWorksheet("RecibosDePago");
+      const headers = [
+        "XML", "Rfc Emisor", "Nombre Emisor", "LugarExp", "Régimen Fiscal", "Rfc Receptor",
+        "Nombre Receptor", "Tipo", "Serie", "Folio", "Fecha emisión", "UUID", "Estado", "Estatus",
+        "Validación EFOS", "Fecha validación", "Monto total", "Moneda", "FormaDePago", "FechaPago",
+        "Serie", "Folio", "SaldoInsoluto", "ImpPagado", "ImpSaldoAnt", "Parcialidad",
+        "MetodoDePagoDR", "MonedaDR", "idDocumento",
+      ];
+      applyHeader(ws, headers, `Recibos de Pago (Complementos) - Cliente ${nombreCliente}`);
+
+      // Agrupar por complemento de pago
+      const grupos: Record<string, Pago[]> = {};
+      pagos.forEach((p) => {
+        const key = p.uuid_complemento || "";
+        if (!grupos[key]) grupos[key] = [];
+        grupos[key].push(p);
+      });
+
+      // Orden de grupos por UUID de complemento (como el archivo original)
+      const clavesOrdenadas = Object.keys(grupos).sort((a, b) => a.localeCompare(b));
+
+      let dataIndex = 0;
+      for (const clave of clavesOrdenadas) {
+        const docs = grupos[clave].slice().sort((a, b) => {
+          const fa = (a.folio || "").localeCompare(b.folio || "");
+          if (fa !== 0) return fa;
+          return (a.uuid_factura || "").localeCompare(b.uuid_factura || "");
+        });
+
+        docs.forEach((p, i) => {
+          const esPrimera = i === 0;
+          const row = ws.addRow([
+            esPrimera ? (p.uuid_complemento ? `${p.uuid_complemento}.xml` : "") : "", // XML
+            esPrimera ? p.rfc_emisor ?? "" : "",           // Rfc Emisor
+            esPrimera ? p.nombre_emisor ?? "" : "",        // Nombre Emisor
+            "",                                            // LugarExp (no expuesto)
+            esPrimera ? p.regimen_emisor ?? "" : "",       // Régimen Fiscal
+            esPrimera ? p.rfc_receptor ?? "" : "",         // Rfc Receptor
+            esPrimera ? p.nombre_receptor ?? "" : "",      // Nombre Receptor
+            esPrimera ? "Pago" : "",                       // Tipo
+            "",                                            // Serie (complemento, no expuesto)
+            "",                                            // Folio (complemento, no expuesto)
+            esPrimera ? excelDate(p.fecha_emision) : "",   // Fecha emisión
+            esPrimera ? p.uuid_complemento ?? "" : "",     // UUID
+            "",                                            // Estado
+            "",                                            // Estatus
+            "",                                            // Validación EFOS
+            "",                                            // Fecha validación
+            esPrimera ? Number(p.monto ?? 0) : "",         // Monto total
+            esPrimera ? p.moneda_pago ?? "" : "",          // Moneda
+            esPrimera ? p.forma_pago ?? "" : "",           // FormaDePago
+            esPrimera ? excelDate(p.fecha_pago) : "",      // FechaPago
+            p.serie ?? "",                                 // Serie (DR)
+            p.folio ?? "",                                 // Folio (DR)
+            Number(p.imp_saldo_insoluto ?? 0),             // SaldoInsoluto
+            Number(p.imp_pagado ?? 0),                     // ImpPagado
+            Number(p.imp_saldo_ant ?? 0),                  // ImpSaldoAnt
+            Number(p.num_parcialidad ?? 0),                // Parcialidad
+            p.metodo_pago_dr ?? "",                        // MetodoDePagoDR
+            p.moneda_dr ?? "",                             // MonedaDR
+            p.uuid_factura ?? "",                          // idDocumento
+          ]);
+
+          row.getCell(11).numFmt = "dd/mm/yyyy"; // Fecha emisión
+          row.getCell(20).numFmt = "dd/mm/yyyy"; // FechaPago
+          styleDataRow(row, dataIndex);
+          dataIndex++;
+        });
+
+        // Fila separadora vacía entre complementos (como el archivo original)
+        ws.addRow(Array(headers.length).fill(""));
+      }
+
+      // ---- Totales al final ----
+      const totalIngresos = pagos
+        .filter((p) => p.rfc_emisor === MI_RFC)
+        .reduce((acc, p) => acc + toPesosPago(p, p.total), 0);
+      const totalEgresos = pagos
+        .filter((p) => p.rfc_receptor === MI_RFC)
+        .reduce((acc, p) => acc + toPesosPago(p, p.total), 0);
+      const totalMes = totalIngresos - totalEgresos;
+
+      const addTotalRow = (label: string, valor: number, fontArgb: string, fillArgb: string) => {
+        const r = ws.addRow(Array(headers.length).fill(""));
+        r.getCell(15).value = label;   // columna "Fecha validación"
+        r.getCell(17).value = valor;   // columna "Monto total"
+        r.eachCell((cell) => {
+          cell.font = { bold: true, color: { argb: fontArgb } };
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: fillArgb } };
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+          if (typeof cell.value === "number") cell.numFmt = "$#,##0.00";
+        });
+      };
+
+      addTotalRow("TOTAL UTILIDAD", totalMes, "FFFFFFFF", "FF2F4F4F");
+      addTotalRow("TOTAL INGRESOS POR PAGOS", totalIngresos, "FF006400", "FFDFFFD6");
+      addTotalRow("TOTAL EGRESOS POR PAGOS", totalEgresos, "FF8B0000", "FFFFE5E5");
+
+      ws.columns.forEach((col) => (col.width = 18));
+    }
+
+    // Nombre de archivo estilo "Emitidos-<RFC>-<YYYYMM>.xlsx"
+    const periodo = (fechaInicio || "").replace(/-/g, "").slice(0, 6) || "periodo";
+    const buffer = await wb.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), `Emitidos-${selectedRFC}-${periodo}.xlsx`);
+  };
+
   // export to Excel
   const exportToExcel = async () => {
+    // 🔀 Usuario especial (id 93 / edel.velazquez) -> reporte estilo Emitidos
+    if (isEmitidosUser()) {
+      await exportToExcelEmitidos();
+      return;
+    }
+
     if (pagos.length === 0) return;
-  
+
     const getNombreClientePorRfc = (rfc: string | undefined) => {
      if (!rfc) return "Cliente desconocido";
      const cliente = clientes.find(c => c.rfc === rfc);
@@ -738,7 +1027,7 @@ const ListPagos = () => {
             <Button
               variant="primary"
               size="sm"
-              disabled={pagos.length === 0}
+              disabled={pagos.length === 0 && !isEmitidosUser()}
               className="text-nowrap mb-1 mb-md-0"
               onClick={exportToExcel}
             >
