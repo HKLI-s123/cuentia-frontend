@@ -420,6 +420,18 @@ const ListPagos = () => {
     return Number.isFinite(n) ? n : 0;
   };
 
+  // Limpia cadenas para el Excel: normaliza saltos de línea a \n y elimina
+  // caracteres de control ilegales (el \r y otros disparan la reparación de
+  // sharedStrings.xml en Excel).
+  const cleanCell = (v: any): any => {
+    if (typeof v !== "string") return v;
+    return v
+      .replace(/\r\n/g, "\n")
+      .replace(/\r/g, "\n")
+      // eslint-disable-next-line no-control-regex
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
+  };
+
   const buildSheet1Cols = (conceptosMap: Map<string, string>): ColDefS1[] => [
     { key: "xml", header: "XML", get: (f) => (f.uuid ? `${f.uuid}.xml` : "") },
     { key: "rfc_emisor", header: "Rfc Emisor", get: (f) => f.rfc_emisor ?? "" },
@@ -647,7 +659,7 @@ const ListPagos = () => {
       applyHeader(ws, s1cols.map((c) => c.header), `CFDIs Emitidos - Cliente ${nombreCliente}`);
 
       facturas.forEach((f, i) => {
-        const row = ws.addRow(s1cols.map((c) => c.get(f)));
+        const row = ws.addRow(s1cols.map((c) => cleanCell(c.get(f))));
         s1cols.forEach((c, idx) => {
           if (c.isDate) row.getCell(idx + 1).numFmt = "dd/mm/yyyy";
         });
@@ -685,7 +697,7 @@ const ListPagos = () => {
 
         docs.forEach((p, i) => {
           const esPrimera = i === 0;
-          const row = ws.addRow(rpcols.map((c) => c.get(p, esPrimera)));
+          const row = ws.addRow(rpcols.map((c) => cleanCell(c.get(p, esPrimera))));
           rpcols.forEach((c, idx) => {
             if (c.isDate) row.getCell(idx + 1).numFmt = "dd/mm/yyyy";
           });
