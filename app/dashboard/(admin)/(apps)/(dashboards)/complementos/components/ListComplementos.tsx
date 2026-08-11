@@ -27,7 +27,7 @@ import {
   TbArrowUp,
 } from "react-icons/tb";
 import CardPagination from "@/components/cards/CardPagination";
-import { getPagos, getFacturas } from "../../../../../../services/financeService"; // asegúrate de exportarlo
+import { getPagos, getFacturas, getFacturasConConceptos } from "../../../../../../services/financeService"; // asegúrate de exportarlo
 import { getSessionInfo } from "@/app/services/authService";
 import { resolveSelectedRFC, setStoredRFC } from "@/app/services/selectedRfcStore";
 import { toast } from "sonner";
@@ -112,6 +112,10 @@ const ListPagos = () => {
   const [session, setSession] = useState<any>(null);
 
   const [visibleRows, setVisibleRows] = useState<Record<number, boolean>>({});
+
+  // Selector de columnas del reporte "Emitidos" (solo usuarios especiales)
+  const [showColsModal, setShowColsModal] = useState(false);
+  const [colSel, setColSel] = useState<Record<string, boolean>>({});
 
   const getFirstDayOfCurrentMonth = () => {
     const now = new Date();
@@ -397,6 +401,88 @@ const ListPagos = () => {
   const safeNum = (v: any) => (typeof v === "number" ? v : parseFloat(`${v || 0}`) || 0);
 
   // ------------------------------------------------------------------
+  // Definición de columnas del reporte "Emitidos" (modelo column-driven).
+  // Cada columna tiene una key única (para el selector), un header y un getter.
+  // Sirve tanto para renderizar el selector (key + header) como para generar
+  // el Excel (get). Las columnas Estado/Estatus/Validación EFOS/Fecha Consulta
+  // y Relacionados/Tipo Relación se retiraron de Sheet1 por petición.
+  // ------------------------------------------------------------------
+  type ColDefS1 = { key: string; header: string; isDate?: boolean; get: (f: any) => any };
+  type ColDefRP = { key: string; header: string; isDate?: boolean; get: (p: Pago, esPrimera: boolean) => any };
+
+  const buildSheet1Cols = (conceptosMap: Map<string, string>): ColDefS1[] => [
+    { key: "xml", header: "XML", get: (f) => (f.uuid ? `${f.uuid}.xml` : "") },
+    { key: "rfc_emisor", header: "Rfc Emisor", get: (f) => f.rfc_emisor ?? "" },
+    { key: "nombre_emisor", header: "Nombre Emisor", get: (f) => f.razonsocialemisor ?? "" },
+    { key: "lugar_exp", header: "LugarExp", get: () => "" },
+    { key: "regimen_fiscal", header: "Régimen Fiscal", get: (f) => f.regimenfiscal ?? "" },
+    { key: "rfc_receptor", header: "Rfc Receptor", get: (f) => f.rfc_receptor ?? "" },
+    { key: "nombre_receptor", header: "Nombre Receptor", get: (f) => f.razonsocialreceptor ?? "" },
+    { key: "tipo", header: "Tipo", get: (f) => ((f.tipocomprobante || "").toUpperCase() === "P" ? "Pago" : (f.movimiento || "").toString().toLowerCase()) },
+    { key: "serie", header: "Serie", get: () => "" },
+    { key: "folio", header: "Folio", get: (f) => f.folio ?? "" },
+    { key: "fecha", header: "Fecha", isDate: true, get: (f) => excelDate(f.fecha) },
+    { key: "subtotal", header: "Sub Total", get: (f) => Number(f.subtotal ?? 0) },
+    { key: "descuento", header: "Descuento", get: (f) => Number(f.descuento ?? 0) },
+    { key: "total_imp_trasladado", header: "Total impuesto Trasladado", get: (f) => Number(f.totaltraslado ?? 0) },
+    { key: "nombre_impuesto_tras", header: "Nombre Impuesto", get: (f) => (Number(f.totaltraslado ?? 0) > 0 ? "002 - IVA" : "") },
+    { key: "total_imp_retenido", header: "Total impuesto Retenido", get: (f) => Number(f.totalretenidos ?? 0) },
+    { key: "nombre_impuesto_ret", header: "Nombre Impuesto", get: () => "" },
+    { key: "total", header: "Total", get: (f) => Number(f.total ?? 0) },
+    { key: "uuid", header: "UUID", get: (f) => f.uuid ?? "" },
+    { key: "metodo_pago", header: "Método de Pago", get: (f) => f.metodopago ?? "" },
+    { key: "forma_pago", header: "Forma de Pago", get: (f) => f.tipopago ?? "" },
+    { key: "moneda", header: "Moneda", get: (f) => f.moneda ?? "" },
+    { key: "tipo_cambio", header: "Tipo de Cambio", get: (f) => f.tipocambio ?? "" },
+    { key: "version", header: "Versión", get: () => "" },
+    { key: "uso_cfdi", header: "Uso CFDI", get: (f) => f.usocfdi ?? "" },
+    { key: "regimen_fiscal_receptor", header: "Régimen Fiscal", get: (f) => f.regimenfiscalreceptor ?? "" },
+    { key: "conceptos", header: "Conceptos", get: (f) => conceptosMap.get(f.uuid) ?? "" },
+    { key: "traslado_iva16", header: "Traslado IVA 16 %", get: (f) => Number(f.iva16 ?? 0) },
+    { key: "retencion_iva", header: "Retención IVA", get: (f) => Number(f.retencioniva ?? 0) },
+  ];
+
+  const buildPagoCols = (): ColDefRP[] => [
+    { key: "xml", header: "XML", get: (p, fp) => (fp ? (p.uuid_complemento ? `${p.uuid_complemento}.xml` : "") : "") },
+    { key: "rfc_emisor", header: "Rfc Emisor", get: (p, fp) => (fp ? (p.rfc_emisor ?? "") : "") },
+    { key: "nombre_emisor", header: "Nombre Emisor", get: (p, fp) => (fp ? (p.nombre_emisor ?? "") : "") },
+    { key: "lugar_exp", header: "LugarExp", get: () => "" },
+    { key: "regimen_fiscal", header: "Régimen Fiscal", get: (p, fp) => (fp ? (p.regimen_emisor ?? "") : "") },
+    { key: "rfc_receptor", header: "Rfc Receptor", get: (p, fp) => (fp ? (p.rfc_receptor ?? "") : "") },
+    { key: "nombre_receptor", header: "Nombre Receptor", get: (p, fp) => (fp ? (p.nombre_receptor ?? "") : "") },
+    { key: "tipo", header: "Tipo", get: (p, fp) => (fp ? "Pago" : "") },
+    { key: "serie_comp", header: "Serie", get: () => "" },
+    { key: "folio_comp", header: "Folio", get: () => "" },
+    { key: "fecha_emision", header: "Fecha emisión", isDate: true, get: (p, fp) => (fp ? excelDate(p.fecha_emision) : "") },
+    { key: "uuid", header: "UUID", get: (p, fp) => (fp ? (p.uuid_complemento ?? "") : "") },
+    { key: "estado", header: "Estado", get: () => "" },
+    { key: "estatus", header: "Estatus", get: () => "" },
+    { key: "validacion_efos", header: "Validación EFOS", get: () => "" },
+    { key: "fecha_validacion", header: "Fecha validación", get: () => "" },
+    { key: "monto_total", header: "Monto total", get: (p, fp) => (fp ? Number(p.monto ?? 0) : "") },
+    { key: "moneda", header: "Moneda", get: (p, fp) => (fp ? (p.moneda_pago ?? "") : "") },
+    { key: "forma_pago", header: "FormaDePago", get: (p, fp) => (fp ? (p.forma_pago ?? "") : "") },
+    { key: "fecha_pago", header: "FechaPago", isDate: true, get: (p, fp) => (fp ? excelDate(p.fecha_pago) : "") },
+    { key: "serie_dr", header: "Serie", get: (p) => p.serie ?? "" },
+    { key: "folio_dr", header: "Folio", get: (p) => p.folio ?? "" },
+    { key: "saldo_insoluto", header: "SaldoInsoluto", get: (p) => Number(p.imp_saldo_insoluto ?? 0) },
+    { key: "imp_pagado", header: "ImpPagado", get: (p) => Number(p.imp_pagado ?? 0) },
+    { key: "imp_saldo_ant", header: "ImpSaldoAnt", get: (p) => Number(p.imp_saldo_ant ?? 0) },
+    { key: "parcialidad", header: "Parcialidad", get: (p) => Number(p.num_parcialidad ?? 0) },
+    { key: "metodo_pago_dr", header: "MetodoDePagoDR", get: (p) => p.metodo_pago_dr ?? "" },
+    { key: "moneda_dr", header: "MonedaDR", get: (p) => p.moneda_dr ?? "" },
+    { key: "id_documento", header: "idDocumento", get: (p) => p.uuid_factura ?? "" },
+  ];
+
+  // Selección por defecto: TODAS las columnas marcadas
+  const buildDefaultColSel = (): Record<string, boolean> => {
+    const sel: Record<string, boolean> = {};
+    buildSheet1Cols(new Map()).forEach((c) => (sel[`s1:${c.key}`] = true));
+    buildPagoCols().forEach((c) => (sel[`rp:${c.key}`] = true));
+    return sel;
+  };
+
+  // ------------------------------------------------------------------
   // Reporte especial "Emitidos" (solo usuario id 93 / edel.velazquez)
   // Replica el layout del archivo Emitidos-<RFC>-<periodo>.xls:
   //   Hoja "Sheet1"        -> CFDIs emitidos (ingresos/egresos/pagos)
@@ -418,7 +504,7 @@ const ListPagos = () => {
     return false;
   };
 
-  const exportToExcelEmitidos = async () => {
+  const exportToExcelEmitidos = async (colSelArg: Record<string, boolean>) => {
     const getNombreClientePorRfc = (rfc: string | undefined) => {
       if (!rfc) return "Cliente desconocido";
       const cliente = clientes.find((c) => c.rfc === rfc);
@@ -445,6 +531,42 @@ const ListPagos = () => {
     if ((!facturas || facturas.length === 0) && pagos.length === 0) {
       toast.warning("No hay datos para exportar en este periodo.");
       return;
+    }
+
+    // Mapa uuid -> texto de conceptos para la columna "Conceptos" de Sheet1.
+    // Nota: el endpoint excluye los CFDIs tipo 'P' (Pago), así que esas filas
+    // quedarán sin conceptos.
+    const trimNum = (v: any) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? String(n) : (v ?? "");
+    };
+    const impNum = (v: any) => {
+      const n = Number(v ?? 0);
+      return n === 0 ? "0" : n.toFixed(2);
+    };
+    const conceptosMap = new Map<string, string>();
+    try {
+      const facturasConc: any[] = await getFacturasConConceptos({
+        rfc: selectedRFC,
+        startDate: fechaInicio || undefined,
+        endDate: fechaFin || undefined,
+      });
+      (facturasConc || []).forEach((f: any) => {
+        const texto = (f.conceptos || [])
+          .map(
+            (c: any) =>
+              `ClaveProdServ : ${c.clave_prod_serv ?? ""}  ` +
+              `Cantidad : ${trimNum(c.cantidad)}  ` +
+              `valorUnitario : ${trimNum(c.valor_unitario)}  ` +
+              `Importe : ${impNum(c.importe)}  ` +
+              `Descripción : ${c.descripcion ?? ""}\r\n`,
+          )
+          .join("");
+        if (f.uuid) conceptosMap.set(f.uuid, texto);
+      });
+    } catch (err) {
+      console.error("Error al cargar conceptos para reporte Emitidos:", err);
+      // No abortamos: el reporte se genera con la columna Conceptos vacía.
     }
 
     const wb = new ExcelJS.Workbook();
@@ -502,68 +624,27 @@ const ListPagos = () => {
       });
     };
 
+    // Columnas visibles según la selección (undefined = incluida)
+    const s1cols = buildSheet1Cols(conceptosMap).filter((c) => colSelArg[`s1:${c.key}`] !== false);
+    const rpcols = buildPagoCols().filter((c) => colSelArg[`rp:${c.key}`] !== false);
+
+    if (s1cols.length === 0 && rpcols.length === 0) {
+      toast.warning("Selecciona al menos una columna para el reporte.");
+      return;
+    }
+
     // ============================================================
     // HOJA 1: "Sheet1" -> CFDIs emitidos
     // ============================================================
-    {
+    if (s1cols.length > 0) {
       const ws = wb.addWorksheet("Sheet1");
-      const headers = [
-        "XML", "Rfc Emisor", "Nombre Emisor", "LugarExp", "Régimen Fiscal", "Rfc Receptor",
-        "Nombre Receptor", "Tipo", "Serie", "Folio", "Fecha", "Sub Total", "Descuento",
-        "Total impuesto Trasladado", "Nombre Impuesto", "Total impuesto Retenido", "Nombre Impuesto",
-        "Total", "UUID", "Método de Pago", "Forma de Pago", "Moneda", "Tipo de Cambio", "Versión",
-        "Uso CFDI", "Régimen Fiscal", "Estado", "Estatus", "Validación EFOS", "Fecha Consulta",
-        "Conceptos", "Relacionados", "Tipo Relación", "Traslado IVA 16 %", "Retención IVA",
-      ];
-      applyHeader(ws, headers, `CFDIs Emitidos - Cliente ${nombreCliente}`);
+      applyHeader(ws, s1cols.map((c) => c.header), `CFDIs Emitidos - Cliente ${nombreCliente}`);
 
       facturas.forEach((f, i) => {
-        const traslado = Number(f.totaltraslado ?? 0);
-        const retenido = Number(f.totalretenidos ?? 0);
-        const tipo =
-          (f.tipocomprobante || "").toUpperCase() === "P"
-            ? "Pago"
-            : (f.movimiento || "").toString().toLowerCase();
-
-        const row = ws.addRow([
-          f.uuid ? `${f.uuid}.xml` : "",           // XML
-          f.rfc_emisor ?? "",                        // Rfc Emisor
-          f.razonsocialemisor ?? "",                 // Nombre Emisor
-          "",                                        // LugarExp (no expuesto)
-          f.regimenfiscal ?? "",                     // Régimen Fiscal
-          f.rfc_receptor ?? "",                      // Rfc Receptor
-          f.razonsocialreceptor ?? "",               // Nombre Receptor
-          tipo,                                      // Tipo
-          "",                                        // Serie (no expuesto)
-          f.folio ?? "",                             // Folio
-          excelDate(f.fecha),                        // Fecha
-          Number(f.subtotal ?? 0),                   // Sub Total
-          Number(f.descuento ?? 0),                  // Descuento
-          traslado,                                  // Total impuesto Trasladado
-          traslado > 0 ? "002 - IVA" : "",           // Nombre Impuesto
-          retenido,                                  // Total impuesto Retenido
-          "",                                        // Nombre Impuesto (retención)
-          Number(f.total ?? 0),                      // Total
-          f.uuid ?? "",                              // UUID
-          f.metodopago ?? "",                        // Método de Pago
-          f.tipopago ?? "",                          // Forma de Pago
-          f.moneda ?? "",                            // Moneda
-          f.tipocambio ?? "",                        // Tipo de Cambio
-          "",                                        // Versión (no expuesto)
-          f.usocfdi ?? "",                           // Uso CFDI
-          f.regimenfiscalreceptor ?? "",             // Régimen Fiscal (receptor)
-          "",                                        // Estado
-          "",                                        // Estatus
-          "",                                        // Validación EFOS
-          "",                                        // Fecha Consulta
-          "",                                        // Conceptos (no expuesto)
-          "",                                        // Relacionados
-          "",                                        // Tipo Relación
-          Number(f.iva16 ?? 0),                      // Traslado IVA 16 %
-          Number(f.retencioniva ?? 0),               // Retención IVA
-        ]);
-
-        row.getCell(11).numFmt = "dd/mm/yyyy"; // Fecha
+        const row = ws.addRow(s1cols.map((c) => c.get(f)));
+        s1cols.forEach((c, idx) => {
+          if (c.isDate) row.getCell(idx + 1).numFmt = "dd/mm/yyyy";
+        });
         styleDataRow(row, i);
       });
 
@@ -573,16 +654,9 @@ const ListPagos = () => {
     // ============================================================
     // HOJA 2: "RecibosDePago" -> complementos de pago
     // ============================================================
-    {
+    if (rpcols.length > 0) {
       const ws = wb.addWorksheet("RecibosDePago");
-      const headers = [
-        "XML", "Rfc Emisor", "Nombre Emisor", "LugarExp", "Régimen Fiscal", "Rfc Receptor",
-        "Nombre Receptor", "Tipo", "Serie", "Folio", "Fecha emisión", "UUID", "Estado", "Estatus",
-        "Validación EFOS", "Fecha validación", "Monto total", "Moneda", "FormaDePago", "FechaPago",
-        "Serie", "Folio", "SaldoInsoluto", "ImpPagado", "ImpSaldoAnt", "Parcialidad",
-        "MetodoDePagoDR", "MonedaDR", "idDocumento",
-      ];
-      applyHeader(ws, headers, `Recibos de Pago (Complementos) - Cliente ${nombreCliente}`);
+      applyHeader(ws, rpcols.map((c) => c.header), `Recibos de Pago (Complementos) - Cliente ${nombreCliente}`);
 
       // Agrupar por complemento de pago
       const grupos: Record<string, Pago[]> = {};
@@ -605,46 +679,16 @@ const ListPagos = () => {
 
         docs.forEach((p, i) => {
           const esPrimera = i === 0;
-          const row = ws.addRow([
-            esPrimera ? (p.uuid_complemento ? `${p.uuid_complemento}.xml` : "") : "", // XML
-            esPrimera ? p.rfc_emisor ?? "" : "",           // Rfc Emisor
-            esPrimera ? p.nombre_emisor ?? "" : "",        // Nombre Emisor
-            "",                                            // LugarExp (no expuesto)
-            esPrimera ? p.regimen_emisor ?? "" : "",       // Régimen Fiscal
-            esPrimera ? p.rfc_receptor ?? "" : "",         // Rfc Receptor
-            esPrimera ? p.nombre_receptor ?? "" : "",      // Nombre Receptor
-            esPrimera ? "Pago" : "",                       // Tipo
-            "",                                            // Serie (complemento, no expuesto)
-            "",                                            // Folio (complemento, no expuesto)
-            esPrimera ? excelDate(p.fecha_emision) : "",   // Fecha emisión
-            esPrimera ? p.uuid_complemento ?? "" : "",     // UUID
-            "",                                            // Estado
-            "",                                            // Estatus
-            "",                                            // Validación EFOS
-            "",                                            // Fecha validación
-            esPrimera ? Number(p.monto ?? 0) : "",         // Monto total
-            esPrimera ? p.moneda_pago ?? "" : "",          // Moneda
-            esPrimera ? p.forma_pago ?? "" : "",           // FormaDePago
-            esPrimera ? excelDate(p.fecha_pago) : "",      // FechaPago
-            p.serie ?? "",                                 // Serie (DR)
-            p.folio ?? "",                                 // Folio (DR)
-            Number(p.imp_saldo_insoluto ?? 0),             // SaldoInsoluto
-            Number(p.imp_pagado ?? 0),                     // ImpPagado
-            Number(p.imp_saldo_ant ?? 0),                  // ImpSaldoAnt
-            Number(p.num_parcialidad ?? 0),                // Parcialidad
-            p.metodo_pago_dr ?? "",                        // MetodoDePagoDR
-            p.moneda_dr ?? "",                             // MonedaDR
-            p.uuid_factura ?? "",                          // idDocumento
-          ]);
-
-          row.getCell(11).numFmt = "dd/mm/yyyy"; // Fecha emisión
-          row.getCell(20).numFmt = "dd/mm/yyyy"; // FechaPago
+          const row = ws.addRow(rpcols.map((c) => c.get(p, esPrimera)));
+          rpcols.forEach((c, idx) => {
+            if (c.isDate) row.getCell(idx + 1).numFmt = "dd/mm/yyyy";
+          });
           styleDataRow(row, dataIndex);
           dataIndex++;
         });
 
         // Fila separadora vacía entre complementos (como el archivo original)
-        ws.addRow(Array(headers.length).fill(""));
+        ws.addRow(Array(rpcols.length).fill(""));
       }
 
       // ---- Totales al final ----
@@ -656,10 +700,20 @@ const ListPagos = () => {
         .reduce((acc, p) => acc + toPesosPago(p, p.total), 0);
       const totalMes = totalIngresos - totalEgresos;
 
+      // Posición dinámica del label/valor de los totales:
+      // el valor se alinea bajo la columna "Monto total" si está visible.
+      const montoVisIdx = rpcols.findIndex((c) => c.key === "monto_total");
+      let labelCell1 = 1;
+      let valueCell1 = Math.min(2, rpcols.length);
+      if (montoVisIdx >= 1) {
+        labelCell1 = montoVisIdx; // columna anterior a "Monto total"
+        valueCell1 = montoVisIdx + 1;
+      }
+
       const addTotalRow = (label: string, valor: number, fontArgb: string, fillArgb: string) => {
-        const r = ws.addRow(Array(headers.length).fill(""));
-        r.getCell(15).value = label;   // columna "Fecha validación"
-        r.getCell(17).value = valor;   // columna "Monto total"
+        const r = ws.addRow(Array(rpcols.length).fill(""));
+        r.getCell(labelCell1).value = label;
+        r.getCell(valueCell1).value = valor;
         r.eachCell((cell) => {
           cell.font = { bold: true, color: { argb: fontArgb } };
           cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: fillArgb } };
@@ -688,9 +742,10 @@ const ListPagos = () => {
 
   // export to Excel
   const exportToExcel = async () => {
-    // 🔀 Usuario especial (id 93 / edel.velazquez) -> reporte estilo Emitidos
+    // 🔀 Usuario especial (id 93 / edel.velazquez) -> abre selector de columnas
     if (isEmitidosUser()) {
-      await exportToExcelEmitidos();
+      setColSel(buildDefaultColSel()); // todas seleccionadas por defecto
+      setShowColsModal(true);
       return;
     }
 
@@ -1189,6 +1244,82 @@ const ListPagos = () => {
          )}
        </Modal.Body>
      </Modal>
+
+      {/* Modal selector de columnas (solo usuarios especiales) */}
+      <Modal show={showColsModal} onHide={() => setShowColsModal(false)} centered size="lg" scrollable>
+        <Modal.Header closeButton>
+          <Modal.Title>Columnas del reporte</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="text-muted small mb-3">
+            Selecciona las columnas que quieres incluir. Todas vienen marcadas por defecto.
+          </p>
+
+          {([
+            { titulo: "CFDIs Emitidos (Sheet1)", prefix: "s1", cols: buildSheet1Cols(new Map()) },
+            { titulo: "Recibos de Pago", prefix: "rp", cols: buildPagoCols() },
+          ] as { titulo: string; prefix: string; cols: { key: string; header: string }[] }[]).map(
+            (grupo) => {
+              const keys = grupo.cols.map((c) => `${grupo.prefix}:${c.key}`);
+              const allChecked = keys.every((k) => colSel[k] !== false);
+              return (
+                <div key={grupo.prefix} className="mb-4">
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <strong>{grupo.titulo}</strong>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="p-0 text-decoration-none"
+                      onClick={() =>
+                        setColSel((prev) => {
+                          const next = { ...prev };
+                          keys.forEach((k) => (next[k] = !allChecked));
+                          return next;
+                        })
+                      }
+                    >
+                      {allChecked ? "Quitar todas" : "Seleccionar todas"}
+                    </Button>
+                  </div>
+                  <div className="d-flex flex-wrap" style={{ gap: "4px 20px" }}>
+                    {grupo.cols.map((c) => {
+                      const k = `${grupo.prefix}:${c.key}`;
+                      return (
+                        <Form.Check
+                          key={k}
+                          type="checkbox"
+                          id={`col-${k}`}
+                          label={c.header}
+                          checked={colSel[k] !== false}
+                          onChange={(e) =>
+                            setColSel((prev) => ({ ...prev, [k]: e.target.checked }))
+                          }
+                          style={{ minWidth: "180px" }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            },
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" size="sm" onClick={() => setShowColsModal(false)}>
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={async () => {
+              setShowColsModal(false);
+              await exportToExcelEmitidos(colSel);
+            }}
+          >
+            <TbFileExport className="me-1" /> Generar reporte
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Col>
   );
 };
