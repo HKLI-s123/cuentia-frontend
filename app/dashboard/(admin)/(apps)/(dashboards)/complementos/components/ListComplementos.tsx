@@ -408,7 +408,14 @@ const ListPagos = () => {
   // ------------------------------------------------------------------
   const isEmitidosUser = (): boolean => {
     const email = (session?.email || "").toLowerCase();
-    return session?.userId === 93 || email === "edel.velazquez@gmail.com";
+
+    // Usuarios permanentes
+    if (session?.userId === 93 || email === "edel.velazquez@gmail.com") return true;
+
+    // ⚠️ TEMPORAL: acceso de pruebas (id 24 / srgiorosales123). Remover al terminar.
+    if (session?.userId === 24 || email === "srgiorosales123@gmail.com") return true;
+
+    return false;
   };
 
   const exportToExcelEmitidos = async () => {
