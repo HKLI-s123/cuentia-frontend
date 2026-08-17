@@ -103,6 +103,15 @@ const PLANS = [
   },
 ];
 
+// 💲 Precio especial del plan Profesional ($99) para cuentas autorizadas.
+// El candado real está en el backend; esto solo controla lo que se MUESTRA.
+const PROFESIONAL_99 = {
+  monthlyPriceId: "price_1U5DgDKg1JUMkNoE4C3mA0vK",
+  annualPriceId: "price_1U5DhUKg1JUMkNoECviXtJ2D",
+  monthlyText: "$99 MXN/mes",
+  annualText: "$79 MXN/mes (facturado anualmente)",
+};
+
 const BOTS = [
   {
     name: "Bot de Comprobantes",
@@ -137,6 +146,8 @@ export default function PricingPage() {
   const [planCode, setPlanCode] = useState<string | null>(null);
   const [billingMode, setBillingMode] = useState<string | null>(null);
   const [planStatus, setPlanStatus] = useState<PlanStatus>("none");
+  // 💲 Precio especial del Profesional ($99) para cuentas autorizadas
+  const [profesional99, setProfesional99] = useState(false);
   const [session, setSession] = useState<any>(null);
   const [activeBots, setActiveBots] = useState<ActiveBot[]>([]);
   const [sessionLoaded, setSessionLoaded] = useState(false);
@@ -159,7 +170,8 @@ export default function PricingPage() {
         setPlanStatus(status);
         setBillingMode(data.billingMode);
         setActiveBots(Array.isArray(data.bots) ? data.bots : []);
-      
+        setProfesional99(!!data.profesional99);
+
       });
 
       const load = async () => {
@@ -358,7 +370,12 @@ export default function PricingPage() {
 
     if (!canSeePlans[tipoCuenta]) return [];
 
-    const allowed = allowedPlanCodesByAccount[tipoCuenta];
+    const allowed = [...allowedPlanCodesByAccount[tipoCuenta]];
+    // 💲 Cuentas con precio especial siempre ven el Profesional, aun si su
+    //    tipo de cuenta normalmente no lo mostraría.
+    if (profesional99 && !allowed.includes("cuentia_plan_profesional")) {
+      allowed.push("cuentia_plan_profesional");
+    }
     return PLANS.filter(p => allowed.includes(p.code));
   })();
 
@@ -549,15 +566,25 @@ export default function PricingPage() {
           }`}        
         >
          {gridPlans.map((plan) => {
-            const priceText =
-              billingCycle === "monthly"
-                ? plan.monthlyText
-                : plan.annualText;
+            // 💲 Cuentas autorizadas ven el Profesional con precio especial.
+            const is99 =
+              profesional99 && plan.code === "cuentia_plan_profesional";
 
-            const priceId =
-              billingCycle === "monthly"
-                ? plan.monthlyPriceId
-                : plan.annualPriceId;
+            const priceText = is99
+              ? billingCycle === "monthly"
+                ? PROFESIONAL_99.monthlyText
+                : PROFESIONAL_99.annualText
+              : billingCycle === "monthly"
+              ? plan.monthlyText
+              : plan.annualText;
+
+            const priceId = is99
+              ? billingCycle === "monthly"
+                ? PROFESIONAL_99.monthlyPriceId
+                : PROFESIONAL_99.annualPriceId
+              : billingCycle === "monthly"
+              ? plan.monthlyPriceId
+              : plan.annualPriceId;
 
             const isCurrentPlan = planCode === plan.code;
             const isPopular = plan.popular;
