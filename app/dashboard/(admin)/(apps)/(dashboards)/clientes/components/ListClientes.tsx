@@ -200,7 +200,11 @@ const handleSave = async (data: ClienteFormData) => {
     setEditCliente(null);
   } catch (error) {
     console.error("Error al guardar cliente:", error);
-    toast.error("No se pudo guardar el cliente, ya existe o se alcanzo el limite del plan actual");
+    const message =
+      error instanceof Error && error.message
+        ? error.message
+        : "No se pudo guardar el cliente. Intenta de nuevo.";
+    toast.error(message);
   }
 };
 

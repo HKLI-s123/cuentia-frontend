@@ -52,6 +52,16 @@ const UserProfile = () => {
                     <Link href="#" className="link-reset">
                         <span className="sidenav-user-name fw-bold">{session?.nombre ?? "Cargando..."}</span>
                     </Link>
+                    {session?.customEnterprise && (
+                        <a
+                            href="/plans"
+                            title="Plan Empresarial activo"
+                            className="d-inline-block mt-1 px-2 py-0.5 rounded-full text-xs fw-semibold"
+                            style={{ background: "#d1fae5", color: "#047857", fontSize: "0.7rem" }}
+                        >
+                            🏢 Plan Empresarial · Activo
+                        </a>
+                    )}
                 </div>
                 <Dropdown>
                     <DropdownToggle as={'a'} role="button" aria-label="profile dropdown"

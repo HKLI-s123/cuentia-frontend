@@ -212,6 +212,77 @@ const Page = () => {
 
       <PageBreadcrumb title="Dashboard" />
 
+      {/* -------------------------------------------------- */}
+      {/* 🏢 Panel Corporativo — exclusivo Plan Empresarial   */}
+      {/* Visible solo mientras la prueba empresarial vigente */}
+      {/* -------------------------------------------------- */}
+      {session?.customEnterprise && (
+        <div
+          className="p-5 mb-4 rounded-2xl text-white shadow-sm"
+          style={{
+            background:
+              "linear-gradient(135deg, #4338ca 0%, #6d28d9 100%)",
+          }}
+        >
+          <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+              <div className="d-flex align-items-center gap-2 mb-1">
+                <span style={{ fontSize: "1.4rem" }}>🏢</span>
+                <h4 className="mb-0 fw-bold text-white">Panel Corporativo</h4>
+                <span
+                  className="px-2 py-0.5 rounded-full fw-semibold"
+                  style={{
+                    background: "rgba(255,255,255,0.2)",
+                    fontSize: "0.7rem",
+                  }}
+                >
+                  Plan Empresarial
+                </span>
+              </div>
+              <p className="mb-0" style={{ opacity: 0.9, fontSize: "0.9rem" }}>
+                Tienes activas las funciones corporativas: vista consolidada
+                multi-RFC, colaboradores ilimitados, Bot Fiscal avanzado y
+                asistente contable con IA ampliada (200 consultas/día).
+              </p>
+            </div>
+            {session?.customEnterpriseEndsAt && (
+              <div className="text-end">
+                <div style={{ fontSize: "0.75rem", opacity: 0.85 }}>
+                  Prueba empresarial activa hasta
+                </div>
+                <div className="fw-bold" style={{ fontSize: "1.05rem" }}>
+                  {new Date(session.customEnterpriseEndsAt).toLocaleDateString(
+                    "es-MX",
+                    { day: "2-digit", month: "long", year: "numeric" }
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="d-flex flex-wrap gap-3 mt-3">
+            {[
+              { label: "RFCs monitoreados", value: clientes.length },
+              { label: "Colaboradores", value: "Ilimitados" },
+              { label: "IA contable", value: "200/día" },
+            ].map((k) => (
+              <div
+                key={k.label}
+                className="px-3 py-2 rounded-xl"
+                style={{ background: "rgba(255,255,255,0.12)", minWidth: 130 }}
+              >
+                <div className="fw-bold" style={{ fontSize: "1.25rem" }}>
+                  {k.value}
+                </div>
+                <div style={{ fontSize: "0.72rem", opacity: 0.85 }}>
+                  {k.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* -------------------------------------- */}
       {/* 🆕 7) Banner si la cuenta es nueva (<24h) */}
       {/* -------------------------------------- */}
