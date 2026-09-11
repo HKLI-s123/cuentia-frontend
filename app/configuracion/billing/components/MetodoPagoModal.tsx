@@ -34,9 +34,9 @@ export default function MetodoPagoModal({
 
           {/* 📌 DATOS DE TRANSFERENCIA */}
           <div className="rounded-lg border bg-gray-50 p-4 text-sm text-gray-700 space-y-1 mb-4">
-            <p><strong>Banco:</strong> BBVA</p>
+            <p><strong>Banco:</strong> HSBC</p>
             <p><strong>Beneficiario:</strong> Sergio Rosales</p>
-            <p><strong>CLABE:</strong> 012164015504841260</p>
+            <p><strong>CLABE:</strong> 021164066227588332</p>
           
             <p className="text-xs text-gray-500 mt-2">
               Por el momento, los depósitos se reciben a nombre de una <strong>persona física</strong>.

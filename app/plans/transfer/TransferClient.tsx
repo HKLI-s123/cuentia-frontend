@@ -77,13 +77,13 @@ export default function TransferPage() {
             {/* DATOS DE LA TRANSFERENCIA */}
             <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-5 mb-6 shadow-inner">
               <p className="mb-1">
-                <b className="text-indigo-300">Banco:</b> BBVA
+                <b className="text-indigo-300">Banco:</b> HSBC
               </p>
               <p className="mb-1">
                 <b className="text-indigo-300">Beneficiario:</b> Sergio Rosales
               </p>
               <p className="mb-1">
-                <b className="text-indigo-300">CLABE:</b> 012164015504841260
+                <b className="text-indigo-300">CLABE:</b> 021164066227588332
               </p>
             
               <p className="mt-2">
