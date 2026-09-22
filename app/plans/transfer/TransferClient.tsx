@@ -20,7 +20,6 @@ export default function TransferPage() {
 
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-
   const submitTransfer = async () => {
     try {
       setLoading(true);
