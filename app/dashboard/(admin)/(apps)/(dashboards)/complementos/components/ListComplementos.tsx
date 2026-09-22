@@ -27,7 +27,7 @@ import {
   TbArrowUp,
 } from "react-icons/tb";
 import CardPagination from "@/components/cards/CardPagination";
-import { getPagos, getFacturas, getFacturasConConceptos } from "../../../../../../services/financeService"; // asegúrate de exportarlo
+import { getPagos, getFacturas, getFacturasConConceptos, getConceptosPorUuids } from "../../../../../../services/financeService"; // asegúrate de exportarlo
 import { getSessionInfo } from "@/app/services/authService";
 import { resolveSelectedRFC, setStoredRFC } from "@/app/services/selectedRfcStore";
 import { toast } from "sonner";
@@ -333,32 +333,9 @@ const ListPagos = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRFC, fechaInicio, fechaFin]);
 
-  // Conceptos de las facturas del periodo, indexados por UUID de factura.
-  // Sirven para desglosar cada documento relacionado en el preview del pago.
-  const fetchConceptos = async () => {
-    if (!selectedRFC || !fechaInicio || !fechaFin) return;
-    try {
-      const conConceptos = await getFacturasConConceptos({
-        rfc: selectedRFC,
-        startDate: fechaInicio,
-        endDate: fechaFin,
-      });
-      const map: Record<string, any[]> = {};
-      (Array.isArray(conConceptos) ? conConceptos : []).forEach((f: any) => {
-        const key = String(f.uuid ?? "").trim().toUpperCase();
-        if (key) map[key] = Array.isArray(f.conceptos) ? f.conceptos : [];
-      });
-      setConceptosMap(map);
-    } catch (error) {
-      console.error("Error al cargar conceptos de facturas:", error);
-      setConceptosMap({});
-    }
-  };
-
+  // Al cambiar de RFC/periodo, limpiamos el caché de conceptos (son por UUID).
   useEffect(() => {
-    if (!selectedRFC || !fechaInicio || !fechaFin) return;
-    fetchConceptos();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setConceptosMap({});
   }, [selectedRFC, fechaInicio, fechaFin]);
 
   // sorting
@@ -452,10 +429,33 @@ const ListPagos = () => {
     return pagos.filter((p) => normUuid(p.uuid_complemento) === target);
   };
 
-  // Abre el preview de un complemento de pago
-  const handleOpenPreview = (pago: Pago) => {
+  // Abre el preview de un complemento de pago y trae los conceptos de las
+  // facturas relacionadas por UUID (sin filtro de fecha).
+  const handleOpenPreview = async (pago: Pago) => {
     setSelectedPagoPreview(pago);
     setShowPreviewModal(true);
+
+    const docs = docsDeComplemento(pago);
+    const uuids = Array.from(
+      new Set(docs.map((d) => normUuid(d.uuid_factura)).filter(Boolean))
+    );
+    // Solo pedimos los que aún no están en el caché
+    const faltantes = uuids.filter((u) => conceptosMap[u] === undefined);
+    if (faltantes.length === 0) return;
+
+    try {
+      const nuevos = await getConceptosPorUuids(faltantes, selectedRFC);
+      // Garantizamos una entrada por UUID pedido (aunque venga sin conceptos)
+      setConceptosMap((prev) => {
+        const merged = { ...prev };
+        faltantes.forEach((u) => {
+          merged[u] = Array.isArray(nuevos?.[u]) ? nuevos[u] : [];
+        });
+        return merged;
+      });
+    } catch (error) {
+      console.error("Error al cargar conceptos por UUID:", error);
+    }
   };
 
   // ------------------------------------------------------------------

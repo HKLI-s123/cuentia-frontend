@@ -350,8 +350,7 @@ const ComplementoPreviewModal: React.FC<ComplementoPreviewModalProps> = ({
 
                         {conceptos.length === 0 ? (
                           <div className="text-muted px-1" style={{ fontSize: "0.68rem" }}>
-                            Sin conceptos disponibles (la factura puede estar fuera del
-                            periodo consultado).
+                            Sin conceptos registrados para esta factura.
                           </div>
                         ) : (
                           <Collapse in={conceptosAbiertos}>

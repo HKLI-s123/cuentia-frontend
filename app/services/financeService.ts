@@ -284,6 +284,32 @@ export const getFacturasConConceptos = async (params: { rfc?: string; startDate?
 };
 
 
+// Conceptos (con impuestos) de varias facturas por su UUID, sin filtro de fecha.
+// Devuelve un mapa { [uuidFacturaMayus]: concepto[] }.
+export const getConceptosPorUuids = async (
+  uuids: string[],
+  rfc?: string
+): Promise<Record<string, any[]>> => {
+  const lista = (uuids ?? [])
+    .map((u) => String(u ?? "").trim())
+    .filter(Boolean);
+
+  if (lista.length === 0) return {};
+
+  const url = new URL(`${API_URL}/cfdis/conceptos-por-uuids`);
+  url.searchParams.append("uuids", lista.join(","));
+  if (rfc) url.searchParams.append("rfc", rfc);
+
+  const res = await apiFetch(url.toString(), { method: "GET" });
+
+  if (!res?.ok) {
+    throw new Error(`Error al obtener conceptos por UUIDs: ${res?.statusText}`);
+  }
+
+  return res.json();
+};
+
+
 export const getPagos = async (params: { rfc?: string; startDate?: string; endDate?: string }) => {
   const url = new URL(`${API_URL}/cfdis/pagos`);
 
