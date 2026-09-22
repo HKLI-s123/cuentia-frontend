@@ -33,6 +33,7 @@ import { resolveSelectedRFC, setStoredRFC } from "@/app/services/selectedRfcStor
 import { toast } from "sonner";
 import { activateGuest, validateGuestKey } from "@/app/services/chatService";
 import { useOnboardingRedirect } from "@/hooks/useUserSessionGuard";
+import ComplementoPreviewModal from "./ComplementoPreviewModal";
 
 type Pago = {
   id: number;
@@ -112,6 +113,10 @@ const ListPagos = () => {
   const [session, setSession] = useState<any>(null);
 
   const [visibleRows, setVisibleRows] = useState<Record<number, boolean>>({});
+
+  // 🔎 Preview individual del complemento de pago (estilo comprobante)
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [selectedPagoPreview, setSelectedPagoPreview] = useState<Pago | null>(null);
 
   // Selector de columnas del reporte "Emitidos" (solo usuarios especiales)
   const [showColsModal, setShowColsModal] = useState(false);
@@ -403,6 +408,25 @@ const ListPagos = () => {
 
   // helper safe number
   const safeNum = (v: any) => (typeof v === "number" ? v : parseFloat(`${v || 0}`) || 0);
+
+  // Normaliza UUIDs para comparar (pueden variar en mayúsculas/espacios)
+  const normUuid = (v: any) => String(v ?? "").trim().toUpperCase();
+
+  // Un complemento (uuid_complemento) puede tener N filas: una por cada
+  // documento relacionado (factura pagada). Devolvemos todas las filas del
+  // mismo complemento para listarlas en el preview.
+  const docsDeComplemento = (pago: Pago | null) => {
+    if (!pago) return [];
+    const target = normUuid(pago.uuid_complemento);
+    if (!target) return [pago];
+    return pagos.filter((p) => normUuid(p.uuid_complemento) === target);
+  };
+
+  // Abre el preview de un complemento de pago
+  const handleOpenPreview = (pago: Pago) => {
+    setSelectedPagoPreview(pago);
+    setShowPreviewModal(true);
+  };
 
   // ------------------------------------------------------------------
   // Definición de columnas del reporte "Emitidos" (modelo column-driven).
@@ -1158,7 +1182,12 @@ const ListPagos = () => {
                     if (!isVisible) return null;
                 
                     return (
-                      <tr key={pago.id}>
+                      <tr
+                        key={pago.id}
+                        onClick={() => handleOpenPreview(pago)}
+                        style={{ cursor: "pointer" }}
+                        title="Ver complemento de pago"
+                      >
                         {(tipoCuenta === "empresarial" || tipoCuenta === "empleado") && <td>{pago.uuid_complemento}</td>}
                         <td>{formatFiscalDate(pago.fecha_pago)}</td>
                         <td>{pago.rfc_emisor}</td>
@@ -1166,7 +1195,7 @@ const ListPagos = () => {
                         <td><strong>${safeNum(pago.monto).toLocaleString()}</strong></td>
                         <td>{pago.moneda_pago || pago.moneda}</td>
                         <td>{pago.uuid_factura}</td>
-                        <td style={{ width: 30 }}>
+                        <td style={{ width: 30 }} onClick={(e) => e.stopPropagation()}>
                           <Dropdown>
                             <DropdownToggle
                               as="a"
@@ -1345,6 +1374,15 @@ const ListPagos = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Preview individual del complemento de pago */}
+      <ComplementoPreviewModal
+        show={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        pago={selectedPagoPreview}
+        documentos={docsDeComplemento(selectedPagoPreview)}
+        rfcActual={selectedRFC}
+      />
     </Col>
   );
 };
