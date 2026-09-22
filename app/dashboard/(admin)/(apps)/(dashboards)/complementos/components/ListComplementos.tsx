@@ -117,6 +117,8 @@ const ListPagos = () => {
   // 🔎 Preview individual del complemento de pago (estilo comprobante)
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [selectedPagoPreview, setSelectedPagoPreview] = useState<Pago | null>(null);
+  // Conceptos de las facturas del periodo, para mostrarlos en el preview
+  const [conceptosMap, setConceptosMap] = useState<Record<string, any[]>>({});
 
   // Selector de columnas del reporte "Emitidos" (solo usuarios especiales)
   const [showColsModal, setShowColsModal] = useState(false);
@@ -328,6 +330,34 @@ const ListPagos = () => {
   useEffect(() => {
     if (!selectedRFC || !fechaInicio || !fechaFin) return; // 🔒 BLOQUEO
     fetchPagos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRFC, fechaInicio, fechaFin]);
+
+  // Conceptos de las facturas del periodo, indexados por UUID de factura.
+  // Sirven para desglosar cada documento relacionado en el preview del pago.
+  const fetchConceptos = async () => {
+    if (!selectedRFC || !fechaInicio || !fechaFin) return;
+    try {
+      const conConceptos = await getFacturasConConceptos({
+        rfc: selectedRFC,
+        startDate: fechaInicio,
+        endDate: fechaFin,
+      });
+      const map: Record<string, any[]> = {};
+      (Array.isArray(conConceptos) ? conConceptos : []).forEach((f: any) => {
+        const key = String(f.uuid ?? "").trim().toUpperCase();
+        if (key) map[key] = Array.isArray(f.conceptos) ? f.conceptos : [];
+      });
+      setConceptosMap(map);
+    } catch (error) {
+      console.error("Error al cargar conceptos de facturas:", error);
+      setConceptosMap({});
+    }
+  };
+
+  useEffect(() => {
+    if (!selectedRFC || !fechaInicio || !fechaFin) return;
+    fetchConceptos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRFC, fechaInicio, fechaFin]);
 
@@ -1382,6 +1412,7 @@ const ListPagos = () => {
         pago={selectedPagoPreview}
         documentos={docsDeComplemento(selectedPagoPreview)}
         rfcActual={selectedRFC}
+        conceptosPorFactura={conceptosMap}
       />
     </Col>
   );

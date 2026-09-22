@@ -11,6 +11,7 @@ import {
   TbReceiptTax,
   TbFileInvoice,
   TbCreditCard,
+  TbListDetails,
 } from "react-icons/tb";
 
 // El preview recibe todas las filas (documentos relacionados) que comparten
@@ -21,7 +22,20 @@ interface ComplementoPreviewModalProps {
   pago: any | null;          // fila representativa del complemento
   documentos: any[];         // todas las filas con el mismo uuid_complemento
   rfcActual?: string;        // RFC seleccionado, para inferir Ingreso/Egreso
+  // Mapa uuid de factura (normalizado) -> conceptos de esa factura.
+  conceptosPorFactura?: Record<string, any[]>;
 }
+
+// Lee un campo de concepto tolerando distintas convenciones de nombre
+const cf = (c: any, ...keys: string[]) => {
+  for (const k of keys) {
+    if (c[k] !== undefined && c[k] !== null && c[k] !== "") return c[k];
+  }
+  return undefined;
+};
+
+// Normaliza UUIDs para buscar en el mapa de conceptos
+const normUuid = (v: any) => String(v ?? "").trim().toUpperCase();
 
 // 🎨 Paleta de marca Cuentia (misma que FacturaPreviewModal)
 const TEAL = "#1AB394";
@@ -48,9 +62,12 @@ const ComplementoPreviewModal: React.FC<ComplementoPreviewModalProps> = ({
   pago,
   documentos,
   rfcActual,
+  conceptosPorFactura,
 }) => {
   const [openDocs, setOpenDocs] = useState(true);
   const [openCuentas, setOpenCuentas] = useState(false);
+  // Conceptos expandidos por índice de documento relacionado
+  const [openConceptos, setOpenConceptos] = useState<Record<number, boolean>>({});
 
   if (!pago) return null;
 
@@ -260,42 +277,139 @@ const ComplementoPreviewModal: React.FC<ComplementoPreviewModalProps> = ({
                 No hay documentos relacionados con este complemento de pago.
               </div>
             ) : (
-              <div style={{ maxHeight: "360px", overflowY: "auto" }} className="pe-1">
-                {documentos.map((d, i) => (
-                  <div
-                    key={d.uuid_factura || i}
-                    className="rounded-3 p-2 mb-2"
-                    style={{ background: "#f7f8fc", border: "1px solid #e6e8ef" }}
-                  >
-                    <div className="d-flex justify-content-between align-items-start gap-2 mb-1">
-                      <span className="fw-semibold" style={{ fontSize: "0.82rem", color: DARK }}>
-                        {i + 1}. Parcialidad {d.num_parcialidad ?? "—"}
-                        {d.serie || d.folio
-                          ? ` · ${d.serie || ""}${d.folio ? `-${d.folio}` : ""}`
-                          : ""}
-                      </span>
-                      <span className="fw-bold text-nowrap" style={{ color: TEAL }}>
-                        {money(d.imp_pagado ?? d.monto)}
-                      </span>
-                    </div>
+              <div style={{ maxHeight: "420px", overflowY: "auto" }} className="pe-1">
+                {documentos.map((d, i) => {
+                  const conceptos =
+                    conceptosPorFactura?.[normUuid(d.uuid_factura)] ?? [];
+                  const conceptosAbiertos = !!openConceptos[i];
+                  return (
                     <div
-                      className="text-muted"
-                      style={{ fontSize: "0.68rem", wordBreak: "break-all" }}
+                      key={d.uuid_factura || i}
+                      className="rounded-3 p-2 mb-2"
+                      style={{ background: "#f7f8fc", border: "1px solid #e6e8ef" }}
                     >
-                      UUID factura: {d.uuid_factura || "—"}
+                      <div className="d-flex justify-content-between align-items-start gap-2 mb-1">
+                        <span className="fw-semibold" style={{ fontSize: "0.82rem", color: DARK }}>
+                          {i + 1}. Parcialidad {d.num_parcialidad ?? "—"}
+                          {d.serie || d.folio
+                            ? ` · ${d.serie || ""}${d.folio ? `-${d.folio}` : ""}`
+                            : ""}
+                        </span>
+                        <span className="fw-bold text-nowrap" style={{ color: TEAL }}>
+                          {money(d.imp_pagado ?? d.monto)}
+                        </span>
+                      </div>
+                      <div
+                        className="text-muted"
+                        style={{ fontSize: "0.68rem", wordBreak: "break-all" }}
+                      >
+                        UUID factura: {d.uuid_factura || "—"}
+                      </div>
+                      <div className="row g-1 mt-1" style={{ fontSize: "0.78rem" }}>
+                        <MiniDato label="Saldo anterior" value={money(d.imp_saldo_ant)} />
+                        <MiniDato label="Pagado" value={money(d.imp_pagado ?? d.monto)} />
+                        <MiniDato label="Saldo insoluto" value={money(d.imp_saldo_insoluto)} />
+                        <MiniDato label="Método de pago" value={d.metodo_pago_dr || "—"} />
+                        {d.moneda_dr && <MiniDato label="Moneda DR" value={d.moneda_dr} />}
+                        {d.equivalencia_dr && Number(d.equivalencia_dr) !== 1 && (
+                          <MiniDato label="Equivalencia DR" value={d.equivalencia_dr} />
+                        )}
+                      </div>
+
+                      {/* Conceptos de la factura relacionada */}
+                      <div className="mt-2 pt-2" style={{ borderTop: "1px dashed #d9dce8" }}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOpenConceptos((o) => ({ ...o, [i]: !o[i] }))
+                          }
+                          className="btn btn-sm w-100 d-flex justify-content-between align-items-center p-1"
+                          style={{ border: "none", background: "transparent" }}
+                          disabled={conceptos.length === 0}
+                        >
+                          <span
+                            className="d-flex align-items-center gap-1 fw-semibold"
+                            style={{ fontSize: "0.72rem", color: INDIGO }}
+                          >
+                            <TbListDetails size={14} /> Conceptos e impuestos
+                            <Badge bg="light" text="dark" style={{ border: "1px solid #e6e8ef" }}>
+                              {conceptos.length}
+                            </Badge>
+                          </span>
+                          {conceptos.length > 0 && (
+                            <TbChevronDown
+                              size={14}
+                              style={{
+                                transition: "transform 0.2s",
+                                transform: conceptosAbiertos ? "rotate(180deg)" : "rotate(0deg)",
+                                color: "#8a8fa3",
+                              }}
+                            />
+                          )}
+                        </button>
+
+                        {conceptos.length === 0 ? (
+                          <div className="text-muted px-1" style={{ fontSize: "0.68rem" }}>
+                            Sin conceptos disponibles (la factura puede estar fuera del
+                            periodo consultado).
+                          </div>
+                        ) : (
+                          <Collapse in={conceptosAbiertos}>
+                            <div>
+                              <div className="pt-1">
+                                {conceptos.map((c, ci) => (
+                                  <div
+                                    key={ci}
+                                    className="rounded-2 p-2 mb-1"
+                                    style={{ background: "#fff", border: "1px solid #e6e8ef" }}
+                                  >
+                                    <div className="d-flex justify-content-between align-items-start gap-2">
+                                      <span className="fw-semibold" style={{ fontSize: "0.76rem", color: DARK }}>
+                                        {ci + 1}. {cf(c, "descripcion") || "—"}
+                                      </span>
+                                      <span className="fw-bold text-nowrap" style={{ color: TEAL, fontSize: "0.76rem" }}>
+                                        {money(cf(c, "importe"))}
+                                      </span>
+                                    </div>
+                                    {(cf(c, "clave_prod_serv", "claveprodserv") ||
+                                      cf(c, "no_identificacion", "noidentificacion")) && (
+                                      <div className="text-muted" style={{ fontSize: "0.64rem" }}>
+                                        {cf(c, "clave_prod_serv", "claveprodserv") &&
+                                          `Clave: ${cf(c, "clave_prod_serv", "claveprodserv")}`}
+                                        {cf(c, "no_identificacion", "noidentificacion") &&
+                                          ` · No. Ident.: ${cf(c, "no_identificacion", "noidentificacion")}`}
+                                      </div>
+                                    )}
+                                    <div className="row g-1 mt-1" style={{ fontSize: "0.72rem" }}>
+                                      <MiniDato label="Cantidad" value={cf(c, "cantidad") ?? "—"} />
+                                      <MiniDato
+                                        label="Unidad"
+                                        value={cf(c, "unidad", "clave_unidad", "claveunidad") ?? "—"}
+                                      />
+                                      <MiniDato
+                                        label="Valor unitario"
+                                        value={money(cf(c, "valor_unitario", "valorunitario"))}
+                                      />
+                                      <MiniDato label="Descuento" value={money(cf(c, "descuento"))} />
+                                      <MiniDato label="IVA 16%" value={money(cf(c, "iva16"))} />
+                                      <MiniDato label="IVA 8%" value={money(cf(c, "iva8"))} />
+                                      <MiniDato label="IEPS tras." value={money(cf(c, "ieps_trasladado"))} />
+                                      <MiniDato label="Ret. IVA" value={money(cf(c, "retencion_iva"))} />
+                                      <MiniDato label="Ret. ISR" value={money(cf(c, "retencion_isr"))} />
+                                      <MiniDato label="Ret. IEPS" value={money(cf(c, "retencion_ieps"))} />
+                                      <MiniDato label="Total trasladado" value={money(cf(c, "total_trasladado"))} />
+                                      <MiniDato label="Total retenido" value={money(cf(c, "total_retenido"))} />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </Collapse>
+                        )}
+                      </div>
                     </div>
-                    <div className="row g-1 mt-1" style={{ fontSize: "0.78rem" }}>
-                      <MiniDato label="Saldo anterior" value={money(d.imp_saldo_ant)} />
-                      <MiniDato label="Pagado" value={money(d.imp_pagado ?? d.monto)} />
-                      <MiniDato label="Saldo insoluto" value={money(d.imp_saldo_insoluto)} />
-                      <MiniDato label="Método de pago" value={d.metodo_pago_dr || "—"} />
-                      {d.moneda_dr && <MiniDato label="Moneda DR" value={d.moneda_dr} />}
-                      {d.equivalencia_dr && Number(d.equivalencia_dr) !== 1 && (
-                        <MiniDato label="Equivalencia DR" value={d.equivalencia_dr} />
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </SeccionColapsable>
