@@ -12,8 +12,11 @@ import {
   TbCash,
   TbFileMinus,
   TbListDetails,
+  TbFileTypePdf,
 } from "react-icons/tb";
+import { toast } from "sonner";
 import { Factura } from "../../../../../../types/factura";
+import { descargarCfdiPdf, facturaFromDb } from "@/utils/cfdi";
 
 interface FacturaPreviewModalProps {
   show: boolean;
@@ -22,6 +25,7 @@ interface FacturaPreviewModalProps {
   conceptos: any[];
   pagos: any[];
   notas: any[];
+  rfcActual?: string; // RFC seleccionado, para pedir el XML de la factura
 }
 
 // Lee un campo de concepto tolerando distintas convenciones de nombre
@@ -53,12 +57,36 @@ const FacturaPreviewModal: React.FC<FacturaPreviewModalProps> = ({
   conceptos,
   pagos,
   notas,
+  rfcActual,
 }) => {
   const [openConceptos, setOpenConceptos] = useState(true);
   const [openPagos, setOpenPagos] = useState(true);
   const [openNotas, setOpenNotas] = useState(true);
+  const [descargandoPdf, setDescargandoPdf] = useState(false);
 
   if (!factura) return null;
+
+  // PDF estilo SAT: usa el XML original; si no está, los datos registrados
+  const handleDescargarPdf = async () => {
+    setDescargandoPdf(true);
+    try {
+      const { fuente } = await descargarCfdiPdf({
+        uuid: factura.uuid,
+        rfc: rfcActual,
+        fallback: () => facturaFromDb(factura, conceptos),
+      });
+      if (fuente === "db") {
+        toast.info(
+          "No encontramos el XML original de esta factura; el PDF se generó con los datos registrados (sin sellos digitales)."
+        );
+      }
+    } catch (err) {
+      console.error("Error al generar el PDF de la factura:", err);
+      toast.error("No se pudo generar el PDF de la factura.");
+    } finally {
+      setDescargandoPdf(false);
+    }
+  };
 
   // Nómina (N) y complementos de pago (P) no tienen complementos de pago
   // ni notas de crédito asociadas.
@@ -417,6 +445,15 @@ const FacturaPreviewModal: React.FC<FacturaPreviewModalProps> = ({
       </Modal.Body>
 
       <Modal.Footer className="border-0">
+        <Button
+          variant="primary"
+          onClick={handleDescargarPdf}
+          disabled={descargandoPdf}
+          className="d-inline-flex align-items-center gap-1"
+        >
+          <TbFileTypePdf size={18} />
+          {descargandoPdf ? "Generando PDF..." : "Descargar PDF"}
+        </Button>
         <Button variant="secondary" onClick={onClose}>
           Cerrar
         </Button>

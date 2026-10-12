@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle, Col, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Table, Modal, Form } from 'react-bootstrap'
-import { TbCircleFilled, TbDotsVertical, TbFileExport, TbArrowDown, TbArrowUp } from 'react-icons/tb'
+import { TbCircleFilled, TbDotsVertical, TbFileExport, TbArrowDown, TbArrowUp, TbFileSpreadsheet, TbFileTypePdf } from 'react-icons/tb'
+import { generarReporteFacturasPdf, generarReporteConceptosPdf } from "@/utils/reportes/reporteFacturasPdf";
 import CardPagination from '@/components/cards/CardPagination'
 import { getFacturas, getFacturasConConceptos, getPagos, getNotasCredito } from "../../../../../../services/financeService"  // 🔹 nuevo servicio
 import { analizarFacturaIA } from "../../../../../../services/iaService" // 👈 nuevo servicio IA
@@ -30,6 +31,7 @@ const ListFacturas = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showExportModal, setShowExportModal] = useState(false);
   const [tipoExport, setTipoExport] = useState<"TODO" | "PUE" | "PPD" | "CONCEPTOS">("TODO");
+  const [formatoExport, setFormatoExport] = useState<"EXCEL" | "PDF">("EXCEL");
   const [loadingFlujo, setLoadingFlujo] = useState(false);
   const [loadingConceptos, setLoadingConceptos] = useState(false);
   const [tipoCuenta, setTipoCuenta] = useState<"individual" | "empresarial" | "invitado" | "empleado" | null>(null);
@@ -407,6 +409,62 @@ const ListFacturas = () => {
     }
   
     exportToExcel(facturasFiltradas);
+  };
+
+  const nombreClienteSeleccionado = () =>
+    clientes.find((c) => c.rfc === selectedRFC)?.nombre || selectedRFC;
+
+  // 📄 Reporte detallado en PDF (mismo contenido que el Excel)
+  const exportReportePdf = (tipo: "TODO" | "PUE" | "PPD") => {
+    const data =
+      tipo === "TODO" ? facturas : facturas.filter((f) => f.metodopago === tipo);
+    if (data.length === 0) {
+      toast.info(`No hay facturas ${tipo === "TODO" ? "" : tipo + " "}en el periodo seleccionado.`);
+      return;
+    }
+    try {
+      const doc = generarReporteFacturasPdf({
+        facturas: data,
+        rfc: selectedRFC,
+        nombreCliente: nombreClienteSeleccionado(),
+        fechaInicio,
+        fechaFin,
+        tipo,
+      });
+      doc.save(`Reporte_Facturas_${selectedRFC}_${fechaInicio}_${fechaFin}.pdf`);
+    } catch (err) {
+      console.error(err);
+      toast.error("No se pudo generar el reporte en PDF.");
+    }
+  };
+
+  const exportConceptosPdf = async () => {
+    if (!selectedRFC || !fechaInicio || !fechaFin) return;
+    setLoadingConceptos(true);
+    try {
+      const facturasConConceptos = await getFacturasConConceptos({
+        rfc: selectedRFC,
+        startDate: fechaInicio,
+        endDate: fechaFin,
+      });
+      if (!Array.isArray(facturasConConceptos) || facturasConConceptos.length === 0) {
+        toast.info("No hay conceptos en el periodo seleccionado.");
+        return;
+      }
+      const doc = generarReporteConceptosPdf({
+        facturasConConceptos,
+        rfc: selectedRFC,
+        nombreCliente: nombreClienteSeleccionado(),
+        fechaInicio,
+        fechaFin,
+      });
+      doc.save(`Conceptos_${selectedRFC}_${fechaInicio}_${fechaFin}.pdf`);
+    } catch (err) {
+      console.error(err);
+      toast.error("No se pudo generar el reporte de conceptos en PDF.");
+    } finally {
+      setLoadingConceptos(false);
+    }
   };
 
   const exportarFlujoEfectivo = async () => {
@@ -1746,10 +1804,28 @@ const ListFacturas = () => {
           <Modal.Title>Seleccionar tipo de reporte</Modal.Title>
         </Modal.Header>
         <Modal.Body className="text-center">
+          <p className="text-muted mb-2">Formato del archivo</p>
+          <div className="d-flex gap-2 justify-content-center mb-3">
+            <Button
+              variant={formatoExport === "EXCEL" ? "success" : "outline-success"}
+              onClick={() => setFormatoExport("EXCEL")}
+              className="d-inline-flex align-items-center gap-1 flex-fill"
+            >
+              <TbFileSpreadsheet size={18} /> Excel
+            </Button>
+            <Button
+              variant={formatoExport === "PDF" ? "danger" : "outline-danger"}
+              onClick={() => setFormatoExport("PDF")}
+              className="d-inline-flex align-items-center gap-1 flex-fill"
+            >
+              <TbFileTypePdf size={18} /> PDF
+            </Button>
+          </div>
+
           <p className="text-muted mb-3">
-            Elige qué tipo de facturas deseas incluir en el archivo Excel.
+            Elige qué tipo de facturas deseas incluir en el archivo {formatoExport === "PDF" ? "PDF" : "Excel"}.
           </p>
-      
+
           <div className="d-grid gap-2">
             <Button
               variant={tipoExport === "PUE" ? "success" : "outline-success"}
@@ -1778,8 +1854,9 @@ const ListFacturas = () => {
           </div>
           {tipoExport === "CONCEPTOS" && (
             <p className="text-muted small mt-3 mb-0">
-              Genera un Excel con cada factura del periodo y sus conceptos relacionados,
-              y una segunda hoja con los conceptos agrupados.
+              {formatoExport === "PDF"
+                ? "Genera un PDF con cada factura del periodo y sus conceptos relacionados, y una sección con los conceptos agrupados."
+                : "Genera un Excel con cada factura del periodo y sus conceptos relacionados, y una segunda hoja con los conceptos agrupados."}
             </p>
           )}
         </Modal.Body>
@@ -1791,7 +1868,10 @@ const ListFacturas = () => {
             variant="primary"
             disabled={loadingConceptos}
             onClick={() => {
-              if (tipoExport === "CONCEPTOS") {
+              if (formatoExport === "PDF") {
+                if (tipoExport === "CONCEPTOS") exportConceptosPdf();
+                else exportReportePdf(tipoExport);
+              } else if (tipoExport === "CONCEPTOS") {
                 exportConceptosFacturas();
               } else {
                 handleExport(tipoExport);
@@ -1816,6 +1896,7 @@ const ListFacturas = () => {
         conceptos={conceptosDeFactura(selectedFacturaPreview)}
         pagos={pagosDeFactura(selectedFacturaPreview)}
         notas={notasDeFactura(selectedFacturaPreview)}
+        rfcActual={selectedRFC}
       />
     </Col>
   )

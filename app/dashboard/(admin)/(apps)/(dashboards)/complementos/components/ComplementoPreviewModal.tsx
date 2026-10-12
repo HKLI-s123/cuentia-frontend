@@ -12,7 +12,10 @@ import {
   TbFileInvoice,
   TbCreditCard,
   TbListDetails,
+  TbFileTypePdf,
 } from "react-icons/tb";
+import { toast } from "sonner";
+import { descargarCfdiPdf, complementoFromDb } from "@/utils/cfdi";
 
 // El preview recibe todas las filas (documentos relacionados) que comparten
 // el mismo uuid_complemento. La primera fila sirve de "cabecera" del pago.
@@ -68,8 +71,31 @@ const ComplementoPreviewModal: React.FC<ComplementoPreviewModalProps> = ({
   const [openCuentas, setOpenCuentas] = useState(false);
   // Conceptos expandidos por índice de documento relacionado
   const [openConceptos, setOpenConceptos] = useState<Record<number, boolean>>({});
+  const [descargandoPdf, setDescargandoPdf] = useState(false);
 
   if (!pago) return null;
+
+  // PDF estilo SAT del complemento: usa el XML original; si no está, los datos registrados
+  const handleDescargarPdf = async () => {
+    setDescargandoPdf(true);
+    try {
+      const { fuente } = await descargarCfdiPdf({
+        uuid: pago.uuid_complemento,
+        rfc: rfcActual,
+        fallback: () => complementoFromDb(pago, documentos),
+      });
+      if (fuente === "db") {
+        toast.info(
+          "No encontramos el XML original de este complemento; el PDF se generó con los datos registrados (sin sellos digitales)."
+        );
+      }
+    } catch (err) {
+      console.error("Error al generar el PDF del complemento:", err);
+      toast.error("No se pudo generar el PDF del complemento de pago.");
+    } finally {
+      setDescargandoPdf(false);
+    }
+  };
 
   // Ingreso: el RFC actual EMITE el complemento (recibió el pago).
   // Egreso: el RFC actual lo RECIBE (realizó el pago).
@@ -467,6 +493,15 @@ const ComplementoPreviewModal: React.FC<ComplementoPreviewModalProps> = ({
       </Modal.Body>
 
       <Modal.Footer className="border-0">
+        <Button
+          variant="primary"
+          onClick={handleDescargarPdf}
+          disabled={descargandoPdf || !pago.uuid_complemento}
+          className="d-inline-flex align-items-center gap-1"
+        >
+          <TbFileTypePdf size={18} />
+          {descargandoPdf ? "Generando PDF..." : "Descargar PDF"}
+        </Button>
         <Button variant="secondary" onClick={onClose}>
           Cerrar
         </Button>

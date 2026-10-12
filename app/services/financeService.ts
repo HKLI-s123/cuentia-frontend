@@ -284,6 +284,24 @@ export const getFacturasConConceptos = async (params: { rfc?: string; startDate?
 };
 
 
+// XML original de un CFDI (factura o complemento de pago) para generar su PDF
+// estilo SAT. Devuelve null si el backend no tiene el XML de ese UUID.
+export const getCfdiXml = async (uuid: string, rfc?: string): Promise<string | null> => {
+  const url = new URL(`${API_URL}/cfdis/xml`);
+  url.searchParams.append("uuid", uuid);
+  if (rfc) url.searchParams.append("rfc", rfc);
+
+  const res = await apiFetch(url.toString(), { method: "GET" });
+
+  if (res?.status === 404) return null;
+  if (!res?.ok) {
+    throw new Error(`Error al obtener el XML del CFDI: ${res?.statusText}`);
+  }
+
+  return res.text();
+};
+
+
 // Conceptos (con impuestos) de varias facturas por su UUID, sin filtro de fecha.
 // Devuelve un mapa { [uuidFacturaMayus]: concepto[] }.
 export const getConceptosPorUuids = async (
