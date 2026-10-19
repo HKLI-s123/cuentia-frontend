@@ -302,6 +302,33 @@ export const getCfdiXml = async (uuid: string, rfc?: string): Promise<string | n
 };
 
 
+// Máximo de XML por ZIP que acepta el backend (POST /cfdis/xml/zip)
+export const MAX_XML_POR_ZIP = 2000;
+
+// ZIP con los XML originales de una o varias facturas. Devuelve null si el
+// backend no encontró ninguno; `faltantes` son los que no encontró (van
+// listados en NO_ENCONTRADOS.txt dentro del ZIP).
+export const exportarXmlsZip = async (
+  uuids: string[],
+  rfc?: string
+): Promise<{ blob: Blob; faltantes: number } | null> => {
+  const res = await apiFetch(`${API_URL}/cfdis/xml/zip`, {
+    method: "POST",
+    body: JSON.stringify({ uuids, rfc }),
+  });
+
+  if (res?.status === 404) return null;
+  if (!res?.ok) {
+    throw new Error(`Error al exportar los XML: ${res?.statusText}`);
+  }
+
+  return {
+    blob: await res.blob(),
+    faltantes: Number(res.headers.get("X-Xml-Faltantes")) || 0,
+  };
+};
+
+
 // Conceptos (con impuestos) de varias facturas por su UUID, sin filtro de fecha.
 // Devuelve un mapa { [uuidFacturaMayus]: concepto[] }.
 export const getConceptosPorUuids = async (

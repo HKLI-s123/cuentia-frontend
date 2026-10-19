@@ -4,8 +4,9 @@ import { useState, useEffect } from "react"
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle, Col, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Table, Modal, Form } from 'react-bootstrap'
-import { TbCircleFilled, TbDotsVertical, TbFileExport, TbArrowDown, TbArrowUp, TbFileSpreadsheet, TbFileTypePdf } from 'react-icons/tb'
+import { TbCircleFilled, TbDotsVertical, TbFileExport, TbArrowDown, TbArrowUp, TbFileSpreadsheet, TbFileTypePdf, TbFileZip } from 'react-icons/tb'
 import { generarReporteFacturasPdf, generarReporteConceptosPdf } from "@/utils/reportes/reporteFacturasPdf";
+import { descargarXmlsZip } from "@/utils/cfdi";
 import CardPagination from '@/components/cards/CardPagination'
 import { getFacturas, getFacturasConConceptos, getPagos, getNotasCredito } from "../../../../../../services/financeService"  // 🔹 nuevo servicio
 import { analizarFacturaIA } from "../../../../../../services/iaService" // 👈 nuevo servicio IA
@@ -52,6 +53,10 @@ const ListFacturas = () => {
   const [pagosRel, setPagosRel] = useState<any[]>([]);
   const [notasRel, setNotasRel] = useState<any[]>([]);
   const [conceptosMap, setConceptosMap] = useState<Record<string, any[]>>({});
+
+  // Exportar XML: selección por UUID (los ids de fila cambian al recargar)
+  const [selectedUuids, setSelectedUuids] = useState<Set<string>>(new Set());
+  const [exportandoXml, setExportandoXml] = useState(false);
 
   const [sortConfig, setSortConfig] = useState<{ key: keyof Factura, direction: "asc" | "desc" } | null>(null)
 
@@ -244,9 +249,11 @@ const ListFacturas = () => {
       });
 
       setFacturas(data);
+      setSelectedUuids(new Set());
     } catch (error) {
       console.error("Error al cargar facturas:", error);
       setFacturas([]);
+      setSelectedUuids(new Set());
     }
   };
 
@@ -380,6 +387,60 @@ const ListFacturas = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedFacturas = filteredFacturas.slice(startIndex, endIndex);
+
+  // ☑️ La casilla del encabezado selecciona todas las facturas del filtro
+  // actual (todas las páginas), excepto las ocultas
+  const seleccionables = filteredFacturas.filter((f) => f.uuid && (visibleRows[f.id] ?? true));
+  const todasSeleccionadas =
+    seleccionables.length > 0 && seleccionables.every((f) => selectedUuids.has(f.uuid));
+  const algunaSeleccionada = seleccionables.some((f) => selectedUuids.has(f.uuid));
+
+  const toggleSeleccion = (uuid: string) => {
+    setSelectedUuids((prev) => {
+      const next = new Set(prev);
+      if (next.has(uuid)) next.delete(uuid);
+      else next.add(uuid);
+      return next;
+    });
+  };
+
+  const toggleSeleccionTodas = () => {
+    setSelectedUuids((prev) => {
+      const next = new Set(prev);
+      seleccionables.forEach((f) => (todasSeleccionadas ? next.delete(f.uuid) : next.add(f.uuid)));
+      return next;
+    });
+  };
+
+  // 🗜️ ZIP con los XML originales de las facturas seleccionadas
+  const handleExportarXml = async () => {
+    if (selectedUuids.size === 0) {
+      toast.info("Selecciona con las casillas las facturas cuyo XML quieres exportar.");
+      return;
+    }
+    setExportandoXml(true);
+    try {
+      const { exportados, faltantes } = await descargarXmlsZip({
+        uuids: Array.from(selectedUuids),
+        rfc: selectedRFC,
+        nombre: `XML_${selectedRFC}_${fechaInicio}_${fechaFin}`,
+      });
+      if (exportados === 0) {
+        toast.error("No encontramos los XML de las facturas seleccionadas.");
+      } else if (faltantes > 0) {
+        toast.warning(
+          `Se exportaron ${exportados} XML. No encontramos ${faltantes}; sus UUID vienen en NO_ENCONTRADOS.txt dentro del ZIP.`
+        );
+      } else {
+        toast.success(`Se exportaron ${exportados} XML.`);
+      }
+    } catch (err) {
+      console.error("Error al exportar XML:", err);
+      toast.error("No se pudieron exportar los XML.");
+    } finally {
+      setExportandoXml(false);
+    }
+  };
 
   const requestSort = (key: keyof Factura) => {
     let direction: "asc" | "desc" = "asc";
@@ -1615,6 +1676,18 @@ const ListFacturas = () => {
               <TbFileExport className="me-1" />
               {loadingFlujo ? "Generando..." : "Flujo de efectivo"}
             </Button>
+            <Button
+              variant="outline-primary"
+              size="sm"
+              disabled={facturas.length === 0 || exportandoXml}
+              className="text-nowrap mb-1 mb-md-0"
+              onClick={handleExportarXml}
+            >
+              <TbFileZip className="me-1" />
+              {exportandoXml
+                ? "Exportando..."
+                : `Exportar XML${selectedUuids.size > 0 ? ` (${selectedUuids.size})` : ""}`}
+            </Button>
             {(tipoCuenta === "empresarial" || tipoCuenta === "empleado") && (
               <Button
                 variant="secondary"
@@ -1630,11 +1703,41 @@ const ListFacturas = () => {
 
         <CardBody>
           {filteredFacturas.length > 0 ? (
+            <>
+            {selectedUuids.size > 0 && (
+              <div className="d-flex align-items-center gap-2 mb-2 small text-muted">
+                <span>
+                  {selectedUuids.size}{" "}
+                  {selectedUuids.size === 1 ? "factura seleccionada" : "facturas seleccionadas"}
+                </span>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="p-0"
+                  onClick={() => setSelectedUuids(new Set())}
+                >
+                  Limpiar selección
+                </Button>
+              </div>
+            )}
             <div className="table-responsive">
               <Table className="table-centered table-custom table-sm table-nowrap table-hover mb-0">
                 <thead>
                   <tr>
-                    {(tipoCuenta === "empresarial" || tipoCuenta === "empleado") && 
+                    <th style={{ width: 30 }}>
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        aria-label="Seleccionar todas las facturas"
+                        title="Seleccionar todas las facturas"
+                        checked={todasSeleccionadas}
+                        ref={(el) => {
+                          if (el) el.indeterminate = algunaSeleccionada && !todasSeleccionadas;
+                        }}
+                        onChange={toggleSeleccionTodas}
+                      />
+                    </th>
+                    {(tipoCuenta === "empresarial" || tipoCuenta === "empleado") &&
                          <th>
                          {/*
                            El header se adapta al tipo de movimiento que se está mostrando.
@@ -1678,6 +1781,15 @@ const ListFacturas = () => {
                         style={{ cursor: "pointer" }}
                         title="Ver comprobante"
                       >
+                        <td style={{ width: 30 }} onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            className="form-check-input"
+                            aria-label={`Seleccionar factura ${factura.uuid}`}
+                            checked={selectedUuids.has(factura.uuid)}
+                            onChange={() => toggleSeleccion(factura.uuid)}
+                          />
+                        </td>
                         {(tipoCuenta === "empresarial" || tipoCuenta === "empleado") && <td>{factura.cliente?.nombre}</td>}
                         <td>{factura?.rfc_emisor}</td>
                         <td>{factura?.rfc_receptor}</td>
@@ -1727,6 +1839,7 @@ const ListFacturas = () => {
                 </tbody>
               </Table>
             </div>
+            </>
           ) : (
             <div className="text-center py-4 text-muted">
               {selectedRFC ? `Cliente: ${selectedRFC}` : "Seleccionar Cliente"}

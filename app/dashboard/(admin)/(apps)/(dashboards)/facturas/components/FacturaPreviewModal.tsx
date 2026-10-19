@@ -13,10 +13,11 @@ import {
   TbFileMinus,
   TbListDetails,
   TbFileTypePdf,
+  TbFileZip,
 } from "react-icons/tb";
 import { toast } from "sonner";
 import { Factura } from "../../../../../../types/factura";
-import { descargarCfdiPdf, facturaFromDb } from "@/utils/cfdi";
+import { descargarCfdiPdf, descargarXmlsZip, facturaFromDb } from "@/utils/cfdi";
 
 interface FacturaPreviewModalProps {
   show: boolean;
@@ -63,8 +64,29 @@ const FacturaPreviewModal: React.FC<FacturaPreviewModalProps> = ({
   const [openPagos, setOpenPagos] = useState(true);
   const [openNotas, setOpenNotas] = useState(true);
   const [descargandoPdf, setDescargandoPdf] = useState(false);
+  const [exportandoXml, setExportandoXml] = useState(false);
 
   if (!factura) return null;
+
+  // ZIP con el XML original de esta factura
+  const handleExportarXml = async () => {
+    setExportandoXml(true);
+    try {
+      const { exportados } = await descargarXmlsZip({
+        uuids: [factura.uuid],
+        rfc: rfcActual,
+        nombre: `XML_${factura.uuid}`,
+      });
+      if (exportados === 0) {
+        toast.error("No encontramos el XML original de esta factura.");
+      }
+    } catch (err) {
+      console.error("Error al exportar el XML de la factura:", err);
+      toast.error("No se pudo exportar el XML de la factura.");
+    } finally {
+      setExportandoXml(false);
+    }
+  };
 
   // PDF estilo SAT: usa el XML original; si no está, los datos registrados
   const handleDescargarPdf = async () => {
@@ -445,6 +467,15 @@ const FacturaPreviewModal: React.FC<FacturaPreviewModalProps> = ({
       </Modal.Body>
 
       <Modal.Footer className="border-0">
+        <Button
+          variant="outline-primary"
+          onClick={handleExportarXml}
+          disabled={exportandoXml}
+          className="d-inline-flex align-items-center gap-1"
+        >
+          <TbFileZip size={18} />
+          {exportandoXml ? "Exportando..." : "Exportar XML"}
+        </Button>
         <Button
           variant="primary"
           onClick={handleDescargarPdf}
