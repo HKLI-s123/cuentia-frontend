@@ -6,7 +6,7 @@ import { saveAs } from "file-saver";
 import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle, Col, Dropdown, DropdownItem, DropdownMenu, DropdownToggle, Table, Modal, Form } from 'react-bootstrap'
 import { TbCircleFilled, TbDotsVertical, TbFileExport, TbArrowDown, TbArrowUp, TbFileSpreadsheet, TbFileTypePdf, TbFileZip } from 'react-icons/tb'
 import { generarReporteFacturasPdf, generarReporteConceptosPdf } from "@/utils/reportes/reporteFacturasPdf";
-import { descargarXmlsZip } from "@/utils/cfdi";
+import { descargarXmlsZip, descargarPdfsZip, facturaFromDb } from "@/utils/cfdi";
 import CardPagination from '@/components/cards/CardPagination'
 import { getFacturas, getFacturasConConceptos, getPagos, getNotasCredito } from "../../../../../../services/financeService"  // 🔹 nuevo servicio
 import { analizarFacturaIA } from "../../../../../../services/iaService" // 👈 nuevo servicio IA
@@ -57,6 +57,7 @@ const ListFacturas = () => {
   // Exportar XML: selección por UUID (los ids de fila cambian al recargar)
   const [selectedUuids, setSelectedUuids] = useState<Set<string>>(new Set());
   const [exportandoXml, setExportandoXml] = useState(false);
+  const [exportandoPdf, setExportandoPdf] = useState(false);
 
   const [sortConfig, setSortConfig] = useState<{ key: keyof Factura, direction: "asc" | "desc" } | null>(null)
 
@@ -439,6 +440,50 @@ const ListFacturas = () => {
       toast.error("No se pudieron exportar los XML.");
     } finally {
       setExportandoXml(false);
+    }
+  };
+
+  // 📄 ZIP con el PDF (estilo SAT) de cada factura seleccionada
+  const handleExportarPdf = async () => {
+    if (selectedUuids.size === 0) {
+      toast.info("Selecciona con las casillas las facturas cuyo PDF quieres exportar.");
+      return;
+    }
+    const porUuid = new Map(facturas.map((f) => [normUuid(f.uuid), f]));
+    const toastId = toast.loading(`Generando PDF 0 de ${selectedUuids.size}...`);
+    setExportandoPdf(true);
+    try {
+      const { exportados, sinXml, fallidos } = await descargarPdfsZip({
+        uuids: Array.from(selectedUuids),
+        rfc: selectedRFC,
+        nombre: `PDF_${selectedRFC}_${fechaInicio}_${fechaFin}`,
+        // Sin XML: PDF con los datos registrados, igual que en el preview
+        fallback: (uuid) => {
+          const f = porUuid.get(uuid);
+          return f ? facturaFromDb(f, conceptosDeFactura(f)) : null;
+        },
+        onProgress: (hechos, total) =>
+          toast.loading(`Generando PDF ${hechos} de ${total}...`, { id: toastId }),
+      });
+      if (exportados === 0) {
+        toast.error("No se pudo generar el PDF de las facturas seleccionadas.", { id: toastId });
+      } else if (sinXml > 0 || fallidos > 0) {
+        toast.warning(
+          `Se exportaron ${exportados} PDF.` +
+            (sinXml > 0
+              ? ` ${sinXml} sin XML original: se generaron con los datos registrados (sin sellos digitales).`
+              : "") +
+            (fallidos > 0 ? ` ${fallidos} no se pudieron generar.` : ""),
+          { id: toastId }
+        );
+      } else {
+        toast.success(`Se exportaron ${exportados} PDF.`, { id: toastId });
+      }
+    } catch (err) {
+      console.error("Error al exportar PDF:", err);
+      toast.error("No se pudieron exportar los PDF.", { id: toastId });
+    } finally {
+      setExportandoPdf(false);
     }
   };
 
@@ -1687,6 +1732,18 @@ const ListFacturas = () => {
               {exportandoXml
                 ? "Exportando..."
                 : `Exportar XML${selectedUuids.size > 0 ? ` (${selectedUuids.size})` : ""}`}
+            </Button>
+            <Button
+              variant="outline-danger"
+              size="sm"
+              disabled={facturas.length === 0 || exportandoPdf}
+              className="text-nowrap mb-1 mb-md-0"
+              onClick={handleExportarPdf}
+            >
+              <TbFileTypePdf className="me-1" />
+              {exportandoPdf
+                ? "Generando PDF..."
+                : `Exportar PDF${selectedUuids.size > 0 ? ` (${selectedUuids.size})` : ""}`}
             </Button>
             {(tipoCuenta === "empresarial" || tipoCuenta === "empleado") && (
               <Button

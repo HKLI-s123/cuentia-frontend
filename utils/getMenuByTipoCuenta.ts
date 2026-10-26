@@ -1,8 +1,17 @@
 import { menuItems } from "@/layouts/components/data";
 import { MenuItemType } from "@/types/layout";
 
+// Secciones de CFDIs → tipos de comprobante que muestran
+const TIPOS_POR_MENU: Record<string, string[]> = {
+  "listado-facturas": ["I", "E", "N"],
+  complementos: ["P"],
+  notascredito: ["E"],
+  diot: ["I"],
+};
+
 export function getMenuForAccount(
-  tipo: "individual" | "empresarial" | "invitado" | "empleado" | null
+  tipo: "individual" | "empresarial" | "invitado" | "empleado" | null,
+  allowedCfdiTypes: string[] | null = null // empleado: null = todos los tipos
 ) {
   // 🟦 Empresarial → ve TODO
   if (tipo === "empresarial") return menuItems;
@@ -56,6 +65,16 @@ export function getMenuForAccount(
           return {
             ...item,
             children: item.children?.filter((c) => c.key === "chatcontable"),
+          };
+        }
+
+        // CFDIs → solo secciones de los tipos que puede ver
+        if (item.key === "cfdis" && allowedCfdiTypes) {
+          return {
+            ...item,
+            children: item.children?.filter((c) =>
+              (TIPOS_POR_MENU[c.key] ?? []).some((t) => allowedCfdiTypes.includes(t))
+            ),
           };
         }
 

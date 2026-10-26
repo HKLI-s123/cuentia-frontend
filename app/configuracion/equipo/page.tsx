@@ -22,6 +22,23 @@ type EmployeeRfcEntry = {
   createdAt: string;
 };
 
+// Tipos de comprobante que se pueden limitar por colaborador
+const TIPOS_CFDI = [
+  { value: "I", label: "Ingreso" },
+  { value: "E", label: "Egreso" },
+  { value: "N", label: "Nómina" },
+  { value: "P", label: "Pagos" },
+];
+const TODOS_TIPOS_CFDI = TIPOS_CFDI.map((t) => t.value);
+
+// null en BD = sin restricción
+function tiposCfdiLabel(tipos: string[] | null) {
+  if (!tipos) return "Todos";
+  return TIPOS_CFDI.filter((t) => tipos.includes(t.value))
+    .map((t) => t.label)
+    .join(", ");
+}
+
 export default function EmployeePage() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -53,6 +70,7 @@ export default function EmployeePage() {
     nombre: "",
     role: "consulta",
     password: "",
+    allowedCfdiTypes: TODOS_TIPOS_CFDI,
   });
 
   // ==========================================
@@ -100,6 +118,7 @@ export default function EmployeePage() {
       nombre: "",
       role: "consulta",
       password: "",
+      allowedCfdiTypes: TODOS_TIPOS_CFDI,
     });
     setShowModal(true);
   };
@@ -111,9 +130,19 @@ export default function EmployeePage() {
       nombre: emp.nombre,
       role: emp.role,
       password: "",
+      allowedCfdiTypes: emp.allowedCfdiTypes ?? TODOS_TIPOS_CFDI,
     });
     setShowModal(true);
   };
+
+  function toggleTipoCfdi(tipo: string) {
+    setForm((f) => ({
+      ...f,
+      allowedCfdiTypes: f.allowedCfdiTypes.includes(tipo)
+        ? f.allowedCfdiTypes.filter((t) => t !== tipo)
+        : [...f.allowedCfdiTypes, tipo],
+    }));
+  }
 
   // ==========================================
   // VALIDACIONES
@@ -141,6 +170,11 @@ export default function EmployeePage() {
       return false;
     }
 
+    if (form.allowedCfdiTypes.length === 0) {
+      toast.error("Selecciona al menos un tipo de CFDI");
+      return false;
+    }
+
     return true;
   }
 
@@ -148,12 +182,24 @@ export default function EmployeePage() {
   // Guardar empleado
   // ==========================================
   const handleSave = async () => {
+    const { password, ...rest } = form;
+    const body = {
+      ...rest,
+      // El API valida longitud mínima: al editar sin cambiarla no se envía
+      ...(password ? { password } : {}),
+      // Todos marcados = sin restricción
+      allowedCfdiTypes:
+        form.allowedCfdiTypes.length === TODOS_TIPOS_CFDI.length
+          ? null
+          : form.allowedCfdiTypes,
+    };
+
     try {
       if (editing) {
-        await updateEmployee(editing.id, form);
+        await updateEmployee(editing.id, body);
         toast.success("Empleado actualizado");
       } else {
-        await createEmployee(form);
+        await createEmployee(body);
         toast.success("Empleado creado");
       }
 
@@ -272,6 +318,7 @@ export default function EmployeePage() {
                 <th className="py-2">Nombre</th>
                 <th>Email</th>
                 <th>Rol</th>
+                <th>CFDIs</th>
                 <th className="text-right">Acciones</th>
               </tr>
             </thead>
@@ -281,6 +328,7 @@ export default function EmployeePage() {
                   <td className="py-2">{e.nombre}</td>
                   <td>{e.email}</td>
                   <td className="capitalize">{e.role}</td>
+                  <td>{tiposCfdiLabel(e.allowedCfdiTypes)}</td>
                     <td className="text-right py-2 relative">
                     <button
                       onClick={() => toggleMenu(e.id)}
@@ -359,6 +407,32 @@ export default function EmployeePage() {
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
               />
+
+              {/* TIPOS DE CFDI */}
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-2">
+                  Tipos de CFDI que puede ver
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {TIPOS_CFDI.map((t) => (
+                    <label
+                      key={t.value}
+                      className="flex items-center gap-2 border rounded p-2 cursor-pointer text-sm text-gray-700"
+                    >
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4"
+                        checked={form.allowedCfdiTypes.includes(t.value)}
+                        onChange={() => toggleTipoCfdi(t.value)}
+                      />
+                      {t.label}
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Con todos marcados no tiene restricción por tipo.
+                </p>
+              </div>
             </div>
 
             <div className="flex justify-end space-x-2 mt-6">

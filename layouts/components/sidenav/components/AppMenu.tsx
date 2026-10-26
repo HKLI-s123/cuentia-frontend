@@ -140,12 +140,14 @@ const AppMenu = () => {
 
     const [openMenuKey, setOpenMenuKey] = useState<string | null>(null);
     const [tipoCuenta, setTipoCuenta] = useState<"individual" | "empresarial" | "invitado" | "empleado" | null>(null);
+    const [allowedCfdiTypes, setAllowedCfdiTypes] = useState<string[] | null>(null);
 
     // 👇 Obtener tipoCuenta desde el backend
     useEffect(() => {
       const load = async () => {
         try {
           const data = await getSessionInfo();
+          setAllowedCfdiTypes(data.allowedCfdiTypes ?? null);
           setTipoCuenta(data.tipoCuenta);
         } catch (err) {
           console.error("Error cargando sesión:", err);
@@ -159,7 +161,7 @@ const AppMenu = () => {
     // Mientras carga
     const isLoading = tipoCuenta === null;
 
-    const filteredMenu = getMenuForAccount(tipoCuenta);
+    const filteredMenu = getMenuForAccount(tipoCuenta, allowedCfdiTypes);
 
     const scrollToActiveLink = () => {
         const activeItem: HTMLAnchorElement | null = document.querySelector('.side-nav-link.active');
