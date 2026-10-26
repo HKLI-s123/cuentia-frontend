@@ -1676,37 +1676,44 @@ const ListFacturas = () => {
       <Card>
         <CardHeader className="justify-content-between align-items-center border-dashed">
           <CardTitle as="h4" className="mb-0">Facturas</CardTitle>
-          <div className="d-flex flex-wrap flex-md-nowrap gap-2 align-items-center">
-            <span>Desde</span>
-            <Form.Control
-              type="date"
-              size="sm"
-              value={fechaInicio}
-              onChange={(e) => setFechaInicio(e.target.value)}
-              className="w-100 w-md-auto mb-1 mb-md-0"
-            />
-            <span>Hasta</span>
-            <Form.Control
-              type="date"
-              size="sm"
-              value={fechaFin}
-              onChange={(e) => setFechaFin(e.target.value)}
-              className="w-100 w-md-auto mb-1 mb-md-0"
-            />
+          {/* Los controles bajan de renglón cuando no caben; en móvil ocupan todo el ancho */}
+          <div className="d-flex flex-wrap gap-2 align-items-center justify-content-end flex-grow-1">
+            <div className="d-flex align-items-center gap-2 flex-grow-1 flex-sm-grow-0">
+              <span>Desde</span>
+              <Form.Control
+                type="date"
+                size="sm"
+                value={fechaInicio}
+                onChange={(e) => setFechaInicio(e.target.value)}
+                className="flex-grow-1"
+                style={{ width: 150 }}
+              />
+            </div>
+            <div className="d-flex align-items-center gap-2 flex-grow-1 flex-sm-grow-0">
+              <span>Hasta</span>
+              <Form.Control
+                type="date"
+                size="sm"
+                value={fechaFin}
+                onChange={(e) => setFechaFin(e.target.value)}
+                className="flex-grow-1"
+                style={{ width: 150 }}
+              />
+            </div>
             <Form.Control
               type="text"
               size="sm"
               placeholder="Buscar por RFC o Cliente"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-100 w-md-auto mb-1 mb-md-0"
-              style={{ minWidth: "180px" }}
+              className="flex-grow-1 flex-sm-grow-0"
+              style={{ width: 200 }}
             />
             <Button
               variant="primary"
               size="sm"
               disabled={facturas.length === 0}
-              className="text-nowrap mb-1 mb-md-0"
+              className="text-nowrap flex-grow-1 flex-sm-grow-0"
               onClick={() => setShowExportModal(true)}
             >
               <TbFileExport className="me-1" /> Reporte detallado
@@ -1715,7 +1722,7 @@ const ListFacturas = () => {
               variant="outline-primary"
               size="sm"
               disabled={!selectedRFC || loadingFlujo}
-              className="text-nowrap mb-1 mb-md-0"
+              className="text-nowrap flex-grow-1 flex-sm-grow-0"
               onClick={exportarFlujoEfectivo}
             >
               <TbFileExport className="me-1" />
@@ -1725,7 +1732,7 @@ const ListFacturas = () => {
               variant="outline-primary"
               size="sm"
               disabled={facturas.length === 0 || exportandoXml}
-              className="text-nowrap mb-1 mb-md-0"
+              className="text-nowrap flex-grow-1 flex-sm-grow-0"
               onClick={handleExportarXml}
             >
               <TbFileZip className="me-1" />
@@ -1737,7 +1744,7 @@ const ListFacturas = () => {
               variant="outline-danger"
               size="sm"
               disabled={facturas.length === 0 || exportandoPdf}
-              className="text-nowrap mb-1 mb-md-0"
+              className="text-nowrap flex-grow-1 flex-sm-grow-0"
               onClick={handleExportarPdf}
             >
               <TbFileTypePdf className="me-1" />
@@ -1750,7 +1757,7 @@ const ListFacturas = () => {
                 variant="secondary"
                 size="sm"
                 onClick={() => setShowModal(true)}
-                className="text-nowrap mb-1 mb-md-0"
+                className="text-nowrap flex-grow-1 flex-sm-grow-0"
               >
                 {selectedRFC ? "Cambiar Cliente" : "Seleccionar Cliente"}
               </Button>
