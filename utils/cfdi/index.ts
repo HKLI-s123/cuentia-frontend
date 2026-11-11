@@ -5,7 +5,7 @@ import { parseCfdiXml } from "./parseCfdiXml";
 import { renderCfdiPdf } from "./renderCfdiPdf";
 import type { CfdiPdfData } from "./types";
 
-export { facturaFromDb, complementoFromDb } from "./fromDb";
+export { facturaFromDb, complementoFromDb, notaCreditoFromDb } from "./fromDb";
 export type { CfdiPdfData } from "./types";
 
 /**

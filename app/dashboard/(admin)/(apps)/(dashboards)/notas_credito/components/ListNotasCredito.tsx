@@ -25,9 +25,13 @@ import {
   TbFileExport,
   TbArrowDown,
   TbArrowUp,
+  TbFileTypePdf,
+  TbFileZip,
 } from "react-icons/tb";
 import CardPagination from "@/components/cards/CardPagination";
-import { getNotasCredito } from "../../../../../../services/financeService"; // tu servicio backend
+import { getNotasCredito, getConceptosPorUuids } from "../../../../../../services/financeService"; // tu servicio backend
+import { descargarXmlsZip, descargarPdfsZip, notaCreditoFromDb } from "@/utils/cfdi";
+import NotaCreditoPreviewModal from "./NotaCreditoPreviewModal";
 import { getSessionInfo } from "@/app/services/authService";
 import { resolveSelectedRFC, setStoredRFC } from "@/app/services/selectedRfcStore";
 import { activateGuest, validateGuestKey } from "@/app/services/chatService";
@@ -81,6 +85,18 @@ const ListNotasCredito = () => {
     key: keyof NotaCredito;
     direction: "asc" | "desc";
   } | null>(null);
+
+  // ☑️ Selección para exportar XML / PDF en lote
+  const [selectedUuids, setSelectedUuids] = useState<Set<string>>(new Set());
+  const [exportandoXml, setExportandoXml] = useState(false);
+  const [exportandoPdf, setExportandoPdf] = useState(false);
+
+  // 🔎 Preview individual de la nota de crédito
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [selectedNotaPreview, setSelectedNotaPreview] = useState<NotaCredito | null>(null);
+  // Caché uuid (mayúsculas) -> conceptos de la nota; se llena al abrir el preview o exportar PDF
+  const [conceptosMap, setConceptosMap] = useState<Record<string, any[]>>({});
+  const [cargandoConceptosUuid, setCargandoConceptosUuid] = useState<string | null>(null);
 
   const getFirstDayOfCurrentMonth = () => {
     const now = new Date();
@@ -214,7 +230,8 @@ const ListNotasCredito = () => {
         subtotal: Number(n.subtotal ?? 0),
         iva_8: Number(n.iva_8 ?? n.importe_trasladado_8 ?? 0),
         iva_16: Number(n.iva_16 ?? n.importe_trasladado_16 ?? 0),
-        total_trasladados: Number(n.total_trasladados ?? 0),
+        // El backend lo devuelve como total_imp_trasladados
+        total_trasladados: Number(n.total_trasladados ?? n.total_imp_trasladados ?? 0),
         retencion_isr: Number(n.retencion_isr ?? 0),
         retencion_iva: Number(n.retencion_iva ?? 0),
         total_retenidos: Number(n.total_retenidos ?? 0),
@@ -228,9 +245,12 @@ const ListNotasCredito = () => {
         estatus: n.estatus ?? "Vigente",
       }));
       setNotas(data);
+      setSelectedUuids(new Set());
+      setConceptosMap({});
     } catch (error) {
       console.error("Error al cargar notas de crédito:", error);
       setNotas([]);
+      setSelectedUuids(new Set());
     }
   };
 
@@ -487,6 +507,156 @@ const ListNotasCredito = () => {
 
   const [visibleRows, setVisibleRows] = useState<Record<number, boolean>>({});
 
+  // Normaliza UUIDs para comparar (pueden variar en mayúsculas/espacios entre tablas)
+  const normUuid = (v: any) => String(v ?? "").trim().toUpperCase();
+
+  // Trae (en tandas) los conceptos de las notas que aún no están en el caché.
+  // Devuelve el caché ya combinado para usarlo sin esperar al re-render.
+  const cargarConceptos = async (uuids: string[]): Promise<Record<string, any[]>> => {
+    const faltantes = Array.from(new Set(uuids.map(normUuid).filter(Boolean))).filter(
+      (u) => conceptosMap[u] === undefined
+    );
+    if (faltantes.length === 0) return conceptosMap;
+
+    const nuevos: Record<string, any[]> = {};
+    // Tandas de 50: los UUID viajan en el query string
+    for (let i = 0; i < faltantes.length; i += 50) {
+      const tanda = faltantes.slice(i, i + 50);
+      try {
+        const res = await getConceptosPorUuids(tanda, selectedRFC);
+        // Una entrada por UUID pedido (aunque venga sin conceptos)
+        tanda.forEach((u) => {
+          nuevos[u] = Array.isArray(res?.[u]) ? res[u] : [];
+        });
+      } catch (error) {
+        console.error("Error al cargar conceptos de notas de crédito:", error);
+      }
+    }
+
+    const merged = { ...conceptosMap, ...nuevos };
+    setConceptosMap((prev) => ({ ...prev, ...nuevos }));
+    return merged;
+  };
+
+  const conceptosDeNota = (nota: NotaCredito | null) =>
+    !nota ? [] : conceptosMap[normUuid(nota.uuid)] ?? [];
+
+  // Abre el preview de una nota y trae sus conceptos (sin filtro de fecha)
+  const handleOpenPreview = async (nota: NotaCredito) => {
+    setSelectedNotaPreview(nota);
+    setShowPreviewModal(true);
+
+    const uuid = normUuid(nota.uuid);
+    if (!uuid || conceptosMap[uuid] !== undefined) return;
+    setCargandoConceptosUuid(uuid);
+    try {
+      await cargarConceptos([uuid]);
+    } finally {
+      setCargandoConceptosUuid((actual) => (actual === uuid ? null : actual));
+    }
+  };
+
+  // ☑️ La casilla del encabezado selecciona todas las notas del filtro
+  // actual (todas las páginas), excepto las ocultas
+  const seleccionables = filteredNotas.filter((n) => n.uuid && (visibleRows[n.id] ?? true));
+  const todasSeleccionadas =
+    seleccionables.length > 0 && seleccionables.every((n) => selectedUuids.has(n.uuid));
+  const algunaSeleccionada = seleccionables.some((n) => selectedUuids.has(n.uuid));
+
+  const toggleSeleccion = (uuid: string) => {
+    setSelectedUuids((prev) => {
+      const next = new Set(prev);
+      if (next.has(uuid)) next.delete(uuid);
+      else next.add(uuid);
+      return next;
+    });
+  };
+
+  const toggleSeleccionTodas = () => {
+    setSelectedUuids((prev) => {
+      const next = new Set(prev);
+      seleccionables.forEach((n) => (todasSeleccionadas ? next.delete(n.uuid) : next.add(n.uuid)));
+      return next;
+    });
+  };
+
+  // 🗜️ ZIP con los XML originales de las notas seleccionadas
+  const handleExportarXml = async () => {
+    if (selectedUuids.size === 0) {
+      toast.info("Selecciona con las casillas las notas de crédito cuyo XML quieres exportar.");
+      return;
+    }
+    setExportandoXml(true);
+    try {
+      const { exportados, faltantes } = await descargarXmlsZip({
+        uuids: Array.from(selectedUuids),
+        rfc: selectedRFC,
+        nombre: `XML_NotasCredito_${selectedRFC}_${fechaInicio}_${fechaFin}`,
+      });
+      if (exportados === 0) {
+        toast.error("No encontramos los XML de las notas de crédito seleccionadas.");
+      } else if (faltantes > 0) {
+        toast.warning(
+          `Se exportaron ${exportados} XML. No encontramos ${faltantes}; sus UUID vienen en NO_ENCONTRADOS.txt dentro del ZIP.`
+        );
+      } else {
+        toast.success(`Se exportaron ${exportados} XML.`);
+      }
+    } catch (err) {
+      console.error("Error al exportar XML de notas de crédito:", err);
+      toast.error("No se pudieron exportar los XML.");
+    } finally {
+      setExportandoXml(false);
+    }
+  };
+
+  // 📄 ZIP con el PDF (estilo SAT) de cada nota seleccionada
+  const handleExportarPdf = async () => {
+    if (selectedUuids.size === 0) {
+      toast.info("Selecciona con las casillas las notas de crédito cuyo PDF quieres exportar.");
+      return;
+    }
+    const uuids = Array.from(selectedUuids);
+    const porUuid = new Map(notas.map((n) => [normUuid(n.uuid), n]));
+    const toastId = toast.loading(`Generando PDF 0 de ${uuids.length}...`);
+    setExportandoPdf(true);
+    try {
+      // Conceptos para las que no tengan XML (el respaldo se arma con ellos)
+      const conceptos = await cargarConceptos(uuids);
+      const { exportados, sinXml, fallidos } = await descargarPdfsZip({
+        uuids,
+        rfc: selectedRFC,
+        nombre: `PDF_NotasCredito_${selectedRFC}_${fechaInicio}_${fechaFin}`,
+        // Sin XML: PDF con los datos registrados, igual que en el preview
+        fallback: (uuid) => {
+          const n = porUuid.get(uuid);
+          return n ? notaCreditoFromDb(n, conceptos[uuid] ?? []) : null;
+        },
+        onProgress: (hechos, total) =>
+          toast.loading(`Generando PDF ${hechos} de ${total}...`, { id: toastId }),
+      });
+      if (exportados === 0) {
+        toast.error("No se pudo generar el PDF de las notas de crédito seleccionadas.", { id: toastId });
+      } else if (sinXml > 0 || fallidos > 0) {
+        toast.warning(
+          `Se exportaron ${exportados} PDF.` +
+            (sinXml > 0
+              ? ` ${sinXml} sin XML original: se generaron con los datos registrados (sin sellos digitales).`
+              : "") +
+            (fallidos > 0 ? ` ${fallidos} no se pudieron generar.` : ""),
+          { id: toastId }
+        );
+      } else {
+        toast.success(`Se exportaron ${exportados} PDF.`, { id: toastId });
+      }
+    } catch (err) {
+      console.error("Error al exportar PDF de notas de crédito:", err);
+      toast.error("No se pudieron exportar los PDF.", { id: toastId });
+    } finally {
+      setExportandoPdf(false);
+    }
+  };
+
   const filteredClientes = clientes.filter((c) => {
     const term = searchCliente.toLowerCase();
     return (
@@ -610,6 +780,30 @@ const ListNotasCredito = () => {
             >
               <TbFileExport className="me-1" /> Reporte detallado
             </Button>
+            <Button
+              variant="outline-primary"
+              size="sm"
+              disabled={notas.length === 0 || exportandoXml}
+              className="text-nowrap mb-1 mb-md-0"
+              onClick={handleExportarXml}
+            >
+              <TbFileZip className="me-1" />
+              {exportandoXml
+                ? "Exportando..."
+                : `Exportar XML${selectedUuids.size > 0 ? ` (${selectedUuids.size})` : ""}`}
+            </Button>
+            <Button
+              variant="outline-danger"
+              size="sm"
+              disabled={notas.length === 0 || exportandoPdf}
+              className="text-nowrap mb-1 mb-md-0"
+              onClick={handleExportarPdf}
+            >
+              <TbFileTypePdf className="me-1" />
+              {exportandoPdf
+                ? "Generando PDF..."
+                : `Exportar PDF${selectedUuids.size > 0 ? ` (${selectedUuids.size})` : ""}`}
+            </Button>
             {(tipoCuenta === "empresarial" || tipoCuenta === "empleado") && (
               <Button
                 variant="secondary"
@@ -624,10 +818,40 @@ const ListNotasCredito = () => {
         </CardHeader>  
         <CardBody>
           {filteredNotas.length > 0 ? (
+            <>
+            {selectedUuids.size > 0 && (
+              <div className="d-flex align-items-center gap-2 mb-2 small text-muted">
+                <span>
+                  {selectedUuids.size}{" "}
+                  {selectedUuids.size === 1 ? "nota seleccionada" : "notas seleccionadas"}
+                </span>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="p-0"
+                  onClick={() => setSelectedUuids(new Set())}
+                >
+                  Limpiar selección
+                </Button>
+              </div>
+            )}
             <div className="table-responsive">
               <Table className="table-centered table-custom table-sm table-nowrap table-hover mb-0">
                 <thead>
                   <tr>
+                    <th style={{ width: 30 }}>
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        aria-label="Seleccionar todas las notas de crédito"
+                        title="Seleccionar todas las notas de crédito"
+                        checked={todasSeleccionadas}
+                        ref={(el) => {
+                          if (el) el.indeterminate = algunaSeleccionada && !todasSeleccionadas;
+                        }}
+                        onChange={toggleSeleccionTodas}
+                      />
+                    </th>
                     <th onClick={() => requestSort("fecha_emision")} style={{ cursor: "pointer" }}>
                       Fecha Emisión {renderSortIcon("fecha_emision")}
                     </th>
@@ -647,7 +871,22 @@ const ListNotasCredito = () => {
                     if (!isVisible) return null;
                 
                     return (
-                      <tr key={nota.id}>
+                      <tr
+                        key={nota.id}
+                        onClick={() => handleOpenPreview(nota)}
+                        style={{ cursor: "pointer" }}
+                        title="Ver comprobante"
+                      >
+                        <td style={{ width: 30 }} onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            className="form-check-input"
+                            aria-label={`Seleccionar nota de crédito ${nota.uuid}`}
+                            checked={selectedUuids.has(nota.uuid)}
+                            disabled={!nota.uuid}
+                            onChange={() => toggleSeleccion(nota.uuid)}
+                          />
+                        </td>
                         <td>{new Date(nota.fecha_emision).toLocaleDateString()}</td>
                         <td>{nota.rfc_emisor}</td>
                         <td>{nota.rfc_receptor}</td>
@@ -663,7 +902,7 @@ const ListNotasCredito = () => {
                           />
                           {nota.estatus}
                         </td>
-                        <td style={{ width: 30 }}>
+                        <td style={{ width: 30 }} onClick={(e) => e.stopPropagation()}>
                           <Dropdown>
                             <DropdownToggle
                               as="a"
@@ -692,6 +931,7 @@ const ListNotasCredito = () => {
                 </tbody>
               </Table>
             </div>
+            </>
           ) : (
             <div className="text-center py-4 text-muted">
               {selectedRFC ? "Sin notas de crédito" : "Seleccionar cliente"}
@@ -764,6 +1004,18 @@ const ListNotasCredito = () => {
          )}
        </Modal.Body>
      </Modal>
+
+      {/* Preview individual de la nota de crédito */}
+      <NotaCreditoPreviewModal
+        show={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        nota={selectedNotaPreview}
+        conceptos={conceptosDeNota(selectedNotaPreview)}
+        cargandoConceptos={
+          !!selectedNotaPreview && cargandoConceptosUuid === normUuid(selectedNotaPreview.uuid)
+        }
+        rfcActual={selectedRFC}
+      />
     </Col>
   );
 };

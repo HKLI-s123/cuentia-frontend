@@ -305,7 +305,8 @@ export async function renderCfdiPdf(data: CfdiPdfData): Promise<jsPDF> {
         { header: "CFDI relacionado", width: 1 },
       ],
       filas: data.relacionados.map((rel) => [
-        `${rel.tipoRelacion} - ${cat.tipoRelacion(rel.tipoRelacion)}`,
+        // Sin TipoRelacion cuando el PDF se arma con datos de BD (notas de crédito)
+        rel.tipoRelacion ? `${rel.tipoRelacion} - ${cat.tipoRelacion(rel.tipoRelacion)}` : "No disponible",
         rel.uuid,
       ]),
     });

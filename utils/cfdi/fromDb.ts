@@ -109,6 +109,50 @@ export function facturaFromDb(f: any, conceptos: any[]): CfdiPdfData {
   };
 }
 
+/**
+ * Nota de crédito (fila de /cfdis/notas-credito) + sus conceptos (conceptos-por-uuids).
+ * notas_credito_cfdi no guarda el TipoRelacion, así que el CFDI relacionado
+ * se muestra sin él.
+ */
+export function notaCreditoFromDb(n: any, conceptos: any[]): CfdiPdfData {
+  const iva16 = pick(n, "iva_16", "importe_trasladado_16");
+  const iva8 = pick(n, "iva_8", "importe_trasladado_8");
+  const traslados: CfdiPdfData["traslados"] = [];
+  if (num(iva16)) traslados.push({ impuesto: "002", tipoFactor: "Tasa", tasaOCuota: "0.160000", importe: str(iva16) });
+  if (num(iva8)) traslados.push({ impuesto: "002", tipoFactor: "Tasa", tasaOCuota: "0.080000", importe: str(iva8) });
+
+  const retenciones: CfdiPdfData["retenciones"] = [];
+  if (num(n.retencion_isr)) retenciones.push({ impuesto: "001", importe: str(n.retencion_isr) });
+  if (num(n.retencion_iva)) retenciones.push({ impuesto: "002", importe: str(n.retencion_iva) });
+
+  const relacionada = str(n.uuid_factura_relacionada).toUpperCase();
+
+  return {
+    fuente: "db",
+    uuid: str(n.uuid).toUpperCase(),
+    emisor: { rfc: str(n.rfc_emisor), nombre: str(n.nombre_emisor), regimen: str(n.regimen_emisor) },
+    receptor: {
+      rfc: str(n.rfc_receptor),
+      nombre: str(n.nombre_receptor),
+      regimen: str(n.regimen_receptor),
+    },
+    fecha: str(n.fecha_emision ?? n.fecha).substring(0, 10),
+    tipoComprobante: "E",
+    moneda: str(n.moneda) || "MXN",
+    tipoCambio: str(n.tipo_cambio),
+    formaPago: str(n.forma_pago),
+    metodoPago: str(n.metodo_pago),
+    subtotal: str(n.subtotal) || "0",
+    descuento: str(n.descuento),
+    total: str(n.total) || "0",
+    traslados,
+    retenciones,
+    conceptos: (conceptos ?? []).map(conceptoDb),
+    relacionados: relacionada ? [{ tipoRelacion: "", uuid: relacionada }] : [],
+    complementos: [],
+  };
+}
+
 /** Complemento de pago: fila representativa + todas sus filas (documentos relacionados). */
 export function complementoFromDb(pago: any, documentos: any[]): CfdiPdfData {
   const docs = documentos?.length ? documentos : [pago];
