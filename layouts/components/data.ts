@@ -6,6 +6,7 @@ import {
     TbBan,
     TbBellRinging,
     TbBoxAlignTop,
+    TbBuildingWarehouse,
     TbCreditCard,
     TbFileCertificate,
     TbFiles,
@@ -121,6 +122,16 @@ export const menuItems: MenuItemType[] = [
             {key: 'reporte-gastos', label: 'Reporte de gastos', url: '/dashboard/reporte-gastos'},
             {key: 'comprobantes-automaticos', label: 'Comprobantes digitales', url: '/dashboard/comprobantes-digitales'},
         ]
+    },
+    // Módulos exclusivos por cuenta (tabla user_features). El título se oculta
+    // solo si la cuenta no tiene ningún módulo de esta sección.
+    {key: 'modulos', label: 'Módulos', isTitle: true},
+    {
+        key: 'inventario',
+        label: 'Inventario',
+        icon: TbBuildingWarehouse,
+        url: '/dashboard/inventario',
+        requiredFeature: 'inventario',
     },
     {key: 'otros', label: 'Otros', isTitle: true},
     {key: 'suscripcion', label: 'Suscripción', icon: TbSparkles, url: '/plans', isSpecial: true}

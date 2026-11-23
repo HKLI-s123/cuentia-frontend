@@ -71,5 +71,7 @@ export type MenuItemType = {
     target?: string
     isDisabled?: boolean
     isSpecial?: boolean
+    // Módulo exclusivo: solo se muestra si la cuenta lo tiene en session-info.features
+    requiredFeature?: string
     children?: MenuItemType[]
 }
